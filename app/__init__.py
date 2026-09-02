@@ -4,7 +4,7 @@ import os
 from flask import Flask
 
 import app.models
-from app.extensions import db, migrate
+from app.extensions import csrf, db, login_manager, migrate
 from config import CONFIGURATIONS, ProductionConfig
 
 
@@ -23,9 +23,13 @@ def create_app(config: str | object | None = None) -> Flask:
     _configure_logging(app)
     db.init_app(app)
     migrate.init_app(app, db)
+    login_manager.init_app(app)
+    csrf.init_app(app)
 
+    from app.auth import auth
     from app.routes import main
 
+    app.register_blueprint(auth)
     app.register_blueprint(main)
 
     return app

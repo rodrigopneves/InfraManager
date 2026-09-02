@@ -9,6 +9,8 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -28,6 +30,7 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     LOG_LEVEL = logging.INFO
+    SESSION_COOKIE_SECURE = True
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
 

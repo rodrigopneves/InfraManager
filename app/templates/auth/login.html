@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Entrar</h1>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <p>
+      {{ form.username.label }}<br>
+      {{ form.username(autocomplete="username") }}
+    </p>
+
+    <p>
+      {{ form.password.label }}<br>
+      {{ form.password(autocomplete="current-password") }}
+    </p>
+
+    <p>{{ form.submit() }}</p>
+  </form>
+{% endblock %}

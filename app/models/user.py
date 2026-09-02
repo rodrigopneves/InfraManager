@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
@@ -9,7 +10,7 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)

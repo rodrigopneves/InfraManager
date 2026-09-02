@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Bem-vindo, {{ current_user.username }}.</h1>
+
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Sair</button>
+  </form>
+{% endblock %}

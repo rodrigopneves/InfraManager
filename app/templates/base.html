@@ -7,7 +7,15 @@
   </head>
   <body>
     <main>
-      <h1>InfraManager está funcionando.</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <p role="alert" data-category="{{ category }}">{{ message }}</p>
+        {% endfor %}
+      {% endwith %}
+
+      {% block content %}
+        <h1>InfraManager está funcionando.</h1>
+      {% endblock %}
     </main>
   </body>
 </html>
