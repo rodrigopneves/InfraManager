@@ -1,13 +1,16 @@
-from flask import flash, redirect, render_template, request, url_for
+from flask import current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.auth import auth
 from app.auth.forms import LoginForm
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import User
 
 
 @auth.route("/login", methods=["GET", "POST"])
+@limiter.limit(
+    lambda: current_app.config["AUTH_LOGIN_RATE_LIMIT"], methods=["POST"]
+)
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("auth.dashboard"))

@@ -3,9 +3,10 @@ import os
 
 from flask import Flask, render_template
 from flask_wtf.csrf import CSRFError
+from werkzeug.exceptions import TooManyRequests
 
 import app.models
-from app.extensions import csrf, db, login_manager, migrate
+from app.extensions import csrf, db, limiter, login_manager, migrate
 from config import CONFIGURATIONS, ProductionConfig
 
 
@@ -22,6 +23,7 @@ def create_app(config: str | object | None = None) -> Flask:
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     from app.auth import auth
     from app.routes import main
@@ -29,6 +31,7 @@ def create_app(config: str | object | None = None) -> Flask:
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_error_handler(CSRFError, _handle_csrf_error)
+    app.register_error_handler(TooManyRequests, _handle_rate_limit_error)
 
     return app
 
@@ -48,6 +51,10 @@ def _validate_production_config(app: Flask) -> None:
 
 def _handle_csrf_error(_error: CSRFError) -> tuple[str, int]:
     return render_template("errors/csrf.html"), 400
+
+
+def _handle_rate_limit_error(_error: TooManyRequests) -> tuple[str, int]:
+    return render_template("errors/429.html"), 429
 
 
 def _configure_logging(app: Flask) -> None:

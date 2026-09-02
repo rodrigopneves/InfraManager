@@ -8,6 +8,9 @@ load_dotenv()
 
 
 class Config:
+    AUTH_LOGIN_RATE_LIMIT = "5 per 15 minutes"
+    RATELIMIT_ENABLED = True
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     SECRET_KEY = os.getenv("SECRET_KEY")
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
@@ -22,6 +25,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     LOG_LEVEL = logging.WARNING
+    RATELIMIT_ENABLED = False
     SECRET_KEY = "testing-only-secret-key"
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
