@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timezone
 
 from flask_login import UserMixin
+from sqlalchemy import false
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -50,6 +51,9 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    is_admin = db.Column(
+        db.Boolean, nullable=False, default=False, server_default=false()
+    )
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at = db.Column(
         db.DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now

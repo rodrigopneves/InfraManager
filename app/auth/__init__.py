@@ -10,9 +10,10 @@ auth = Blueprint("auth", __name__)
 @login_manager.user_loader
 def load_user(user_id: str) -> User | None:
     try:
-        return db.session.get(User, int(user_id))
+        user = db.session.get(User, int(user_id))
     except (TypeError, ValueError):
         return None
+    return user if user is not None and user.is_active else None
 
 
 from app.auth import routes

@@ -32,3 +32,25 @@ def active_user(app: Flask) -> User:
     db.session.add(user)
     db.session.commit()
     return user
+
+
+@pytest.fixture()
+def admin_user(app: Flask) -> User:
+    user = User(
+        username="admin.demo",
+        email="admin.demo@example.com",
+        is_admin=True,
+    )
+    user.set_password("valid-admin-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture()
+def regular_user(app: Flask) -> User:
+    user = User(username="user.demo", email="user.demo@example.com")
+    user.set_password("valid-user-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
