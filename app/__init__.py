@@ -1,3 +1,4 @@
+import logging
 import os
 
 from flask import Flask
@@ -18,6 +19,7 @@ def create_app(config: str | object | None = None) -> Flask:
             "DATABASE_URL must be defined when using the production configuration."
         )
 
+    _configure_logging(app)
     db.init_app(app)
     migrate.init_app(app, db)
 
@@ -26,6 +28,19 @@ def create_app(config: str | object | None = None) -> Flask:
     app.register_blueprint(main)
 
     return app
+
+
+def _configure_logging(app: Flask) -> None:
+    log_level = app.config.get("LOG_LEVEL", logging.INFO)
+    logger = logging.getLogger(app.name)
+    logger.setLevel(log_level)
+
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+        )
+        logger.addHandler(handler)
 
 
 def _resolve_config(config: str | object | None) -> object:

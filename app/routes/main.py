@@ -7,3 +7,8 @@ main = Blueprint("main", __name__)
 @main.get("/")
 def index() -> str:
     return render_template("base.html")
+
+
+@main.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}

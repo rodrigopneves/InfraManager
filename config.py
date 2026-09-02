@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -13,10 +14,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    LOG_LEVEL = logging.DEBUG
     SQLALCHEMY_DATABASE_URI = "sqlite:///inframanager.db"
 
 
 class TestingConfig(Config):
+    LOG_LEVEL = logging.WARNING
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
@@ -24,6 +27,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    LOG_LEVEL = logging.INFO
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
 
