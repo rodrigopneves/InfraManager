@@ -1,1 +1,6 @@
-"""Application extensions will be initialized here when needed."""
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+
+
+db = SQLAlchemy()
+migrate = Migrate()
