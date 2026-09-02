@@ -22,6 +22,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     LOG_LEVEL = logging.WARNING
+    SECRET_KEY = "testing-only-secret-key"
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False

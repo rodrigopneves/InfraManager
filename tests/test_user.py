@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import User
+from app.models import User, validate_email, validate_username
 
 
 def build_user(username: str, email: str) -> User:
@@ -61,3 +61,31 @@ def test_email_must_be_unique(app) -> None:
         db.session.commit()
 
     db.session.rollback()
+
+
+@pytest.mark.parametrize(
+    "username",
+    ["ab", "user name", "user@example", "user/name"],
+)
+def test_invalid_username_is_rejected(username: str) -> None:
+    with pytest.raises(ValueError):
+        validate_username(username)
+
+
+def test_username_and_email_are_normalized() -> None:
+    user = User(
+        username="  Demo.User  ",
+        email="  Demo.User@Example.COM  ",
+    )
+
+    assert user.username == "demo.user"
+    assert user.email == "demo.user@example.com"
+    assert validate_email("  Another.User@Example.COM ") == (
+        "another.user@example.com"
+    )
+
+
+@pytest.mark.parametrize("email", ["invalid", "missing@domain", "two@@example.com"])
+def test_invalid_email_is_rejected(email: str) -> None:
+    with pytest.raises(ValueError):
+        validate_email(email)

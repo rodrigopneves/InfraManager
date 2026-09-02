@@ -1,11 +1,12 @@
 from urllib.parse import urlparse
 
+import pytest
 from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
 from app.models import User
-from config import TestingConfig
+from config import Config, ProductionConfig, TestingConfig
 
 
 def submit_login(
@@ -39,6 +40,16 @@ def test_valid_credentials_authenticate_user(
     assert b"Bem-vindo, login.demo." in response.data
 
 
+@pytest.mark.parametrize("username", ["  login.demo  ", "LOGIN.DEMO"])
+def test_login_normalizes_username(
+    client: FlaskClient, active_user: User, username: str
+) -> None:
+    response = submit_login(client, username=username, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Bem-vindo, login.demo." in response.data
+
+
 def test_invalid_password_is_rejected(
     client: FlaskClient, active_user: User
 ) -> None:
@@ -46,6 +57,7 @@ def test_invalid_password_is_rejected(
 
     assert response.status_code == 200
     assert "Usuário ou senha inválidos.".encode() in response.data
+    assert b"incorrect-password" not in response.data
 
 
 def test_unknown_username_is_rejected(client: FlaskClient) -> None:
@@ -125,3 +137,28 @@ def test_csrf_is_enabled_outside_default_test_configuration() -> None:
 
     assert login_response.status_code == 400
     assert logout_response.status_code == 400
+    expected_message = (
+        "A solicitação não pôde ser validada. "
+        "Atualize a página e tente novamente."
+    ).encode()
+    assert expected_message in login_response.data
+    assert b"csrf" not in login_response.data.lower()
+    assert b"token" not in login_response.data.lower()
+
+
+def test_session_cookie_and_secret_key_configuration() -> None:
+    assert Config.SESSION_COOKIE_HTTPONLY is True
+    assert Config.SESSION_COOKIE_SAMESITE == "Lax"
+    assert ProductionConfig.SESSION_COOKIE_SECURE is True
+    assert TestingConfig.SECRET_KEY == "testing-only-secret-key"
+    assert ProductionConfig.SECRET_KEY == Config.SECRET_KEY
+
+
+def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        ProductionConfig, "SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:"
+    )
+    monkeypatch.setattr(ProductionConfig, "SECRET_KEY", None)
+
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        create_app("production")

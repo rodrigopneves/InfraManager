@@ -12,7 +12,6 @@ from app.models import User
 @pytest.fixture()
 def app() -> Iterator[Flask]:
     application = create_app("testing")
-    application.config["SECRET_KEY"] = "testing-only-secret-key"
 
     with application.app_context():
         db.create_all()

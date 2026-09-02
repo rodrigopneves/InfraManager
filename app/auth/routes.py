@@ -1,4 +1,4 @@
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.auth import auth
@@ -24,6 +24,8 @@ def login():
             login_user(user)
             return redirect(url_for("auth.dashboard"))
 
+        flash("Usuário ou senha inválidos.", "error")
+    elif request.method == "POST":
         flash("Usuário ou senha inválidos.", "error")
 
     return render_template("auth/login.html", form=form)

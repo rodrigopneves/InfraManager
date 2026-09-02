@@ -1,7 +1,8 @@
 import logging
 import os
 
-from flask import Flask
+from flask import Flask, render_template
+from flask_wtf.csrf import CSRFError
 
 import app.models
 from app.extensions import csrf, db, login_manager, migrate
@@ -13,12 +14,8 @@ def create_app(config: str | object | None = None) -> Flask:
     selected_config = _resolve_config(config)
     app.config.from_object(selected_config)
 
-    if selected_config is ProductionConfig and not app.config.get(
-        "SQLALCHEMY_DATABASE_URI"
-    ):
-        raise RuntimeError(
-            "DATABASE_URL must be defined when using the production configuration."
-        )
+    if selected_config is ProductionConfig:
+        _validate_production_config(app)
 
     _configure_logging(app)
     db.init_app(app)
@@ -31,8 +28,26 @@ def create_app(config: str | object | None = None) -> Flask:
 
     app.register_blueprint(auth)
     app.register_blueprint(main)
+    app.register_error_handler(CSRFError, _handle_csrf_error)
 
     return app
+
+
+def _validate_production_config(app: Flask) -> None:
+    required_settings = {
+        "DATABASE_URL": app.config.get("SQLALCHEMY_DATABASE_URI"),
+        "SECRET_KEY": app.config.get("SECRET_KEY"),
+    }
+    missing_settings = [name for name, value in required_settings.items() if not value]
+    if missing_settings:
+        missing_names = ", ".join(missing_settings)
+        raise RuntimeError(
+            f"Missing required production environment variables: {missing_names}."
+        )
+
+
+def _handle_csrf_error(_error: CSRFError) -> tuple[str, int]:
+    return render_template("errors/csrf.html"), 400
 
 
 def _configure_logging(app: Flask) -> None:
