@@ -3,6 +3,7 @@ import os
 
 from flask import Flask
 
+import app.models
 from app.extensions import db, migrate
 from config import CONFIGURATIONS, ProductionConfig
 
