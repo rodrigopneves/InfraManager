@@ -1,53 +1,46 @@
-# Variáveis de ambiente e segredos
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Flask
+instance/
+*.sqlite
+*.sqlite3
+*.db
+
+# Environment variables
 .env
 .env.*
 !.env.example
 
-# Ambiente virtual Python
-.venv/
-venv/
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Banco de dados local
-*.db
-*.sqlite
-*.sqlite3
-instance/
-
-# Chaves e certificados privados
-*.pem
-*.key
-id_rsa
-id_rsa.*
-id_ed25519
-id_ed25519.*
-
-# Logs
-*.log
-logs/
-
-# Testes / cobertura
+# Testing / Coverage
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Ferramentas Python
-.mypy_cache/
-.ruff_cache/
 
 # IDE
 .vscode/
 .idea/
 
-# Sistema operacional
+# OS
 .DS_Store
 Thumbs.db
 
-# Arquivos temporários
-*.tmp
-*.swp
-*~
+# Logs
+*.log
+
+# Python tooling
+.mypy_cache/
+.ruff_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
