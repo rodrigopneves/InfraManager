@@ -1,0 +1,53 @@
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Ambiente virtual Python
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Chaves e certificados privados
+*.pem
+*.key
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+
+# Logs
+*.log
+logs/
+
+# Testes / cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ferramentas Python
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.swp
+*~
