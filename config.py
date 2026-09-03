@@ -9,6 +9,9 @@ load_dotenv()
 
 class Config:
     AUTH_LOGIN_RATE_LIMIT = "5 per 15 minutes"
+    MFA_ISSUER_NAME = "InfraManager"
+    MFA_PENDING_TTL_SECONDS = 300
+    MFA_VERIFY_RATE_LIMIT = "5 per 5 minutes"
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     SECRET_KEY = os.getenv("SECRET_KEY")

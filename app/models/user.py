@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 
 from flask_login import UserMixin
+from sqlalchemy import false
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -72,6 +73,10 @@ class User(UserMixin, db.Model):
         default=UserRole.VIEWER.value,
         server_default=UserRole.VIEWER.value,
     )
+    mfa_enabled = db.Column(
+        db.Boolean, nullable=False, default=False, server_default=false()
+    )
+    mfa_secret = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at = db.Column(
         db.DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now

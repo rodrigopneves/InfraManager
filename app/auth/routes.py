@@ -1,8 +1,23 @@
-from flask import current_app, flash, redirect, render_template, request, url_for
+from flask import (
+    current_app,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.auth import auth
-from app.auth.forms import LoginForm
+from app.auth.forms import LoginForm, MfaVerifyForm
+from app.auth.services import (
+    clear_pending_mfa_login,
+    get_pending_mfa_user,
+    start_pending_mfa_login,
+    verify_totp,
+)
 from app.extensions import db, limiter
 from app.models import User, UserRole
 
@@ -24,20 +39,63 @@ def login():
         if user is not None and user.is_active and user.check_password(
             form.password.data
         ):
+            if user.mfa_enabled:
+                if not user.mfa_secret:
+                    clear_pending_mfa_login()
+                    flash("Usuário ou senha inválidos.", "error")
+                    return render_template("auth/login.html", form=form)
+                start_pending_mfa_login(user)
+                return redirect(url_for("auth.mfa_verify"))
+
+            clear_pending_mfa_login()
             login_user(user)
             return redirect(url_for("auth.dashboard"))
 
+        clear_pending_mfa_login()
         flash("Usuário ou senha inválidos.", "error")
     elif request.method == "POST":
+        clear_pending_mfa_login()
         flash("Usuário ou senha inválidos.", "error")
 
     return render_template("auth/login.html", form=form)
+
+
+@auth.route("/mfa/verify", methods=["GET", "POST"])
+@limiter.limit(
+    lambda: current_app.config["MFA_VERIFY_RATE_LIMIT"], methods=["POST"]
+)
+def mfa_verify():
+    if current_user.is_authenticated:
+        clear_pending_mfa_login()
+        return redirect(url_for("auth.dashboard"))
+
+    user = get_pending_mfa_user()
+    if user is None:
+        flash("Sua verificação expirou. Entre novamente.", "error")
+        return redirect(url_for("auth.login"))
+
+    form = MfaVerifyForm()
+    if form.validate_on_submit():
+        if verify_totp(user.mfa_secret, form.code.data):
+            clear_pending_mfa_login()
+            login_user(user)
+            return redirect(url_for("auth.dashboard"))
+        form.code.data = ""
+        flash("Código de autenticação inválido.", "error")
+    elif request.method == "POST":
+        form.code.data = ""
+        flash("Código de autenticação inválido.", "error")
+
+    response = make_response(render_template("auth/mfa_verify.html", form=form))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @auth.post("/logout")
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for("auth.login"))
 
 

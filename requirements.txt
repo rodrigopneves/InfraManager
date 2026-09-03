@@ -4,5 +4,7 @@ Flask-Login
 Flask-Migrate
 Flask-SQLAlchemy
 Flask-WTF
+PyOTP
 pytest
 python-dotenv
+qrcode

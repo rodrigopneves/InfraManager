@@ -134,9 +134,18 @@ def test_csrf_is_enabled_outside_default_test_configuration() -> None:
         data={"username": "login.demo", "password": "valid-test-password"},
     )
     logout_response = client.post("/logout")
+    mfa_response = client.post("/mfa/verify", data={"code": "123456"})
+    setup_response = client.post("/account/mfa/setup", data={"code": "123456"})
+    disable_response = client.post(
+        "/account/mfa/disable",
+        data={"password": "not-a-real-password", "code": "123456"},
+    )
 
     assert login_response.status_code == 400
     assert logout_response.status_code == 400
+    assert mfa_response.status_code == 400
+    assert setup_response.status_code == 400
+    assert disable_response.status_code == 400
     expected_message = (
         "A solicitação não pôde ser validada. "
         "Atualize a página e tente novamente."

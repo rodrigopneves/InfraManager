@@ -45,6 +45,11 @@ def test_migration_converts_legacy_admin_flags(tmp_path: Path) -> None:
         migrated_roles = dict(
             db.session.execute(text("SELECT username, role FROM users")).all()
         )
+        migrated_mfa = dict(
+            db.session.execute(
+                text("SELECT username, mfa_enabled FROM users")
+            ).all()
+        )
         columns = {column["name"] for column in inspect(db.engine).get_columns("users")}
 
     assert migrated_roles == {
@@ -53,3 +58,6 @@ def test_migration_converts_legacy_admin_flags(tmp_path: Path) -> None:
     }
     assert "role" in columns
     assert "is_admin" not in columns
+    assert migrated_mfa == {"legacy.admin": 0, "legacy.viewer": 0}
+    assert "mfa_enabled" in columns
+    assert "mfa_secret" in columns

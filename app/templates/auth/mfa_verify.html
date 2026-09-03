@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Verificação em duas etapas</h1>
+  <p>Informe o código de seis dígitos do seu aplicativo autenticador.</p>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.code.label }}<br>
+      {{ form.code(inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
+    </p>
+    <p>{{ form.submit() }}</p>
+  </form>
+{% endblock %}

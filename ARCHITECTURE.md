@@ -230,6 +230,7 @@ O sistema será dividido inicialmente nos seguintes Blueprints:
 
 ```text
 auth
+account
 dashboard
 assets
 virtual_machines
@@ -244,6 +245,7 @@ Estrutura conceitual:
 app/
 │
 ├── auth/
+├── account/
 ├── dashboard/
 ├── assets/
 ├── virtual_machines/
@@ -279,6 +281,11 @@ inframanager/
 │   │   ├── forms.py
 │   │   ├── services.py
 │   │   └── decorators.py
+│   │
+│   ├── account/
+│   │   ├── routes.py
+│   │   ├── forms.py
+│   │   └── services.py
 │   │
 │   ├── dashboard/
 │   │   └── routes.py
@@ -796,6 +803,11 @@ login_user(user)
 
 Isso evita que a primeira etapa seja confundida com autenticação completa.
 
+Na implementação da etapa 02.7, esse estado possui somente `user_id` e timestamp,
+expira após 5 minutos e é validado novamente contra status, configuração MFA e
+existência do usuário antes do segundo fator. A integridade do estado mantido no
+cliente depende da assinatura da sessão Flask.
+
 ---
 
 # 25. MFA TOTP
@@ -831,6 +843,16 @@ MFA ativado
 ```
 
 O segredo TOTP deverá receber proteção adequada definida no `SECURITY.md`.
+
+O fluxo da etapa 02.7 usa `PyOTP` com tolerância de uma janela temporal. O QR Code
+é gerado em memória como SVG e entregue somente na rota autenticada de setup. O
+Blueprint `account` concentra ativação e desativação; o Blueprint `auth` concentra
+a verificação que conclui o login.
+
+Esta etapa habilita MFA opcional por usuário, sem política baseada em perfil. A
+obrigatoriedade geral descrita nos requisitos arquiteturais permanece pendente para
+uma etapa posterior do MVP. A proteção criptográfica do segredo em repouso também
+permanece hardening necessário antes da produção.
 
 ---
 

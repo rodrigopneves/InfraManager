@@ -109,6 +109,7 @@ Também são requisitos da atividade:
 - Flask-WTF
 - Flask-Limiter
 - PyOTP
+- qrcode
 - MFA/TOTP
 - CSRF
 - RBAC
@@ -241,6 +242,11 @@ e confirmar│
 O MFA é obrigatório para todos os usuários. No primeiro acesso, após a validação da senha, o usuário deverá configurar e confirmar o TOTP antes de acessar o Dashboard. A sessão autenticada definitiva somente será criada depois do código válido.
 
 O MFA é um requisito adicional de segurança adotado pelo InfraManager, e não uma exigência direta do professor ou do enunciado acadêmico.
+
+Estado incremental: a etapa 02.7 disponibiliza ativação TOTP opcional por usuário
+e exige o segundo fator sempre que ele estiver ativo. A obrigatoriedade no primeiro
+acesso para todas as contas continua sendo requisito do MVP, mas ainda não está
+aplicada nesta etapa.
 
 ---
 

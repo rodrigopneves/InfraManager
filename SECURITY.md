@@ -352,6 +352,12 @@ MFA fortalece diretamente o controle relacionado a falhas de autenticação.
 
 MFA é obrigatório para `ADMIN`, `OPERATOR` e `VIEWER`.
 
+Na etapa 02.7, o suporte técnico é introduzido de forma opcional por usuário para
+preservar compatibilidade com as contas existentes. A imposição obrigatória para
+todos os perfis permanece um requisito do MVP e será aplicada em etapa posterior.
+TOTP reduz o risco de comprometimento apenas por senha, mas não constitui proteção
+completa contra phishing.
+
 ---
 
 # 12. Estado Pré-MFA
@@ -373,6 +379,11 @@ login_user(user)
 ```
 
 somente deverá ocorrer depois da validação TOTP.
+
+O estado pré-MFA atual contém somente o identificador do usuário e o instante em
+que a senha foi validada. Ele expira em 5 minutos, é protegido pela assinatura da
+sessão Flask e é removido no sucesso, na expiração ou quando o fluxo se torna
+inválido. Senha, código TOTP e segredo TOTP não integram esse estado.
 
 ---
 
@@ -406,6 +417,15 @@ O MFA só deverá ser marcado como ativo após um código TOTP válido ser confi
 
 Enquanto a configuração não for confirmada, o usuário permanecerá em estado pré-MFA e não poderá acessar o Dashboard nem outras rotas protegidas.
 
+Na ativação opcional da etapa 02.7, um usuário que já possua sessão
+autenticada inicia o setup na área da conta. O QR Code é SVG gerado em memória e
+incorporado como `data URI`; nenhum arquivo ou endpoint público é criado. Abrir a
+página não ativa MFA. A ativação ocorre somente após validar um código TOTP.
+
+A verificação usa `PyOTP`, janela de tolerância `valid_window=1` e aceita somente
+códigos de seis dígitos. A rota de segundo fator permite no máximo 5 tentativas em
+5 minutos por origem com o backend de rate limiting configurado.
+
 ---
 
 # 14. Segredo TOTP
@@ -421,6 +441,16 @@ Não poderá:
 - ser incluído em screenshots de evidência.
 
 A estratégia final de armazenamento deverá considerar proteção adicional adequada ao MVP.
+
+Limitação conhecida da etapa 02.7: depois da confirmação, o segredo TOTP é
+armazenado no SQLite sem criptografia de campo. Ele não é exibido novamente,
+incluído em templates administrativos, mensagens de erro ou logs. Antes de uso em
+produção, deverá ser protegido em repouso com criptografia autenticada e chave
+externa ao banco e ao repositório, incluindo estratégia segura de rotação.
+
+A desativação pelo titular exige simultaneamente a senha atual e um TOTP válido.
+Quando concluída, remove o segredo persistido. Reset administrativo permanece fora
+do escopo desta etapa.
 
 ---
 

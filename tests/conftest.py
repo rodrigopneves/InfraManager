@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 import pytest
+import pyotp
 from flask import Flask
 from flask.testing import FlaskClient
 
@@ -51,6 +52,20 @@ def admin_user(app: Flask) -> User:
 def regular_user(app: Flask) -> User:
     user = User(username="user.demo", email="user.demo@example.com")
     user.set_password("valid-user-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture()
+def mfa_user(app: Flask) -> User:
+    user = User(
+        username="mfa.demo",
+        email="mfa.demo@example.com",
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
+    )
+    user.set_password("valid-mfa-password")
     db.session.add(user)
     db.session.commit()
     return user

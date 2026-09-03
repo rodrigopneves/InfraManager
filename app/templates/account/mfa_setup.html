@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Configurar MFA</h1>
+  <p>Leia este QR Code com seu aplicativo autenticador e confirme o código atual.</p>
+  <p><img src="{{ qr_data_uri }}" alt="QR Code para configurar MFA"></p>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.code.label }}<br>
+      {{ form.code(inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
+    </p>
+    <p>{{ form.submit() }}</p>
+  </form>
+
+  <form method="post" action="{{ url_for('account.cancel_mfa_setup') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Cancelar</button>
+  </form>
+{% endblock %}

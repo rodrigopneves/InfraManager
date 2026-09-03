@@ -11,6 +11,7 @@
         <th>E-mail</th>
         <th>Status</th>
         <th>Perfil</th>
+        <th>MFA</th>
         <th>Criado em</th>
         <th>Ações</th>
       </tr>
@@ -22,6 +23,7 @@
           <td>{{ user.email }}</td>
           <td>{{ "Ativo" if user.is_active else "Inativo" }}</td>
           <td>{{ user.role_label }}</td>
+          <td>{{ "Ativo" if user.mfa_enabled else "Inativo" }}</td>
           <td>{{ user.created_at }}</td>
           <td>
             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}">Editar</a>
@@ -34,7 +36,7 @@
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="6">Nenhum usuário cadastrado.</td></tr>
+        <tr><td colspan="7">Nenhum usuário cadastrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

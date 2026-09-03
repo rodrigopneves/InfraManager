@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 import pytest
+import pyotp
 from flask import Flask
 from flask.testing import FlaskClient
 
@@ -133,3 +134,44 @@ def test_different_remote_addresses_have_independent_limits(
     )
 
     assert independent_response.status_code == 200
+
+
+def test_mfa_verification_has_a_dedicated_rate_limit(
+    rate_limited_client: FlaskClient, rate_limited_app: Flask
+) -> None:
+    user = User(
+        username="limited.mfa",
+        email="limited.mfa@example.com",
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
+    )
+    user.set_password("valid-mfa-password")
+    db.session.add(user)
+    db.session.commit()
+    remote_address = "198.51.100.20"
+    login_response = post_login(
+        rate_limited_client,
+        remote_address=remote_address,
+        username=user.username,
+        password="valid-mfa-password",
+    )
+    assert login_response.status_code == 302
+    assert login_response.location.endswith("/mfa/verify")
+    current_code = pyotp.TOTP(user.mfa_secret).now()
+    invalid_code = "000000" if current_code != "000000" else "000001"
+
+    for _ in range(5):
+        response = rate_limited_client.post(
+            "/mfa/verify",
+            data={"code": invalid_code},
+            environ_overrides={"REMOTE_ADDR": remote_address},
+        )
+        assert response.status_code == 200
+
+    blocked_response = rate_limited_client.post(
+        "/mfa/verify",
+        data={"code": invalid_code},
+        environ_overrides={"REMOTE_ADDR": remote_address},
+    )
+    assert blocked_response.status_code == 429
+    assert invalid_code.encode() not in blocked_response.data

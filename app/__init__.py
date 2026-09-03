@@ -26,10 +26,12 @@ def create_app(config: str | object | None = None) -> Flask:
     limiter.init_app(app)
 
     from app.auth import auth
+    from app.account import account
     from app.admin import admin
     from app.commands import create_admin_command
     from app.routes import main
 
+    app.register_blueprint(account)
     app.register_blueprint(admin)
     app.register_blueprint(auth)
     app.register_blueprint(main)

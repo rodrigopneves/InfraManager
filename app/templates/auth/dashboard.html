@@ -3,6 +3,13 @@
 {% block content %}
   <h1>Bem-vindo, {{ current_user.username }}.</h1>
 
+  <p>MFA: {{ "ativo" if current_user.mfa_enabled else "desativado" }}</p>
+  {% if current_user.mfa_enabled %}
+    <p><a href="{{ url_for('account.mfa_disable') }}">Desativar MFA</a></p>
+  {% else %}
+    <p><a href="{{ url_for('account.mfa_setup') }}">Configurar MFA</a></p>
+  {% endif %}
+
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('admin.users') }}">Usuários</a></p>
   {% endif %}

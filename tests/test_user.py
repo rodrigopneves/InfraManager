@@ -26,6 +26,8 @@ def test_create_user_and_password_hashing(app) -> None:
     assert stored_user.check_password("incorrect-password") is False
     assert stored_user.is_active is True
     assert stored_user.role == UserRole.VIEWER.value
+    assert stored_user.mfa_enabled is False
+    assert stored_user.mfa_secret is None
     assert stored_user.created_at is not None
     assert stored_user.updated_at is not None
 
