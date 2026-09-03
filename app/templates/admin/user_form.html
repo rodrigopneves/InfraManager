@@ -32,7 +32,7 @@
     {% endif %}
 
     <p>{{ form.is_active() }} {{ form.is_active.label }}</p>
-    <p>{{ form.is_admin() }} {{ form.is_admin.label }}</p>
+    <p>{{ form.role.label }} {{ form.role() }}</p>
     <p>{{ form.submit() }}</p>
   </form>
 

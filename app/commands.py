@@ -3,7 +3,7 @@ from flask.cli import with_appcontext
 
 from app.admin.services import create_user
 from app.extensions import db
-from app.models import User, validate_email, validate_username
+from app.models import User, UserRole, validate_email, validate_username
 
 
 @click.command("create-admin")
@@ -34,6 +34,6 @@ def create_admin_command() -> None:
         email=email,
         password=password,
         is_active=True,
-        is_admin=True,
+        role=UserRole.ADMIN.value,
     )
     click.echo("Administrador criado com sucesso.")

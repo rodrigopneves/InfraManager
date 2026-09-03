@@ -1,8 +1,8 @@
 import re
 from datetime import datetime, timezone
+from enum import Enum
 
 from flask_login import UserMixin
-from sqlalchemy import false
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -11,6 +11,21 @@ from app.extensions import db
 
 USERNAME_PATTERN = re.compile(r"^[a-z0-9._-]{3,64}$")
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    OPERATOR = "operator"
+    VIEWER = "viewer"
+
+
+ROLE_LABELS = {
+    UserRole.ADMIN.value: "Administrador",
+    UserRole.OPERATOR.value: "Operador",
+    UserRole.VIEWER.value: "Visualizador",
+}
+ROLE_CHOICES = tuple((role.value, ROLE_LABELS[role.value]) for role in UserRole)
+VALID_USER_ROLES = frozenset(role.value for role in UserRole)
 
 
 def utc_now() -> datetime:
@@ -51,8 +66,11 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
-    is_admin = db.Column(
-        db.Boolean, nullable=False, default=False, server_default=false()
+    role = db.Column(
+        db.String(20),
+        nullable=False,
+        default=UserRole.VIEWER.value,
+        server_default=UserRole.VIEWER.value,
     )
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at = db.Column(
@@ -66,6 +84,23 @@ class User(UserMixin, db.Model):
     @validates("email")
     def normalize_and_validate_email(self, _key: str, email: str) -> str:
         return validate_email(email)
+
+    @validates("role")
+    def validate_role(self, _key: str, role: str | UserRole) -> str:
+        role_value = role.value if isinstance(role, UserRole) else role
+        if role_value not in VALID_USER_ROLES:
+            raise ValueError("Role has an invalid value.")
+        return role_value
+
+    def has_role(self, *roles: str | UserRole) -> bool:
+        allowed_roles = {
+            role.value if isinstance(role, UserRole) else role for role in roles
+        }
+        return self.role in allowed_roles
+
+    @property
+    def role_label(self) -> str:
+        return ROLE_LABELS.get(self.role, "Perfil inválido")
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)

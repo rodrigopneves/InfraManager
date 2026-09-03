@@ -34,7 +34,7 @@ def new_user():
             email=form.email.data,
             password=form.password.data,
             is_active=form.is_active.data,
-            is_admin=form.is_admin.data,
+            role=form.role.data,
         )
         flash("Usuário criado com sucesso.", "success")
         return redirect(url_for("admin.users"))
@@ -56,7 +56,7 @@ def edit_user(user_id: int):
                 username=form.username.data,
                 email=form.email.data,
                 is_active=form.is_active.data,
-                is_admin=form.is_admin.data,
+                role=form.role.data,
             )
         except AdminOperationError as error:
             flash(str(error), "error")

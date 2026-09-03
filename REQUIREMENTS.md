@@ -566,7 +566,7 @@ Campos:
 - perfil;
 - status.
 
-O perfil será armazenado diretamente em `User.role`, restrito aos valores `ADMIN`, `OPERATOR` e `VIEWER`. Não haverá entidade ou tabela `Role` separada no MVP.
+O perfil será armazenado diretamente em `User.role`, com os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não haverá entidade ou tabela `Role` separada no MVP.
 
 A senha inicial deverá seguir política de segurança definida pelo sistema.
 

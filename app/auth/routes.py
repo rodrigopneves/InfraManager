@@ -4,7 +4,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from app.auth import auth
 from app.auth.forms import LoginForm
 from app.extensions import db, limiter
-from app.models import User
+from app.models import User, UserRole
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -44,4 +44,4 @@ def logout():
 @auth.get("/dashboard")
 @login_required
 def dashboard():
-    return render_template("auth/dashboard.html")
+    return render_template("auth/dashboard.html", admin_role=UserRole.ADMIN)

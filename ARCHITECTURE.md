@@ -459,7 +459,7 @@ OPERATOR
 VIEWER
 ```
 
-O RBAC será representado diretamente pelo campo `User.role`, validado contra os valores `ADMIN`, `OPERATOR` e `VIEWER`. O MVP não possuirá entidade, tabela, relacionamento ou model `Role` separado.
+O RBAC será representado diretamente pelo campo `User.role`, validado contra os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. O MVP não possuirá entidade, tabela, relacionamento ou model `Role` separado.
 
 O campo `password_hash` nunca armazenará senha em texto puro.
 

@@ -6,7 +6,7 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
-from app.models import User
+from app.models import User, UserRole
 
 
 @pytest.fixture()
@@ -39,7 +39,7 @@ def admin_user(app: Flask) -> User:
     user = User(
         username="admin.demo",
         email="admin.demo@example.com",
-        is_admin=True,
+        role=UserRole.ADMIN.value,
     )
     user.set_password("valid-admin-password")
     db.session.add(user)

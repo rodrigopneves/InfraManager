@@ -5,7 +5,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 from app.admin.services import AdminOperationError, ensure_admin_access_remains
 from app.extensions import db
-from app.models import User
+from app.models import User, UserRole
 
 
 def login(client: FlaskClient, username: str, password: str) -> None:
@@ -26,6 +26,7 @@ def create_user_data(**overrides) -> dict:
         "password": "new-user-password",
         "password_confirmation": "new-user-password",
         "is_active": "y",
+        "role": UserRole.VIEWER.value,
     }
     data.update(overrides)
     return data
@@ -40,9 +41,13 @@ def test_unauthenticated_user_cannot_access_admin(
     assert urlparse(response.location).path == "/login"
 
 
+@pytest.mark.parametrize("role", [UserRole.OPERATOR.value, UserRole.VIEWER.value])
 def test_non_admin_user_receives_403(
+    role: str,
     client: FlaskClient, active_user: User
 ) -> None:
+    active_user.role = role
+    db.session.commit()
     login(client, "login.demo", "valid-test-password")
 
     response = client.get("/admin/users")
@@ -59,17 +64,34 @@ def test_admin_can_list_users(client: FlaskClient, admin_user: User) -> None:
     assert response.status_code == 200
     assert b"admin.demo" in response.data
     assert b"admin.demo@example.com" in response.data
+    assert b"Administrador" in response.data
 
 
-def test_admin_creates_normalized_user_with_hashed_password(
-    client: FlaskClient, admin_user: User
+@pytest.mark.parametrize("role", [UserRole.OPERATOR.value, UserRole.VIEWER.value])
+def test_non_admin_roles_can_access_dashboard(
+    role: str, client: FlaskClient, active_user: User
+) -> None:
+    active_user.role = role
+    db.session.commit()
+    login(client, "login.demo", "valid-test-password")
+
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert b"Bem-vindo, login.demo." in response.data
+    assert "Usuários".encode() not in response.data
+
+
+@pytest.mark.parametrize("role", [role.value for role in UserRole])
+def test_admin_creates_user_with_selected_role(
+    role: str, client: FlaskClient, admin_user: User
 ) -> None:
     login_admin(client)
 
     response = client.post(
         "/admin/users/new",
         data=create_user_data(
-            username="  New.User  ", email="  New.User@Example.COM  "
+            username="  New.User  ", email="  New.User@Example.COM  ", role=role
         ),
     )
     created_user = db.session.scalar(
@@ -82,7 +104,7 @@ def test_admin_creates_normalized_user_with_hashed_password(
     assert created_user.password_hash != "new-user-password"
     assert created_user.check_password("new-user-password") is True
     assert created_user.is_active is True
-    assert created_user.is_admin is False
+    assert created_user.role == role
 
 
 def test_duplicate_username_is_rejected(
@@ -119,6 +141,19 @@ def test_duplicate_email_is_rejected(
     assert db.session.scalar(db.select(db.func.count()).select_from(User)) == 1
 
 
+def test_invalid_role_from_form_is_rejected(
+    client: FlaskClient, admin_user: User
+) -> None:
+    login_admin(client)
+
+    response = client.post(
+        "/admin/users/new", data=create_user_data(role="superadmin")
+    )
+
+    assert response.status_code == 200
+    assert db.session.scalar(db.select(db.func.count()).select_from(User)) == 1
+
+
 def test_admin_edits_user(
     client: FlaskClient, admin_user: User, regular_user: User
 ) -> None:
@@ -130,6 +165,7 @@ def test_admin_edits_user(
             "username": "  Updated.User ",
             "email": " Updated.User@Example.COM ",
             "is_active": "y",
+            "role": UserRole.OPERATOR.value,
         },
     )
     db.session.refresh(regular_user)
@@ -138,7 +174,7 @@ def test_admin_edits_user(
     assert regular_user.username == "updated.user"
     assert regular_user.email == "updated.user@example.com"
     assert regular_user.is_active is True
-    assert regular_user.is_admin is False
+    assert regular_user.role == UserRole.OPERATOR.value
 
 
 def test_admin_can_deactivate_and_reactivate_user(
@@ -184,8 +220,9 @@ def test_admin_cannot_deactivate_own_account(
     assert admin_user.is_active is True
 
 
-def test_admin_cannot_remove_own_admin_status(
-    client: FlaskClient, admin_user: User
+@pytest.mark.parametrize("role", [UserRole.OPERATOR.value, UserRole.VIEWER.value])
+def test_admin_cannot_remove_own_admin_role(
+    role: str, client: FlaskClient, admin_user: User
 ) -> None:
     login_admin(client)
 
@@ -195,6 +232,7 @@ def test_admin_cannot_remove_own_admin_status(
             "username": admin_user.username,
             "email": admin_user.email,
             "is_active": "y",
+            "role": role,
         },
     )
     db.session.refresh(admin_user)
@@ -203,21 +241,31 @@ def test_admin_cannot_remove_own_admin_status(
     assert "Você não pode remover seu próprio acesso administrativo.".encode() in (
         response.data
     )
-    assert admin_user.is_admin is True
+    assert admin_user.role == UserRole.ADMIN.value
 
 
-def test_last_active_admin_cannot_be_removed(app: Flask) -> None:
+@pytest.mark.parametrize(
+    ("new_is_active", "new_role"),
+    [
+        (False, UserRole.ADMIN.value),
+        (True, UserRole.OPERATOR.value),
+        (True, UserRole.VIEWER.value),
+    ],
+)
+def test_last_active_admin_cannot_be_removed(
+    app: Flask, new_is_active: bool, new_role: str
+) -> None:
     inactive_actor = User(
         username="inactive.admin",
         email="inactive.admin@example.com",
         is_active=False,
-        is_admin=True,
+        role=UserRole.ADMIN.value,
     )
     inactive_actor.set_password("inactive-admin-password")
     last_admin = User(
         username="last.admin",
         email="last.admin@example.com",
-        is_admin=True,
+        role=UserRole.ADMIN.value,
     )
     last_admin.set_password("last-admin-password")
     db.session.add_all([inactive_actor, last_admin])
@@ -227,8 +275,8 @@ def test_last_active_admin_cannot_be_removed(app: Flask) -> None:
         ensure_admin_access_remains(
             inactive_actor,
             last_admin,
-            is_active=False,
-            is_admin=last_admin.is_admin,
+            is_active=new_is_active,
+            role=new_role,
         )
 
 
@@ -243,13 +291,13 @@ def test_non_admin_cannot_promote_self_directly(
             "username": regular_user.username,
             "email": regular_user.email,
             "is_active": "y",
-            "is_admin": "y",
+            "role": UserRole.ADMIN.value,
         },
     )
     db.session.refresh(regular_user)
 
     assert response.status_code == 403
-    assert regular_user.is_admin is False
+    assert regular_user.role == UserRole.VIEWER.value
 
 
 def test_create_admin_command_creates_admin(app: Flask) -> None:
@@ -271,7 +319,7 @@ def test_create_admin_command_creates_admin(app: Flask) -> None:
     assert result.exit_code == 0
     assert user is not None
     assert user.email == "cli.admin@example.com"
-    assert user.is_admin is True
+    assert user.role == UserRole.ADMIN.value
     assert user.is_active is True
     assert user.check_password("cli-admin-password") is True
     assert "cli-admin-password" not in result.output

@@ -525,7 +525,7 @@ Permissões deverão seguir `REQUIREMENTS.md` e `SECURITY.md`.
 
 Toda autorização deverá ser verificada no servidor.
 
-Os perfis deverão ser armazenados diretamente em `User.role`. Não criar entidade, tabela ou model `Role` separado no MVP.
+Os perfis deverão ser armazenados diretamente em `User.role`, usando os valores técnicos `admin`, `operator` e `viewer`. Não criar entidade, tabela ou model `Role` separado no MVP.
 
 ---
 

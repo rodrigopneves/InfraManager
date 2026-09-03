@@ -1,5 +1,7 @@
 from app.models.user import (
     User,
+    UserRole,
+    ROLE_CHOICES,
     normalize_email,
     normalize_username,
     validate_email,
@@ -8,6 +10,8 @@ from app.models.user import (
 
 __all__ = [
     "User",
+    "UserRole",
+    "ROLE_CHOICES",
     "normalize_email",
     "normalize_username",
     "validate_email",

@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Bem-vindo, {{ current_user.username }}.</h1>
 
-  {% if current_user.is_admin %}
+  {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('admin.users') }}">Usuários</a></p>
   {% endif %}
 

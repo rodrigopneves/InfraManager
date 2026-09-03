@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, PasswordField, StringField, SubmitField
+from wtforms import BooleanField, PasswordField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Length, ValidationError
 
+from app.models import ROLE_CHOICES
 from app.models import validate_email as validate_email_value
 from app.models import validate_username as validate_username_value
 
@@ -10,7 +11,7 @@ class UserFieldsForm(FlaskForm):
     username = StringField("Usuário", validators=[DataRequired()])
     email = StringField("E-mail", validators=[DataRequired()])
     is_active = BooleanField("Ativo", default=True)
-    is_admin = BooleanField("Administrador")
+    role = SelectField("Perfil", choices=ROLE_CHOICES, validators=[DataRequired()])
 
     def validate_username(self, field: StringField) -> None:
         try:

@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import User, validate_email, validate_username
+from app.models import User, UserRole, validate_email, validate_username
 
 
 def build_user(username: str, email: str) -> User:
@@ -25,6 +25,7 @@ def test_create_user_and_password_hashing(app) -> None:
     assert stored_user.check_password("temporary-test-password") is True
     assert stored_user.check_password("incorrect-password") is False
     assert stored_user.is_active is True
+    assert stored_user.role == UserRole.VIEWER.value
     assert stored_user.created_at is not None
     assert stored_user.updated_at is not None
 
@@ -89,3 +90,12 @@ def test_username_and_email_are_normalized() -> None:
 def test_invalid_email_is_rejected(email: str) -> None:
     with pytest.raises(ValueError):
         validate_email(email)
+
+
+def test_invalid_role_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        User(
+            username="invalid.role",
+            email="invalid.role@example.com",
+            role="superadmin",
+        )

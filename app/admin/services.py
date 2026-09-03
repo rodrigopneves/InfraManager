@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.models import User
+from app.models import User, UserRole
 
 
 class AdminOperationError(ValueError):
@@ -26,13 +26,13 @@ def add_identity_conflict_errors(
 
 
 def create_user(
-    *, username: str, email: str, password: str, is_active: bool, is_admin: bool
+    *, username: str, email: str, password: str, is_active: bool, role: str
 ) -> User:
     user = User(
         username=username,
         email=email,
         is_active=is_active,
-        is_admin=is_admin,
+        role=role,
     )
     user.set_password(password)
     db.session.add(user)
@@ -47,39 +47,39 @@ def update_user(
     username: str,
     email: str,
     is_active: bool,
-    is_admin: bool,
+    role: str,
 ) -> None:
-    ensure_admin_access_remains(
-        actor, user, is_active=is_active, is_admin=is_admin
-    )
+    ensure_admin_access_remains(actor, user, is_active=is_active, role=role)
     user.username = username
     user.email = email
     user.is_active = is_active
-    user.is_admin = is_admin
+    user.role = role
     db.session.commit()
 
 
 def toggle_user_active(actor: User, user: User) -> None:
     new_status = not user.is_active
-    ensure_admin_access_remains(
-        actor, user, is_active=new_status, is_admin=user.is_admin
-    )
+    ensure_admin_access_remains(actor, user, is_active=new_status, role=user.role)
     user.is_active = new_status
     db.session.commit()
 
 
 def ensure_admin_access_remains(
-    actor: User, user: User, *, is_active: bool, is_admin: bool
+    actor: User, user: User, *, is_active: bool, role: str
 ) -> None:
     if user.id == actor.id and user.is_active and not is_active:
         raise AdminOperationError("Você não pode desativar sua própria conta.")
-    if user.id == actor.id and user.is_admin and not is_admin:
+    if (
+        user.id == actor.id
+        and user.has_role(UserRole.ADMIN)
+        and role != UserRole.ADMIN.value
+    ):
         raise AdminOperationError(
             "Você não pode remover seu próprio acesso administrativo."
         )
 
-    removes_active_admin = user.is_active and user.is_admin and (
-        not is_active or not is_admin
+    removes_active_admin = user.is_active and user.has_role(UserRole.ADMIN) and (
+        not is_active or role != UserRole.ADMIN.value
     )
     if removes_active_admin and active_admin_count() <= 1:
         raise AdminOperationError(
@@ -89,6 +89,6 @@ def ensure_admin_access_remains(
 
 def active_admin_count() -> int:
     query = db.select(db.func.count()).select_from(User).where(
-        User.is_admin.is_(True), User.is_active.is_(True)
+        User.role == UserRole.ADMIN.value, User.is_active.is_(True)
     )
     return db.session.scalar(query) or 0

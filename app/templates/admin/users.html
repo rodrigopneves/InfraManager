@@ -10,7 +10,7 @@
         <th>Usuário</th>
         <th>E-mail</th>
         <th>Status</th>
-        <th>Administrador</th>
+        <th>Perfil</th>
         <th>Criado em</th>
         <th>Ações</th>
       </tr>
@@ -21,7 +21,7 @@
           <td>{{ user.username }}</td>
           <td>{{ user.email }}</td>
           <td>{{ "Ativo" if user.is_active else "Inativo" }}</td>
-          <td>{{ "Sim" if user.is_admin else "Não" }}</td>
+          <td>{{ user.role_label }}</td>
           <td>{{ user.created_at }}</td>
           <td>
             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}">Editar</a>

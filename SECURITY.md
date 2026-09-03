@@ -539,7 +539,7 @@ VIEWER
 
 Autorização deverá ocorrer no backend.
 
-O papel será armazenado diretamente em `User.role`, restrito a `ADMIN`, `OPERATOR` e `VIEWER`. Não haverá entidade ou tabela `Role` separada no MVP.
+O papel será armazenado diretamente em `User.role`, restrito aos valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não haverá entidade ou tabela `Role` separada no MVP.
 
 Nunca apenas:
 
