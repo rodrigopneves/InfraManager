@@ -311,6 +311,18 @@ quando apropriado.
 
 Eventos deverão ser registrados.
 
+Configuração atual da etapa 02:
+
+```text
+POST /login       → 5 tentativas / 15 minutos
+POST /mfa/verify  → 5 tentativas / 5 minutos
+```
+
+O backend `memory://` do Flask-Limiter mantém contadores somente no processo local.
+Ele não é adequado para produção com múltiplos workers, pois os limites não seriam
+compartilhados. Um armazenamento compartilhado deverá ser definido antes da
+produção; Redis permanece deliberadamente fora desta etapa.
+
 ---
 
 # 11. MFA — Multi-Factor Authentication
@@ -516,6 +528,10 @@ SESSION_COOKIE_SAMESITE = "Lax"
 ```
 
 ou configuração equivalente compatível com o framework.
+
+A configuração comum explicita `SESSION_PERMANENT=False`. Desenvolvimento local
+HTTP não força `Secure`; produção exige `SESSION_COOKIE_SECURE=True` e valida a
+presença de `SECRET_KEY` fornecida pelo ambiente.
 
 ---
 

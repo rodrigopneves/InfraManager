@@ -1,5 +1,6 @@
 from flask import flash, redirect, render_template, url_for
 from flask_login import current_user
+from sqlalchemy.orm import selectinload
 
 from app.admin import admin
 from app.admin.decorators import admin_required
@@ -29,8 +30,11 @@ def users():
 @admin_required
 def audit():
     audit_logs = db.session.scalars(
-        db.select(AuditLog).order_by(
-            AuditLog.created_at.desc(), AuditLog.id.desc()
+        db.select(AuditLog)
+        .options(selectinload(AuditLog.actor), selectinload(AuditLog.target))
+        .order_by(
+            AuditLog.created_at.desc(),
+            AuditLog.id.desc(),
         )
     ).all()
     entries = [

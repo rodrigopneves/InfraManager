@@ -156,6 +156,10 @@ Gunicorn deverá escutar somente na interface local ou socket Unix.
 
 Gunicorn será utilizado como servidor WSGI.
 
+O módulo `wsgi.py` exporta a aplicação Flask como `wsgi:app`, carregada a partir da
+Application Factory. O arquivo `run.py` mantém a entrada de desenvolvimento e pode
+ser usado por comandos como `flask --app run.py routes`.
+
 Responsabilidades:
 
 - executar a aplicação Flask;
@@ -1259,6 +1263,12 @@ Rotas prioritárias:
 ```
 
 Limites definitivos serão documentados no `SECURITY.md`.
+
+Na etapa 02, `POST /login` utiliza 5 tentativas em 15 minutos e `POST
+/mfa/verify` utiliza 5 tentativas em 5 minutos. O armazenamento atual `memory://`
+é adequado apenas ao desenvolvimento e à execução com processo único: cada worker
+teria contadores independentes. Produção exigirá backend compartilhado, cuja escolha
+fica fora desta etapa; Redis não é adicionado agora.
 
 ---
 

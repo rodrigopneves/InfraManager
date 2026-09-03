@@ -158,6 +158,7 @@ def test_csrf_is_enabled_outside_default_test_configuration() -> None:
 def test_session_cookie_and_secret_key_configuration() -> None:
     assert Config.SESSION_COOKIE_HTTPONLY is True
     assert Config.SESSION_COOKIE_SAMESITE == "Lax"
+    assert Config.SESSION_PERMANENT is False
     assert ProductionConfig.SESSION_COOKIE_SECURE is True
     assert TestingConfig.SECRET_KEY == "testing-only-secret-key"
     assert ProductionConfig.SECRET_KEY == Config.SECRET_KEY
@@ -171,3 +172,27 @@ def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None
 
     with pytest.raises(RuntimeError, match="SECRET_KEY"):
         create_app("production")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/logout",
+        "/mfa/verify",
+        "/account/mfa/setup",
+        "/account/mfa/setup/cancel",
+        "/account/mfa/disable",
+        "/admin/users/new",
+        "/admin/users/1/edit",
+        "/admin/users/1/toggle-active",
+    ],
+)
+def test_mutating_routes_reject_missing_csrf_token(path: str) -> None:
+    class CsrfEnabledTestingConfig(TestingConfig):
+        SECRET_KEY = "csrf-routes-test-only-secret-key"
+        WTF_CSRF_ENABLED = True
+
+    application = create_app(CsrfEnabledTestingConfig)
+    response = application.test_client().post(path)
+
+    assert response.status_code == 400

@@ -20,7 +20,7 @@ O projeto será desenvolvido aplicando princípios de **Secure by Design**, **Se
 
 ## Status do Projeto
 
-**Status atual:** Planejamento e especificação
+**Status atual:** etapa 02 concluída e estabilizada
 
 ```text
 Planejamento       ✅
@@ -28,12 +28,31 @@ Requisitos         ✅
 Arquitetura        ✅
 Segurança          ✅
 AGENTS.md           ✅
-Desenvolvimento     ⏳
-Testes              ⏳
+Desenvolvimento     🚧
+Testes da etapa 02  ✅
 OCI                 ⏳
 CI/CD               ⏳
 Documentação final  ⏳
 ```
+
+A etapa 02 entrega Application Factory, persistência e migrations, autenticação,
+CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP opcional e
+auditoria de autenticação/usuários. O ponto WSGI padrão é `wsgi:app`; `run.py`
+permanece como entrada de desenvolvimento e para comandos Flask.
+
+Débitos conhecidos para hardening e produção:
+
+1. `mfa_secret` ainda não possui criptografia de campo em repouso;
+2. o Flask-Limiter utiliza `memory://`, inadequado para múltiplos workers;
+3. o IP real atrás do proxy ainda não é tratado com `ProxyFix` confiável;
+4. não existe armazenamento compartilhado como Redis;
+5. não existe integração com SIEM;
+6. a auditoria não possui retenção automática;
+7. MFA ainda é opcional por usuário;
+8. a interface visual permanece básica.
+
+Esses itens não impedem o uso acadêmico atual, mas devem ser tratados nas etapas
+correspondentes antes de considerar a aplicação pronta para produção.
 
 ---
 
