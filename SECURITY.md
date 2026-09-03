@@ -866,20 +866,26 @@ Caso seja adicionado posteriormente, exigirá revisão específica de segurança
 
 O AuditLog deverá registrar ações relevantes.
 
-Eventos:
+Eventos implementados na etapa 02.8:
 
 ```text
-AUTH.LOGIN_SUCCESS
-AUTH.LOGIN_FAILURE
-AUTH.MFA_FAILURE
-AUTH.MFA_ENABLED
-AUTH.MFA_DISABLED
-AUTH.LOGOUT
+LOGIN_SUCCESS
+LOGIN_FAILURE
+LOGOUT
+MFA_SUCCESS
+MFA_FAILURE
+MFA_ENABLED
+MFA_DISABLED
+USER_CREATED
+USER_UPDATED
+USER_ACTIVATED
+USER_DEACTIVATED
+USER_ROLE_CHANGED
+```
 
-USER.CREATE
-USER.UPDATE
-USER.DISABLE
+Eventos reservados para etapas futuras:
 
+```text
 ASSET.CREATE
 ASSET.UPDATE
 ASSET.DELETE
@@ -907,21 +913,33 @@ Datacenter, Sala e Rack possuem CRUD completo. Suas operações de escrita dever
 
 # 37. Dados de Auditoria
 
-Registro deverá possuir:
+O registro persistido na etapa 02.8 possui:
 
 ```text
-timestamp
-user_id
+id
 event_type
-action
-resource_type
-resource_id
+actor_user_id (opcional)
+target_user_id (opcional)
 ip_address
 user_agent
-success
+details
+created_at
 ```
 
-Quando apropriado, descrição resumida.
+`details` é um JSON curto com lista branca específica por evento. São permitidos
+somente motivo genérico de falha, perfil e status atribuídos, origem CLI, nomes de
+campos alterados e transição de perfil. Valores anteriores de username/e-mail não
+são armazenados.
+
+O endereço IP vem exclusivamente de `request.remote_addr`. A aplicação não
+interpreta `X-Forwarded-For` nesta fase; a confiança no proxy será configurada e
+testada junto com Nginx/ProxyFix. O User-Agent é truncado em 255 caracteres e pode
+ser omitido da tabela administrativa.
+
+Falhas de persistência da auditoria executam rollback da tentativa, geram erro no
+Application Log somente com o tipo do evento e não interrompem a operação principal
+já concluída. Não existe `try/except: pass` nem inclusão do conteúdo do evento no
+log técnico.
 
 ---
 
@@ -946,6 +964,14 @@ Nunca registrar:
 Usuários comuns não deverão possuir acesso para modificar logs de auditoria.
 
 O módulo de Auditoria será somente leitura pela interface.
+
+A rota `GET /admin/audit` é protegida por autorização server-side para `admin`,
+ordena os registros do mais recente para o mais antigo e não oferece edição ou
+exclusão.
+
+Não há retenção ou remoção automática, exportação, assinatura criptográfica,
+integração com SIEM/syslog remoto ou correlação de eventos nesta etapa. Alertas de
+segurança continuam como requisito futuro do MVP.
 
 ---
 

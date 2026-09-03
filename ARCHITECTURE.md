@@ -668,41 +668,42 @@ O inventário visual completo de rack não faz parte do MVP.
 
 # 21. Modelo AuditLog
 
-Campos:
+Campos implementados na etapa 02.8:
 
 ```text
 id
-user_id
 event_type
-action
-resource_type
-resource_id
-description
+actor_user_id
+target_user_id
 ip_address
 user_agent
-success
+details
 created_at
 ```
 
-Exemplo:
+`actor_user_id` e `target_user_id` são relacionamentos opcionais distintos com
+`User`. Isso permite registrar falhas anônimas de autenticação e identificar o
+usuário afetado por uma ação administrativa. A interface trata relações ausentes
+sem impedir a consulta.
+
+`details` utiliza JSON compatível com SQLite, limitado a metadados permitidos por
+evento. Não recebe objetos arbitrários, formulários, requisições ou sessões.
+
+Índices simples são mantidos em `event_type`, `created_at`, `actor_user_id` e
+`target_user_id`.
+
+Exemplo atual:
 
 ```text
-event_type: AUTH
-action: LOGIN_FAILURE
-user_id: 15
+event_type: LOGIN_FAILURE
+actor_user_id: null
+target_user_id: null
 ip_address: 192.0.2.10
-success: false
+details: {"reason": "authentication_failed"}
 ```
 
-Outro exemplo:
-
-```text
-event_type: CRUD
-action: UPDATE
-resource_type: VirtualMachine
-resource_id: 23
-success: true
-```
+Campos genéricos de recurso e resultado poderão ser acrescentados quando a
+auditoria dos futuros módulos de infraestrutura for implementada.
 
 ---
 

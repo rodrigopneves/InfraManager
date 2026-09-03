@@ -35,5 +35,6 @@ def create_admin_command() -> None:
         password=password,
         is_active=True,
         role=UserRole.ADMIN.value,
+        source="cli",
     )
     click.echo("Administrador criado com sucesso.")

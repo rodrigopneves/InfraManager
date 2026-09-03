@@ -11,8 +11,9 @@ from app.admin.services import (
     toggle_user_active,
     update_user,
 )
+from app.audit.services import format_details
 from app.extensions import db
-from app.models import User
+from app.models import AuditLog, User
 
 
 @admin.get("/users")
@@ -22,6 +23,21 @@ def users():
         db.select(User).order_by(User.username)
     ).all()
     return render_template("admin/users.html", users=registered_users)
+
+
+@admin.get("/audit")
+@admin_required
+def audit():
+    audit_logs = db.session.scalars(
+        db.select(AuditLog).order_by(
+            AuditLog.created_at.desc(), AuditLog.id.desc()
+        )
+    ).all()
+    entries = [
+        {"log": audit_log, "details": format_details(audit_log.details)}
+        for audit_log in audit_logs
+    ]
+    return render_template("admin/audit.html", entries=entries)
 
 
 @admin.route("/users/new", methods=["GET", "POST"])
@@ -35,6 +51,7 @@ def new_user():
             password=form.password.data,
             is_active=form.is_active.data,
             role=form.role.data,
+            actor=current_user,
         )
         flash("Usuário criado com sucesso.", "success")
         return redirect(url_for("admin.users"))

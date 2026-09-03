@@ -17,6 +17,8 @@ from app.account.services import (
     enable_mfa,
     generate_mfa_secret,
 )
+from app.audit import record_event
+from app.models import AuditEventType
 
 
 MFA_SETUP_SECRET_KEY = "pending_mfa_setup_secret"
@@ -44,6 +46,11 @@ def mfa_setup():
     if form.validate_on_submit():
         if enable_mfa(current_user, secret, form.code.data):
             session.pop(MFA_SETUP_SECRET_KEY, None)
+            record_event(
+                AuditEventType.MFA_ENABLED,
+                actor=current_user,
+                target=current_user,
+            )
             flash("MFA ativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
@@ -81,6 +88,11 @@ def mfa_disable():
     if form.validate_on_submit():
         if disable_mfa(current_user, form.password.data, form.code.data):
             session.pop(MFA_SETUP_SECRET_KEY, None)
+            record_event(
+                AuditEventType.MFA_DISABLED,
+                actor=current_user,
+                target=current_user,
+            )
             flash("MFA desativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""

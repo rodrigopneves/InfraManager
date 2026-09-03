@@ -485,27 +485,29 @@ A documentação definitiva será atualizada durante o desenvolvimento.
 
 # Auditoria
 
-Serão registrados eventos como:
+Na etapa 02.8 são registrados:
 
 ```text
 LOGIN_SUCCESS
 LOGIN_FAILURE
 MFA_FAILURE
+MFA_SUCCESS
 MFA_ENABLED
+MFA_DISABLED
 LOGOUT
 
-USER_CREATE
-USER_UPDATE
-USER_DISABLE
-
-ASSET_CREATE
-ASSET_UPDATE
-ASSET_DELETE
-
-VM_CREATE
-VM_UPDATE
-VM_DELETE
+USER_CREATED
+USER_UPDATED
+USER_ACTIVATED
+USER_DEACTIVATED
+USER_ROLE_CHANGED
 ```
+
+Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
+limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
+fica disponível para administradores em `/admin/audit`, com eventos mais recentes
+primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
+Nginx/ProxyFix.
 
 O log não deverá armazenar:
 
@@ -516,6 +518,10 @@ O log não deverá armazenar:
 - recovery code;
 - token;
 - session ID.
+
+Não há nesta etapa retenção automática, exportação, integração com SIEM/syslog,
+correlação ou alertas. Eventos de ativos, VMs e infraestrutura serão adicionados
+com os respectivos módulos.
 
 ---
 
@@ -958,9 +964,9 @@ Nenhuma evidência deverá conter segredos.
 
 ## Fase 7 — Auditoria
 
-- [ ] AuditLog
-- [ ] eventos
-- [ ] consulta administrativa
+- [x] AuditLog
+- [x] eventos de autenticação e administração de usuários
+- [x] consulta administrativa
 - [ ] alertas simples de segurança
 
 ## Fase 8 — Segurança
