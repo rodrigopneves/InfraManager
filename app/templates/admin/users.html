@@ -1,43 +1,52 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, page_header, status_badge %}
+
+{% block title %}Usuários | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Usuários</h1>
-  <p><a href="{{ url_for('admin.new_user') }}">Novo usuário</a></p>
+  {{ page_header(
+    "Usuários",
+    "Contas, perfis de acesso e estado de autenticação.",
+    url_for('admin.new_user'),
+    "Novo usuário"
+  ) }}
 
-  <table>
-    <thead>
-      <tr>
-        <th>Usuário</th>
-        <th>E-mail</th>
-        <th>Status</th>
-        <th>Perfil</th>
-        <th>MFA</th>
-        <th>Criado em</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-        <tr>
-          <td>{{ user.username }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ "Ativo" if user.is_active else "Inativo" }}</td>
-          <td>{{ user.role_label }}</td>
-          <td>{{ "Ativo" if user.mfa_enabled else "Inativo" }}</td>
-          <td>{{ user.created_at }}</td>
-          <td>
-            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}">Editar</a>
-            <form method="post" action="{{ url_for('admin.toggle_active', user_id=user.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit">
-                {{ "Desativar" if user.is_active else "Ativar" }}
-              </button>
-            </form>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7">Nenhum usuário cadastrado.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% if users %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Usuários cadastrados" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Usuários cadastrados</caption>
+        <thead><tr><th scope="col">Usuário</th><th scope="col">E-mail</th><th scope="col">Status</th><th scope="col">Perfil</th><th scope="col">MFA</th><th scope="col">Criado em</th><th scope="col">Ações</th></tr></thead>
+        <tbody>
+          {% for user in users %}
+            <tr class="{{ 'record-inactive' if not user.is_active else '' }}">
+              <td><strong>{{ user.username }}</strong></td>
+              <td>{{ user.email }}</td>
+              <td>{{ status_badge("Ativo" if user.is_active else "Inativo", "active" if user.is_active else "inactive") }}</td>
+              <td><span class="badge text-bg-light role-badge">{{ user.role_label }}</span></td>
+              <td>{{ status_badge("Ativo" if user.mfa_enabled else "Inativo", "active" if user.mfa_enabled else "inactive") }}</td>
+              <td><time datetime="{{ user.created_at.isoformat() }}">{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</time></td>
+              <td>
+                <div class="table-actions" role="group" aria-label="Ações para {{ user.username }}">
+                  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_user', user_id=user.id) }}">Editar</a>
+                  <form class="table-action-form" method="post" action="{{ url_for('admin.toggle_active', user_id=user.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm {{ 'btn-outline-warning' if user.is_active else 'btn-outline-success' }}" type="submit">
+                      {{ "Desativar" if user.is_active else "Ativar" }}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state(
+      "Nenhum usuário cadastrado.",
+      "Cadastre o primeiro usuário autorizado do sistema.",
+      url_for('admin.new_user'),
+      "Cadastrar usuário"
+    ) }}
+  {% endif %}
 {% endblock %}

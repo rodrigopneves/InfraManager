@@ -1,40 +1,28 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_actions, form_check, form_field %}
+
+{% block title %}{{ title }} | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>{{ title }}</h1>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-
-    <p>
-      {{ form.username.label }}<br>
-      {{ form.username(autocomplete="username") }}
-      {% for error in form.username.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-
-    <p>
-      {{ form.email.label }}<br>
-      {{ form.email(autocomplete="email") }}
-      {% for error in form.email.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-
-    {% if form.password is defined %}
-      <p>
-        {{ form.password.label }}<br>
-        {{ form.password(autocomplete="new-password") }}
-        {% for error in form.password.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-      </p>
-      <p>
-        {{ form.password_confirmation.label }}<br>
-        {{ form.password_confirmation(autocomplete="new-password") }}
-        {% for error in form.password_confirmation.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-      </p>
-    {% endif %}
-
-    <p>{{ form.is_active() }} {{ form.is_active.label }}</p>
-    <p>{{ form.role.label }} {{ form.role() }}</p>
-    <p>{{ form.submit() }}</p>
-  </form>
-
-  <p><a href="{{ url_for('admin.users') }}">Voltar</a></p>
+  <div class="form-page">
+    <header class="form-page-header">
+      <h1>{{ title }}</h1>
+      <p>Defina a identidade, o perfil de acesso e o estado da conta.</p>
+    </header>
+    <p class="required-note"><span>Obrigatório</span> indica um campo que precisa ser preenchido.</p>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      <div class="form-grid">
+        {{ form_field(form.username, "Use de 3 a 64 caracteres: letras minúsculas, números, ponto, hífen ou sublinhado.", autocomplete="username") }}
+        {{ form_field(form.email, autocomplete="email") }}
+        {% if form.password is defined %}
+          {{ form_field(form.password, "Utilize no mínimo 8 caracteres.", autocomplete="new-password") }}
+          {{ form_field(form.password_confirmation, autocomplete="new-password") }}
+        {% endif %}
+        {{ form_field(form.role, "Novos usuários devem receber somente o perfil necessário.") }}
+        {{ form_check(form.is_active, "Usuários inativos não podem entrar no sistema.") }}
+      </div>
+      {{ form_actions(form.submit, url_for('admin.users')) }}
+    </form>
+  </div>
 {% endblock %}

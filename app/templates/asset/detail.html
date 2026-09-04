@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, status_badge %}
 
 {% block content %}
   <h1>{{ asset.name }}</h1>
@@ -16,29 +17,41 @@
     <dt>Descrição</dt><dd>{{ asset.description or "-" }}</dd>
   </dl>
   {% if asset.asset_type == "server" %}
-    <h2>Máquinas Virtuais</h2>
-    <p>Total de VMs: {{ asset.virtual_machines|length }}</p>
-    {% if current_user.has_role(admin_role) %}
-      <p><a href="{{ url_for('virtual_machine.create', host_asset_id=asset.id) }}">Nova Máquina Virtual</a></p>
+    <div class="related-list-heading">
+      <div>
+        <h2>Máquinas Virtuais</h2>
+        <p>Total de VMs: {{ asset.virtual_machines|length }}</p>
+      </div>
+      {% if current_user.has_role(admin_role) %}
+        <a class="btn btn-sm btn-primary" href="{{ url_for('virtual_machine.create', host_asset_id=asset.id) }}">Nova Máquina Virtual</a>
+      {% endif %}
+    </div>
+    {% if asset.virtual_machines %}
+      <div class="table-responsive list-table-wrapper" role="region" aria-label="Máquinas Virtuais deste Ativo" tabindex="0">
+        <table class="table table-hover align-middle list-table">
+          <caption class="visually-hidden">Máquinas Virtuais do Ativo {{ asset.asset_tag }}</caption>
+          <thead><tr><th scope="col">Nome</th><th scope="col">Hostname</th><th scope="col">IP</th><th scope="col">Ambiente</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            {% for virtual_machine in asset.virtual_machines %}
+              <tr>
+                <td><a href="{{ url_for('virtual_machine.detail', virtual_machine_id=virtual_machine.id) }}"><strong>{{ virtual_machine.name }}</strong></a></td>
+                <td>{{ virtual_machine.hostname or "-" }}</td>
+                <td>{{ virtual_machine.ip_address or "-" }}</td>
+                <td>{{ virtual_machine.environment_label }}</td>
+                <td>{{ status_badge(virtual_machine.status_label, virtual_machine.status) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ empty_state(
+        "Nenhuma Máquina Virtual hospedada.",
+        "As VMs associadas a este servidor aparecerão nesta seção.",
+        url_for('virtual_machine.create', host_asset_id=asset.id) if current_user.has_role(admin_role) else none,
+        "Cadastrar Máquina Virtual"
+      ) }}
     {% endif %}
-    <table>
-      <thead>
-        <tr><th>Nome</th><th>Hostname</th><th>IP</th><th>Ambiente</th><th>Status</th></tr>
-      </thead>
-      <tbody>
-        {% for virtual_machine in asset.virtual_machines %}
-          <tr>
-            <td><a href="{{ url_for('virtual_machine.detail', virtual_machine_id=virtual_machine.id) }}">{{ virtual_machine.name }}</a></td>
-            <td>{{ virtual_machine.hostname or "-" }}</td>
-            <td>{{ virtual_machine.ip_address or "-" }}</td>
-            <td>{{ virtual_machine.environment_label }}</td>
-            <td>{{ virtual_machine.status_label }}</td>
-          </tr>
-        {% else %}
-          <tr><td colspan="5">Nenhuma Máquina Virtual hospedada.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
   {% endif %}
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('asset.edit', asset_id=asset.id) }}">Editar</a></p>

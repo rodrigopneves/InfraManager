@@ -1,15 +1,27 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_field %}
+
+{% block title %}Verificação em duas etapas | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Verificação em duas etapas</h1>
-  <p>Informe o código de seis dígitos do seu aplicativo autenticador.</p>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-    <p>
-      {{ form.code.label }}<br>
-      {{ form.code(inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
-    </p>
-    <p>{{ form.submit() }}</p>
-  </form>
+  <div class="form-page form-page-narrow">
+    <header class="form-page-header">
+      <h1>Verificação em duas etapas</h1>
+      <p>Informe o código de seis dígitos do seu aplicativo autenticador.</p>
+    </header>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      {{ form_field(
+        form.code,
+        "O código muda periodicamente e deve conter somente números.",
+        inputmode="numeric",
+        autocomplete="one-time-code",
+        maxlength="6",
+        autofocus=true
+      ) }}
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary w-100") }}
+      </div>
+    </form>
+  </div>
 {% endblock %}

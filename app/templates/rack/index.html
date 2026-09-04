@@ -1,52 +1,51 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, page_header, pagination_nav, status_badge %}
+
+{% block title %}Racks | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Racks</h1>
+  {{ page_header(
+    "Racks",
+    "Capacidade física e localização dos equipamentos.",
+    url_for('rack.create') if current_user.has_role(admin_role) else none,
+    "Novo Rack"
+  ) }}
 
-  {% if current_user.has_role(admin_role) %}
-    <p><a href="{{ url_for('rack.create') }}">Novo Rack</a></p>
-  {% endif %}
-
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nome</th>
-        <th>Sala</th>
-        <th>Datacenter</th>
-        <th>Capacidade</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for rack in pagination.items %}
-        <tr>
-          <td>{{ rack.code }}</td>
-          <td>{{ rack.name }}</td>
-          <td><a href="{{ url_for('room.detail', room_id=rack.room.id) }}">{{ rack.room.code }}</a></td>
-          <td><a href="{{ url_for('datacenter.detail', datacenter_id=rack.room.datacenter.id) }}">{{ rack.room.datacenter.code }}</a></td>
-          <td>{{ rack.capacity_u }} U</td>
-          <td>{{ rack.status_label }}</td>
-          <td>
-            <a href="{{ url_for('rack.detail', rack_id=rack.id) }}">Detalhes</a>
-            {% if current_user.has_role(admin_role) %}
-              <a href="{{ url_for('rack.edit', rack_id=rack.id) }}">Editar</a>
-              <a href="{{ url_for('rack.delete_confirm', rack_id=rack.id) }}">Excluir</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7">Nenhum Rack cadastrado.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('rack.index', page=pagination.prev_num) }}">Anterior</a>
-  {% endif %}
-  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('rack.index', page=pagination.next_num) }}">Próxima</a>
+  {% if pagination.items %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Racks cadastrados" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Racks cadastrados</caption>
+        <thead><tr><th scope="col">Código</th><th scope="col">Nome</th><th scope="col">Sala</th><th scope="col">Datacenter</th><th scope="col">Capacidade</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+        <tbody>
+          {% for rack in pagination.items %}
+            <tr class="{{ 'record-inactive' if rack.status == 'inactive' else '' }}">
+              <td><strong>{{ rack.code }}</strong></td>
+              <td>{{ rack.name }}</td>
+              <td><a href="{{ url_for('room.detail', room_id=rack.room.id) }}">{{ rack.room.code }}</a></td>
+              <td><a href="{{ url_for('datacenter.detail', datacenter_id=rack.room.datacenter.id) }}">{{ rack.room.datacenter.code }}</a></td>
+              <td>{{ rack.capacity_u }} U</td>
+              <td>{{ status_badge(rack.status_label, rack.status) }}</td>
+              <td>
+                <div class="table-actions" role="group" aria-label="Ações para {{ rack.code }}">
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('rack.detail', rack_id=rack.id) }}">Detalhes</a>
+                  {% if current_user.has_role(admin_role) %}
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('rack.edit', rack_id=rack.id) }}">Editar</a>
+                    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('rack.delete_confirm', rack_id=rack.id) }}">Excluir</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination_nav(pagination, 'rack.index', 'Racks') }}
+  {% else %}
+    {{ empty_state(
+      "Nenhum Rack cadastrado.",
+      "Cadastre um Rack depois de criar sua Sala.",
+      url_for('rack.create') if current_user.has_role(admin_role) else none,
+      "Cadastrar Rack"
+    ) }}
   {% endif %}
 {% endblock %}

@@ -1,52 +1,51 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, page_header, pagination_nav, status_badge %}
+
+{% block title %}Datacenters | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Datacenters</h1>
+  {{ page_header(
+    "Datacenters",
+    "Localidades físicas e estrutura associada.",
+    url_for('datacenter.create') if current_user.has_role(admin_role) else none,
+    "Novo Datacenter"
+  ) }}
 
-  {% if current_user.has_role(admin_role) %}
-    <p><a href="{{ url_for('datacenter.create') }}">Novo Datacenter</a></p>
-  {% endif %}
-
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nome</th>
-        <th>Localização</th>
-        <th>Salas</th>
-        <th>Racks</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for datacenter in pagination.items %}
-        <tr>
-          <td>{{ datacenter.code }}</td>
-          <td>{{ datacenter.name }}</td>
-          <td>{{ datacenter.location }}</td>
-          <td>{{ datacenter.rooms|length }}</td>
-          <td>{{ rack_counts.get(datacenter.id, 0) }}</td>
-          <td>{{ datacenter.status_label }}</td>
-          <td>
-            <a href="{{ url_for('datacenter.detail', datacenter_id=datacenter.id) }}">Detalhes</a>
-            {% if current_user.has_role(admin_role) %}
-              <a href="{{ url_for('datacenter.edit', datacenter_id=datacenter.id) }}">Editar</a>
-              <a href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7">Nenhum Datacenter cadastrado.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('datacenter.index', page=pagination.prev_num) }}">Anterior</a>
-  {% endif %}
-  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('datacenter.index', page=pagination.next_num) }}">Próxima</a>
+  {% if pagination.items %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Datacenters cadastrados" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Datacenters cadastrados</caption>
+        <thead><tr><th scope="col">Código</th><th scope="col">Nome</th><th scope="col">Localização</th><th scope="col">Salas</th><th scope="col">Racks</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+        <tbody>
+          {% for datacenter in pagination.items %}
+            <tr class="{{ 'record-inactive' if datacenter.status == 'inactive' else '' }}">
+              <td><strong>{{ datacenter.code }}</strong></td>
+              <td>{{ datacenter.name }}</td>
+              <td>{{ datacenter.location }}</td>
+              <td>{{ datacenter.rooms|length }}</td>
+              <td>{{ rack_counts.get(datacenter.id, 0) }}</td>
+              <td>{{ status_badge(datacenter.status_label, datacenter.status) }}</td>
+              <td>
+                <div class="table-actions" role="group" aria-label="Ações para {{ datacenter.code }}">
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('datacenter.detail', datacenter_id=datacenter.id) }}">Detalhes</a>
+                  {% if current_user.has_role(admin_role) %}
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('datacenter.edit', datacenter_id=datacenter.id) }}">Editar</a>
+                    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination_nav(pagination, 'datacenter.index', 'Datacenters') }}
+  {% else %}
+    {{ empty_state(
+      "Nenhum Datacenter cadastrado.",
+      "Cadastre o primeiro Datacenter para iniciar a estrutura física.",
+      url_for('datacenter.create') if current_user.has_role(admin_role) else none,
+      "Cadastrar Datacenter"
+    ) }}
   {% endif %}
 {% endblock %}

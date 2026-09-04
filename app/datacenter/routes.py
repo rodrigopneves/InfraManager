@@ -127,7 +127,7 @@ def delete(datacenter_id: int):
     try:
         delete_datacenter(current_user, selected_datacenter)
     except DatacenterHasRoomsError as error:
-        flash(str(error), "error")
+        flash(str(error), "warning")
         return redirect(
             url_for("datacenter.detail", datacenter_id=selected_datacenter.id)
         )

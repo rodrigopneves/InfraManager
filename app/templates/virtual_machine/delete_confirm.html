@@ -1,11 +1,13 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import delete_confirmation %}
+
+{% block title %}Excluir Máquina Virtual | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Confirmar exclusão</h1>
-  <p>Confirme a exclusão da Máquina Virtual <strong>{{ virtual_machine.name }}</strong>.</p>
-  <form method="post" action="{{ url_for('virtual_machine.delete', virtual_machine_id=virtual_machine.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Confirmar exclusão</button>
-  </form>
-  <p><a href="{{ url_for('virtual_machine.detail', virtual_machine_id=virtual_machine.id) }}">Cancelar</a></p>
+  {{ delete_confirmation(
+    "da Máquina Virtual",
+    virtual_machine.name,
+    url_for('virtual_machine.delete', virtual_machine_id=virtual_machine.id),
+    url_for('virtual_machine.detail', virtual_machine_id=virtual_machine.id)
+  ) }}
 {% endblock %}

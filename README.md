@@ -20,7 +20,7 @@ O projeto será desenvolvido aplicando princípios de **Secure by Design**, **Se
 
 ## Status do Projeto
 
-**Status atual:** etapa 02 concluída e estabilizada
+**Status atual:** etapa 04 concluída e validada
 
 ```text
 Planejamento       ✅
@@ -29,17 +29,19 @@ Arquitetura        ✅
 Segurança          ✅
 AGENTS.md           ✅
 Desenvolvimento     🚧
-Testes 02 e 03       ✅
+Testes 02 a 04       ✅
 OCI                 ⏳
 CI/CD               ⏳
 Documentação final  ⏳
 ```
 
-As etapas 02, 03.1, 03.2, 03.3, 03.4 e 03.5 entregam Application Factory, persistência e migrations,
+As etapas 02, 03 e 04 entregam Application Factory, persistência e migrations,
 autenticação, CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA
-TOTP opcional, auditoria e os CRUDs de Datacenters, Salas, Racks, Ativos e Máquinas Virtuais. O ponto WSGI padrão é
-`wsgi:app`; `run.py` permanece como entrada de desenvolvimento e para comandos
-Flask.
+TOTP opcional, auditoria, os CRUDs de Datacenters, Salas, Racks, Ativos e
+Máquinas Virtuais e a interface responsiva em Jinja2 e Bootstrap. O Dashboard
+utiliza dados reais e separa indicadores administrativos conforme o RBAC. O
+ponto WSGI padrão é `wsgi:app`; `run.py` permanece como entrada de
+desenvolvimento e para comandos Flask.
 
 Débitos conhecidos para hardening e produção:
 
@@ -49,8 +51,7 @@ Débitos conhecidos para hardening e produção:
 4. não existe armazenamento compartilhado como Redis;
 5. não existe integração com SIEM;
 6. a auditoria não possui retenção automática;
-7. MFA ainda é opcional por usuário;
-8. a interface visual permanece básica.
+7. MFA ainda é opcional por usuário.
 
 Esses itens não impedem o uso acadêmico atual, mas devem ser tratados nas etapas
 correspondentes antes de considerar a aplicação pronta para produção.
@@ -423,22 +424,21 @@ Datacenter
 
 # Dashboard
 
-O Dashboard deverá apresentar indicadores como:
+O Dashboard apresenta dados agregados do ambiente:
 
 ```text
-Ativos físicos
-Máquinas virtuais
-Datacenters
-Racks
+Datacenters, Salas e Racks
+Ativos físicos e Máquinas Virtuais
+Capacidade e ocupação dos Racks
 
-Ativos ativos
-Ativos em manutenção
-
-VMs ligadas
-VMs desligadas
+Ativos por status
+Máquinas Virtuais por status
+Estados vazios dos módulos
 ```
 
-Também poderá apresentar os últimos registros modificados.
+Administradores também visualizam totais de usuários e atividade recente da
+auditoria. Essas consultas ficam em `app/dashboard/services.py`; dados
+administrativos não são consultados nem renderizados para os demais perfis.
 
 ---
 

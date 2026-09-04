@@ -171,7 +171,7 @@ def delete(asset_id: int):
     try:
         delete_asset(current_user, selected_asset)
     except AssetHasVirtualMachinesError as error:
-        flash(str(error), "error")
+        flash(str(error), "warning")
         return redirect(url_for("asset.detail", asset_id=selected_asset.id))
     flash("Ativo excluído com sucesso.", "success")
     return redirect(url_for("asset.index"))

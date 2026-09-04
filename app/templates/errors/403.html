@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}Acesso negado · InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Acesso negado</h1>
-  <p>Você não possui permissão para acessar esta página.</p>
+  {{ error_page(403, "Acesso negado", "Você não possui permissão para acessar este recurso.", "Se precisar de acesso, entre em contato com um administrador.") }}
 {% endblock %}

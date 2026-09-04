@@ -92,7 +92,7 @@ def edit_user(user_id: int):
                 role=form.role.data,
             )
         except AdminOperationError as error:
-            flash(str(error), "error")
+            flash(str(error), "warning")
         else:
             flash("Usuário atualizado com sucesso.", "success")
             return redirect(url_for("admin.users"))
@@ -106,7 +106,7 @@ def toggle_active(user_id: int):
     try:
         toggle_user_active(current_user, user)
     except AdminOperationError as error:
-        flash(str(error), "error")
+        flash(str(error), "warning")
     else:
         status = "ativado" if user.is_active else "desativado"
         flash(f"Usuário {status} com sucesso.", "success")

@@ -1,17 +1,28 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_actions, form_field %}
+
+{% block title %}{{ title }} | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>{{ title }}</h1>
-  <form method="post">
-    {{ form.hidden_tag() }}
-    {% for field in [form.rack_id, form.name, form.asset_tag, form.serial_number, form.manufacturer, form.model, form.asset_type, form.rack_unit_start, form.rack_units, form.status, form.description] %}
-      <p>
-        {{ field.label }}<br>
-        {{ field() }}
-        {% for error in field.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-      </p>
-    {% endfor %}
-    <p>{{ form.submit() }}</p>
-  </form>
-  <p><a href="{{ cancel_url }}">Cancelar</a></p>
+  <div class="form-page">
+    <header class="form-page-header"><h1>{{ title }}</h1><p>Registre identificação, localização e ocupação física do equipamento.</p></header>
+    <p class="required-note"><span>Obrigatório</span> indica um campo que precisa ser preenchido.</p>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      <div class="form-grid">
+        {{ form_field(form.rack_id, "A posição informada será validada contra a capacidade e ocupação do Rack.", "form-field-full") }}
+        {{ form_field(form.name) }}
+        {{ form_field(form.asset_tag, "Identificador único, normalizado para letras maiúsculas.") }}
+        {{ form_field(form.serial_number) }}
+        {{ form_field(form.manufacturer) }}
+        {{ form_field(form.model) }}
+        {{ form_field(form.asset_type) }}
+        {{ form_field(form.status) }}
+        {{ form_field(form.rack_unit_start, "Primeira unidade física ocupada pelo Ativo.", inputmode="numeric") }}
+        {{ form_field(form.rack_units, "Quantidade total de unidades ocupadas.", inputmode="numeric") }}
+        {{ form_field(form.description, "Campo opcional com até 1000 caracteres.", "form-field-full") }}
+      </div>
+      {{ form_actions(form.submit, cancel_url) }}
+    </form>
+  </div>
 {% endblock %}

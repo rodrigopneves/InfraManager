@@ -39,7 +39,7 @@ def mfa_setup():
 
     if not isinstance(secret, str):
         session.pop(MFA_SETUP_SECRET_KEY, None)
-        flash("Inicie novamente a configuração do MFA.", "error")
+        flash("Inicie novamente a configuração do MFA.", "danger")
         return redirect(url_for("account.mfa_setup"))
 
     form = MfaCodeForm()
@@ -54,10 +54,10 @@ def mfa_setup():
             flash("MFA ativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
-        flash("Código de autenticação inválido.", "error")
+        flash("Código de autenticação inválido.", "danger")
     elif request.method == "POST":
         form.code.data = ""
-        flash("Código de autenticação inválido.", "error")
+        flash("Código de autenticação inválido.", "danger")
 
     qr_data_uri = build_mfa_qr_data_uri(current_user, secret)
     response = make_response(
@@ -96,10 +96,10 @@ def mfa_disable():
             flash("MFA desativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
-        flash("Não foi possível desativar o MFA.", "error")
+        flash("Não foi possível desativar o MFA.", "danger")
     elif request.method == "POST":
         form.code.data = ""
-        flash("Não foi possível desativar o MFA.", "error")
+        flash("Não foi possível desativar o MFA.", "danger")
 
     response = make_response(
         render_template("account/mfa_disable.html", form=form)

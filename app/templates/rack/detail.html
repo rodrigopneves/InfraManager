@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, status_badge %}
 
 {% block content %}
   <h1>{{ rack.name }}</h1>
@@ -25,27 +26,39 @@
     <dt>Livre</dt><dd>{{ free_u }} U</dd>
   </dl>
 
-  <h2>Ativos</h2>
-  {% if current_user.has_role(admin_role) %}
-    <p><a href="{{ url_for('asset.create', rack_id=rack.id) }}">Novo Ativo neste Rack</a></p>
+  <div class="related-list-heading">
+    <h2>Ativos</h2>
+    {% if current_user.has_role(admin_role) %}
+      <a class="btn btn-sm btn-primary" href="{{ url_for('asset.create', rack_id=rack.id) }}">Novo Ativo neste Rack</a>
+    {% endif %}
+  </div>
+  {% if rack.assets %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Ativos deste Rack" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Ativos do Rack {{ rack.code }}</caption>
+        <thead><tr><th scope="col">U</th><th scope="col">Identificador</th><th scope="col">Nome</th><th scope="col">Tipo</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+        <tbody>
+          {% for asset in rack.assets %}
+            <tr class="{{ 'record-inactive' if asset.status == 'inactive' else '' }}">
+              <td>{{ asset.rack_position_label }}</td>
+              <td><strong>{{ asset.asset_tag }}</strong></td>
+              <td>{{ asset.name }}</td>
+              <td>{{ asset.type_label }}</td>
+              <td>{{ status_badge(asset.status_label, asset.status) }}</td>
+              <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('asset.detail', asset_id=asset.id) }}">Detalhes</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state(
+      "Nenhum Ativo cadastrado neste Rack.",
+      "Os equipamentos instalados aparecerão nesta seção.",
+      url_for('asset.create', rack_id=rack.id) if current_user.has_role(admin_role) else none,
+      "Cadastrar Ativo"
+    ) }}
   {% endif %}
-  <table>
-    <thead><tr><th>U</th><th>Identificador</th><th>Nome</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead>
-    <tbody>
-      {% for asset in rack.assets %}
-        <tr>
-          <td>{{ asset.rack_position_label }}</td>
-          <td>{{ asset.asset_tag }}</td>
-          <td>{{ asset.name }}</td>
-          <td>{{ asset.type_label }}</td>
-          <td>{{ asset.status_label }}</td>
-          <td><a href="{{ url_for('asset.detail', asset_id=asset.id) }}">Detalhes</a></td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6">Nenhum Ativo cadastrado neste Rack.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
 
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('rack.edit', rack_id=rack.id) }}">Editar</a></p>

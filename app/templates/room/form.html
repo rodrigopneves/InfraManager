@@ -1,37 +1,22 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_actions, form_field %}
+
+{% block title %}{{ title }} | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>{{ title }}</h1>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-
-    <p>
-      {{ form.datacenter_id.label }}<br>
-      {{ form.datacenter_id() }}
-      {% for error in form.datacenter_id.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-    <p>
-      {{ form.name.label }}<br>
-      {{ form.name() }}
-      {% for error in form.name.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-    <p>
-      {{ form.code.label }}<br>
-      {{ form.code() }}
-      {% for error in form.code.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-    <p>
-      {{ form.description.label }}<br>
-      {{ form.description() }}
-      {% for error in form.description.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-    <p>
-      {{ form.status.label }} {{ form.status() }}
-      {% for error in form.status.errors %}<span role="alert">{{ error }}</span>{% endfor %}
-    </p>
-    <p>{{ form.submit() }}</p>
-  </form>
-
-  <p><a href="{{ cancel_url }}">Cancelar</a></p>
+  <div class="form-page">
+    <header class="form-page-header"><h1>{{ title }}</h1><p>Associe a Sala a um Datacenter e defina sua identificação.</p></header>
+    <p class="required-note"><span>Obrigatório</span> indica um campo que precisa ser preenchido.</p>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      <div class="form-grid">
+        {{ form_field(form.datacenter_id, "Toda Sala deve pertencer a um Datacenter.") }}
+        {{ form_field(form.name) }}
+        {{ form_field(form.code, "O código é único dentro do Datacenter selecionado.") }}
+        {{ form_field(form.status) }}
+        {{ form_field(form.description, "Campo opcional com até 1000 caracteres.", "form-field-full") }}
+      </div>
+      {{ form_actions(form.submit, cancel_url) }}
+    </form>
+  </div>
 {% endblock %}

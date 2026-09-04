@@ -149,7 +149,7 @@ def delete(room_id: int):
     try:
         delete_room(current_user, selected_room)
     except RoomHasRacksError as error:
-        flash(str(error), "error")
+        flash(str(error), "warning")
         return redirect(url_for("room.detail", room_id=selected_room.id))
     flash("Sala excluída com sucesso.", "success")
     return redirect(url_for("room.index"))

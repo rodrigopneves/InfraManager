@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}Solicitação inválida · InfraManager{% endblock %}
+
+{% block content %}
+  {{ error_page(400, "Solicitação inválida", "Não foi possível processar esta solicitação.", "Revise os dados informados e tente novamente.") }}
+{% endblock %}

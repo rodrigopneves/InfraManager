@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}Erro interno · InfraManager{% endblock %}
+
+{% block content %}
+  {{ error_page(500, "Não foi possível concluir a operação", "Ocorreu um erro interno. Tente novamente mais tarde.", "Se o problema continuar, entre em contato com o administrador.") }}
+{% endblock %}

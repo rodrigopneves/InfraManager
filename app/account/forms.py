@@ -7,7 +7,7 @@ class MfaCodeForm(FlaskForm):
     code = StringField(
         "Código de autenticação",
         validators=[
-            DataRequired(),
+            DataRequired(message="Informe o código de autenticação."),
             Regexp(r"^\d{6}$", message="Código inválido."),
         ],
     )
@@ -15,5 +15,7 @@ class MfaCodeForm(FlaskForm):
 
 
 class DisableMfaForm(MfaCodeForm):
-    password = PasswordField("Senha atual", validators=[DataRequired()])
+    password = PasswordField(
+        "Senha atual", validators=[DataRequired(message="Informe sua senha atual.")]
+    )
     submit = SubmitField("Desativar MFA")

@@ -1,67 +1,49 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, page_header, pagination_nav, status_badge %}
+
+{% block title %}Auditoria | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Auditoria</h1>
+  {{ page_header(
+    "Auditoria",
+    "Registro cronológico das ações relevantes realizadas no sistema."
+  ) }}
 
-  <table>
-    <thead>
-      <tr>
-        <th>Data/hora</th>
-        <th>Evento</th>
-        <th>Ator</th>
-        <th>Alvo</th>
-        <th>IP</th>
-        <th>Recurso</th>
-        <th>Resultado</th>
-        <th>Detalhes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for entry in entries %}
-        {% set audit_log = entry.log %}
-        <tr>
-          <td>{{ audit_log.created_at }}</td>
-          <td>{{ audit_log.event_type }}</td>
-          <td>
-            {% if audit_log.actor %}
-              {{ audit_log.actor.username }}
-            {% elif audit_log.actor_user_id %}
-              Usuário #{{ audit_log.actor_user_id }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td>
-            {% if audit_log.target %}
-              {{ audit_log.target.username }}
-            {% elif audit_log.target_user_id %}
-              Usuário #{{ audit_log.target_user_id }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td>{{ audit_log.ip_address or "-" }}</td>
-          <td>
-            {% if audit_log.resource_type and audit_log.resource_id %}
-              {{ audit_log.resource_type }} #{{ audit_log.resource_id }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td>{{ audit_log.result or "-" }}</td>
-          <td>{{ entry.details }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="8">Nenhum evento registrado.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.audit', page=pagination.prev_num) }}">Anterior</a>
-  {% endif %}
-  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('admin.audit', page=pagination.next_num) }}">Próxima</a>
+  {% if entries %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Eventos de auditoria" tabindex="0">
+      <table class="table table-hover align-middle list-table audit-table">
+        <caption class="visually-hidden">Eventos de auditoria</caption>
+        <thead><tr><th scope="col">Data/hora</th><th scope="col">Evento</th><th scope="col">Ator</th><th scope="col">Alvo</th><th scope="col">IP</th><th scope="col">Recurso</th><th scope="col">Resultado</th><th scope="col">Detalhes</th></tr></thead>
+        <tbody>
+          {% for entry in entries %}
+            {% set audit_log = entry.log %}
+            <tr>
+              <td><time datetime="{{ audit_log.created_at.isoformat() }}">{{ audit_log.created_at.strftime('%d/%m/%Y %H:%M') }}</time></td>
+              <td><span class="badge text-bg-light audit-event-badge">{{ audit_log.event_type }}</span></td>
+              <td>
+                {% if audit_log.actor %}{{ audit_log.actor.username }}{% elif audit_log.actor_user_id %}Usuário #{{ audit_log.actor_user_id }}{% else %}-{% endif %}
+              </td>
+              <td>
+                {% if audit_log.target %}{{ audit_log.target.username }}{% elif audit_log.target_user_id %}Usuário #{{ audit_log.target_user_id }}{% else %}-{% endif %}
+              </td>
+              <td>{{ audit_log.ip_address or "-" }}</td>
+              <td>
+                {% if audit_log.resource_type and audit_log.resource_id %}{{ audit_log.resource_type }} #{{ audit_log.resource_id }}{% else %}-{% endif %}
+              </td>
+              <td>
+                {% if audit_log.result %}{{ status_badge(audit_log.result, audit_log.result) }}{% else %}-{% endif %}
+              </td>
+              <td>{{ entry.details }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination_nav(pagination, 'admin.audit', 'Auditoria') }}
+  {% else %}
+    {{ empty_state(
+      "Nenhum evento registrado.",
+      "Os eventos auditáveis serão apresentados aqui em ordem cronológica."
+    ) }}
   {% endif %}
 {% endblock %}

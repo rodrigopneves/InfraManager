@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}Muitas tentativas · InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Muitas tentativas</h1>
-  <p>Muitas tentativas foram realizadas. Aguarde alguns minutos e tente novamente.</p>
+  {{ error_page(429, "Muitas tentativas", "Muitas tentativas foram realizadas. Aguarde alguns minutos e tente novamente.") }}
 {% endblock %}

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}Página não encontrada · InfraManager{% endblock %}
+
+{% block content %}
+  {{ error_page(404, "Página não encontrada", "A página ou o recurso solicitado não foi encontrado.", "Verifique o endereço ou retorne à navegação principal.") }}
+{% endblock %}

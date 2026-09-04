@@ -1,21 +1,21 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_field %}
+
+{% block title %}Entrar | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Entrar</h1>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-
-    <p>
-      {{ form.username.label }}<br>
-      {{ form.username(autocomplete="username") }}
-    </p>
-
-    <p>
-      {{ form.password.label }}<br>
-      {{ form.password(autocomplete="current-password") }}
-    </p>
-
-    <p>{{ form.submit() }}</p>
-  </form>
+  <div class="form-page form-page-narrow">
+    <header class="form-page-header">
+      <h1>Entrar</h1>
+      <p>Use suas credenciais para acessar o gerenciamento de infraestrutura.</p>
+    </header>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      {{ form_field(form.username, autocomplete="username", autofocus=true) }}
+      {{ form_field(form.password, autocomplete="current-password") }}
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary w-100") }}
+      </div>
+    </form>
+  </div>
 {% endblock %}

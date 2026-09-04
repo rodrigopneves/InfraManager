@@ -19,6 +19,10 @@ from app.auth.services import (
     start_pending_mfa_login,
     verify_totp,
 )
+from app.dashboard.services import (
+    get_admin_dashboard_summary,
+    get_dashboard_summary,
+)
 from app.extensions import db, limiter
 from app.models import AuditEventType, User, UserRole
 
@@ -47,7 +51,7 @@ def login():
                         AuditEventType.LOGIN_FAILURE,
                         details={"reason": "authentication_failed"},
                     )
-                    flash("Usuário ou senha inválidos.", "error")
+                    flash("Usuário ou senha inválidos.", "danger")
                     return render_template("auth/login.html", form=form)
                 start_pending_mfa_login(user)
                 return redirect(url_for("auth.mfa_verify"))
@@ -62,14 +66,14 @@ def login():
             AuditEventType.LOGIN_FAILURE,
             details={"reason": "authentication_failed"},
         )
-        flash("Usuário ou senha inválidos.", "error")
+        flash("Usuário ou senha inválidos.", "danger")
     elif request.method == "POST":
         clear_pending_mfa_login()
         record_event(
             AuditEventType.LOGIN_FAILURE,
             details={"reason": "authentication_failed"},
         )
-        flash("Usuário ou senha inválidos.", "error")
+        flash("Usuário ou senha inválidos.", "danger")
 
     return render_template("auth/login.html", form=form)
 
@@ -85,7 +89,7 @@ def mfa_verify():
 
     user = get_pending_mfa_user()
     if user is None:
-        flash("Sua verificação expirou. Entre novamente.", "error")
+        flash("Sua verificação expirou. Entre novamente.", "danger")
         return redirect(url_for("auth.login"))
 
     form = MfaVerifyForm()
@@ -98,11 +102,11 @@ def mfa_verify():
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
         record_event(AuditEventType.MFA_FAILURE, target=user)
-        flash("Código de autenticação inválido.", "error")
+        flash("Código de autenticação inválido.", "danger")
     elif request.method == "POST":
         form.code.data = ""
         record_event(AuditEventType.MFA_FAILURE, target=user)
-        flash("Código de autenticação inválido.", "error")
+        flash("Código de autenticação inválido.", "danger")
 
     response = make_response(render_template("auth/mfa_verify.html", form=form))
     response.headers["Cache-Control"] = "no-store"
@@ -122,4 +126,13 @@ def logout():
 @auth.get("/dashboard")
 @login_required
 def dashboard():
-    return render_template("auth/dashboard.html", admin_role=UserRole.ADMIN)
+    admin_summary = None
+    if current_user.has_role(UserRole.ADMIN):
+        admin_summary = get_admin_dashboard_summary()
+
+    return render_template(
+        "auth/dashboard.html",
+        admin_role=UserRole.ADMIN,
+        summary=get_dashboard_summary(),
+        admin_summary=admin_summary,
+    )

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, status_badge %}
 
 {% block content %}
   <h1>{{ room.name }}</h1>
@@ -14,34 +15,38 @@
     <dd>{{ room.description or "-" }}</dd>
   </dl>
 
-  <h2>Racks</h2>
-  {% if current_user.has_role(admin_role) %}
-    <p><a href="{{ url_for('rack.create', room_id=room.id) }}">Novo Rack nesta Sala</a></p>
+  <div class="related-list-heading">
+    <h2>Racks</h2>
+    {% if current_user.has_role(admin_role) %}
+      <a class="btn btn-sm btn-primary" href="{{ url_for('rack.create', room_id=room.id) }}">Novo Rack nesta Sala</a>
+    {% endif %}
+  </div>
+  {% if room.racks %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Racks desta Sala" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Racks da Sala {{ room.code }}</caption>
+        <thead><tr><th scope="col">Código</th><th scope="col">Nome</th><th scope="col">Capacidade</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+        <tbody>
+          {% for rack in room.racks %}
+            <tr class="{{ 'record-inactive' if rack.status == 'inactive' else '' }}">
+              <td><strong>{{ rack.code }}</strong></td>
+              <td>{{ rack.name }}</td>
+              <td>{{ rack.capacity_u }} U</td>
+              <td>{{ status_badge(rack.status_label, rack.status) }}</td>
+              <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('rack.detail', rack_id=rack.id) }}">Detalhes</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state(
+      "Nenhum Rack cadastrado nesta Sala.",
+      "Os Racks vinculados aparecerão nesta seção.",
+      url_for('rack.create', room_id=room.id) if current_user.has_role(admin_role) else none,
+      "Cadastrar Rack"
+    ) }}
   {% endif %}
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nome</th>
-        <th>Capacidade</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for rack in room.racks %}
-        <tr>
-          <td>{{ rack.code }}</td>
-          <td>{{ rack.name }}</td>
-          <td>{{ rack.capacity_u }} U</td>
-          <td>{{ rack.status_label }}</td>
-          <td><a href="{{ url_for('rack.detail', rack_id=rack.id) }}">Detalhes</a></td>
-        </tr>
-      {% else %}
-        <tr><td colspan="5">Nenhum Rack cadastrado nesta Sala.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
 
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('room.edit', room_id=room.id) }}">Editar</a></p>

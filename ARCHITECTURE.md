@@ -1134,26 +1134,43 @@ templates/
 │
 ├── base.html
 │
-├── auth/
-│   ├── login.html
-│   ├── mfa.html
+├── account/
+│   ├── mfa_disable.html
 │   └── mfa_setup.html
 │
-├── dashboard/
-│   └── index.html
+├── admin/
+│   ├── audit.html
+│   ├── user_form.html
+│   └── users.html
+│
+├── auth/
+│   ├── login.html
+│   ├── mfa_verify.html
+│   └── dashboard.html
+│
+├── errors/
+│   ├── 400.html
+│   ├── 403.html
+│   ├── 404.html
+│   ├── 429.html
+│   ├── 500.html
+│   └── csrf.html
+│
+├── macros/
+│   └── ui.html
 │
 ├── asset/
-│
 ├── virtual_machine/
-│
 ├── datacenter/
 ├── room/
-├── rack/
-│
-├── users/
-│
-└── audit/
+└── rack/
 ```
+
+O Dashboard é renderizado por `auth/dashboard.html`; suas consultas agregadas
+ficam isoladas em `app/dashboard/services.py`. Componentes repetidos de
+listagens, formulários, paginação, estados vazios e páginas de erro utilizam
+`templates/macros/ui.html`. Os estilos responsivos e de acessibilidade ficam
+centralizados em `static/css/app.css`.
 
 ---
 

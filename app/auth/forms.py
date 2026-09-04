@@ -6,8 +6,12 @@ from app.models import validate_username as validate_username_value
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Usuário", validators=[DataRequired()])
-    password = PasswordField("Senha", validators=[DataRequired()])
+    username = StringField(
+        "Usuário", validators=[DataRequired(message="Informe seu usuário.")]
+    )
+    password = PasswordField(
+        "Senha", validators=[DataRequired(message="Informe sua senha.")]
+    )
     submit = SubmitField("Entrar")
 
     def validate_username(self, field: StringField) -> None:
@@ -21,7 +25,7 @@ class MfaVerifyForm(FlaskForm):
     code = StringField(
         "Código de autenticação",
         validators=[
-            DataRequired(),
+            DataRequired(message="Informe o código de autenticação."),
             Regexp(r"^\d{6}$", message="Código inválido."),
         ],
     )

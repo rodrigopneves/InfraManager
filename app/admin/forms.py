@@ -8,10 +8,18 @@ from app.models import validate_username as validate_username_value
 
 
 class UserFieldsForm(FlaskForm):
-    username = StringField("Usuário", validators=[DataRequired()])
-    email = StringField("E-mail", validators=[DataRequired()])
+    username = StringField(
+        "Usuário", validators=[DataRequired(message="Informe um usuário.")]
+    )
+    email = StringField(
+        "E-mail", validators=[DataRequired(message="Informe um e-mail.")]
+    )
     is_active = BooleanField("Ativo", default=True)
-    role = SelectField("Perfil", choices=ROLE_CHOICES, validators=[DataRequired()])
+    role = SelectField(
+        "Perfil",
+        choices=ROLE_CHOICES,
+        validators=[DataRequired(message="Selecione um perfil.")],
+    )
 
     def validate_username(self, field: StringField) -> None:
         try:
@@ -28,12 +36,20 @@ class UserFieldsForm(FlaskForm):
 
 class CreateUserForm(UserFieldsForm):
     password = PasswordField(
-        "Senha", validators=[DataRequired(), Length(min=8, max=256)]
+        "Senha",
+        validators=[
+            DataRequired(message="Informe uma senha."),
+            Length(
+                min=8,
+                max=256,
+                message="A senha deve possuir entre 8 e 256 caracteres.",
+            ),
+        ],
     )
     password_confirmation = PasswordField(
         "Confirmar senha",
         validators=[
-            DataRequired(),
+            DataRequired(message="Confirme a senha."),
             EqualTo("password", message="As senhas devem coincidir."),
         ],
     )

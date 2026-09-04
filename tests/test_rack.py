@@ -506,7 +506,7 @@ def test_hierarchy_is_displayed_and_user_content_is_escaped(
     assert rack.code.encode() in room_detail.data
     assert f"/racks/create?room_id={sample_room.id}".encode() in room_detail.data
     assert b"<td>1</td>" in room_list.data
-    assert b"<th>Racks</th>" in datacenter_list.data
+    assert b'<th scope="col">Racks</th>' in datacenter_list.data
     assert b"<td>1</td>" in datacenter_list.data
 
 

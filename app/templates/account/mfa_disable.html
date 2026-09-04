@@ -1,19 +1,31 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_field %}
+
+{% block title %}Desativar MFA | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Desativar MFA</h1>
-  <p>Confirme sua senha e o código atual do aplicativo autenticador.</p>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-    <p>
-      {{ form.password.label }}<br>
-      {{ form.password(autocomplete="current-password") }}
-    </p>
-    <p>
-      {{ form.code.label }}<br>
-      {{ form.code(inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
-    </p>
-    <p>{{ form.submit() }}</p>
-  </form>
+  <div class="form-page form-page-narrow">
+    <header class="form-page-header">
+      <h1>Desativar MFA</h1>
+      <p>Confirme sua identidade antes de remover o segundo fator.</p>
+    </header>
+    <div class="alert alert-warning" role="alert">
+      A conta ficará protegida apenas pela senha até uma nova configuração de MFA.
+    </div>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      {{ form_field(form.password, autocomplete="current-password") }}
+      {{ form_field(
+        form.code,
+        "Digite o código atual de seis dígitos.",
+        inputmode="numeric",
+        autocomplete="one-time-code",
+        maxlength="6"
+      ) }}
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-danger") }}
+        <a class="btn btn-outline-secondary" href="{{ url_for('auth.dashboard') }}">Cancelar</a>
+      </div>
+    </form>
+  </div>
 {% endblock %}

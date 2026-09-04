@@ -1,0 +1,149 @@
+{% macro page_header(title, description, action_url=none, action_label=none) %}
+  <header class="list-page-header">
+    <div>
+      <h1>{{ title }}</h1>
+      <p>{{ description }}</p>
+    </div>
+    {% if action_url and action_label %}
+      <a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>
+    {% endif %}
+  </header>
+{% endmacro %}
+
+{% macro status_badge(label, value) %}
+  {% set badge_classes = {
+    'active': 'success',
+    'running': 'success',
+    'success': 'success',
+    'inactive': 'secondary',
+    'stopped': 'secondary',
+    'suspended': 'info',
+    'maintenance': 'warning'
+  } %}
+  <span class="badge text-bg-{{ badge_classes.get(value, 'light') }} status-badge" data-status="{{ value }}">{{ label }}</span>
+{% endmacro %}
+
+{% macro empty_state(title, description, action_url=none, action_label=none) %}
+  <div class="list-empty-state">
+    <span class="empty-state-mark" aria-hidden="true">0</span>
+    <h2>{{ title }}</h2>
+    <p>{{ description }}</p>
+    {% if action_url and action_label %}
+      <a class="btn btn-primary btn-sm" href="{{ action_url }}">{{ action_label }}</a>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro pagination_nav(pagination, endpoint, label) %}
+  <nav class="list-pagination" aria-label="Paginação de {{ label }}">
+    <ul class="pagination pagination-sm mb-0">
+      {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num) }}" rel="prev">Anterior</a>
+        </li>
+      {% endif %}
+      <li class="page-item active" aria-current="page">
+        <span class="page-link">Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
+      </li>
+      {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num) }}" rel="next">Próxima</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endmacro %}
+
+{% macro form_field(field, help_text=none, container_class="") %}
+  {% set control_class = "form-select" if field.type == "SelectField" else "form-control" %}
+  {% set invalid_class = " is-invalid" if field.errors else "" %}
+  <div class="form-field {{ container_class }}">
+    <div class="form-label-row">
+      {{ field.label(class="form-label") }}
+      {% if field.flags.required %}
+        <span class="required-indicator">Obrigatório</span>
+      {% endif %}
+    </div>
+    {% if field.errors and help_text %}
+      {{ field(class=control_class ~ invalid_class, aria_invalid="true", aria_describedby=field.id ~ "-help " ~ field.id ~ "-errors", **kwargs) }}
+    {% elif field.errors %}
+      {{ field(class=control_class ~ invalid_class, aria_invalid="true", aria_describedby=field.id ~ "-errors", **kwargs) }}
+    {% elif help_text %}
+      {{ field(class=control_class, aria_describedby=field.id ~ "-help", **kwargs) }}
+    {% else %}
+      {{ field(class=control_class, **kwargs) }}
+    {% endif %}
+    {% if help_text %}
+      <div id="{{ field.id }}-help" class="form-text">{{ help_text }}</div>
+    {% endif %}
+    {% if field.errors %}
+      <div id="{{ field.id }}-errors" class="invalid-feedback" role="alert">
+        {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro form_check(field, help_text=none) %}
+  <div class="form-field">
+    <div class="form-check">
+      {% if field.errors and help_text %}
+        {{ field(class="form-check-input is-invalid", aria_invalid="true", aria_describedby=field.id ~ "-help " ~ field.id ~ "-errors") }}
+      {% elif field.errors %}
+        {{ field(class="form-check-input is-invalid", aria_invalid="true", aria_describedby=field.id ~ "-errors") }}
+      {% elif help_text %}
+        {{ field(class="form-check-input", aria_invalid="false", aria_describedby=field.id ~ "-help") }}
+      {% else %}
+        {{ field(class="form-check-input", aria_invalid="false") }}
+      {% endif %}
+      {{ field.label(class="form-check-label") }}
+    </div>
+    {% if help_text %}<div id="{{ field.id }}-help" class="form-text">{{ help_text }}</div>{% endif %}
+    {% if field.errors %}
+      <div id="{{ field.id }}-errors" class="invalid-feedback d-block" role="alert">
+        {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro form_actions(submit_field, cancel_url) %}
+  <div class="form-actions">
+    {{ submit_field(class="btn btn-primary") }}
+    <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancelar</a>
+  </div>
+{% endmacro %}
+
+{% macro delete_confirmation(resource_reference, resource_name, action_url, cancel_url, can_delete=true, blocked_message=none) %}
+  <div class="danger-confirmation">
+    <span class="danger-mark" aria-hidden="true">!</span>
+    <h1>Confirmar exclusão</h1>
+    <p>Confirme a exclusão {{ resource_reference }} <strong>{{ resource_name }}</strong>.</p>
+    <p class="danger-help">Esta ação não poderá ser desfeita.</p>
+
+    {% if can_delete %}
+      <div class="form-actions justify-content-center">
+        <form class="delete-confirmation-form" method="post" action="{{ action_url }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-danger" type="submit">Confirmar exclusão</button>
+        </form>
+        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancelar</a>
+      </div>
+    {% else %}
+      <div class="alert alert-warning" role="alert">{{ blocked_message }}</div>
+      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Voltar</a>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro error_page(status_code, title, description, guidance=none) %}
+  <div class="error-page">
+    <span class="error-code" aria-hidden="true">{{ status_code }}</span>
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    {% if guidance %}<p class="error-guidance">{{ guidance }}</p>{% endif %}
+    <a class="btn btn-primary" href="{{ url_for('auth.dashboard') if current_user.is_authenticated else url_for('main.index') }}">
+      {{ "Voltar ao Dashboard" if current_user.is_authenticated else "Voltar ao início" }}
+    </a>
+  </div>
+{% endmacro %}

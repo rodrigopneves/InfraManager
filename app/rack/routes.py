@@ -156,7 +156,7 @@ def delete(rack_id: int):
     try:
         delete_rack(current_user, selected_rack)
     except RackHasAssetsError as error:
-        flash(str(error), "error")
+        flash(str(error), "warning")
         return redirect(url_for("rack.detail", rack_id=selected_rack.id))
     flash("Rack excluído com sucesso.", "success")
     return redirect(url_for("rack.index"))

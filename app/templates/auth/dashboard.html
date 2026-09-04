@@ -1,27 +1,195 @@
 {% extends "base.html" %}
 
+{% block title %}Dashboard | InfraManager{% endblock %}
+
 {% block content %}
-  <h1>Bem-vindo, {{ current_user.username }}.</h1>
+  <header class="dashboard-hero">
+    <div>
+      <h1>Bem-vindo, {{ current_user.username }}.</h1>
+      <p>Visão geral do ambiente de infraestrutura cadastrado.</p>
+    </div>
+    <span class="status-chip">MFA: {{ "ativo" if current_user.mfa_enabled else "desativado" }}</span>
+  </header>
 
-  <p>MFA: {{ "ativo" if current_user.mfa_enabled else "desativado" }}</p>
-  <p><a href="{{ url_for('datacenter.index') }}">Datacenters</a></p>
-  <p><a href="{{ url_for('room.index') }}">Salas</a></p>
-  <p><a href="{{ url_for('rack.index') }}">Racks</a></p>
-  <p><a href="{{ url_for('asset.index') }}">Ativos</a></p>
-  <p><a href="{{ url_for('virtual_machine.index') }}">Máquinas Virtuais</a></p>
-  {% if current_user.mfa_enabled %}
-    <p><a href="{{ url_for('account.mfa_disable') }}">Desativar MFA</a></p>
-  {% else %}
-    <p><a href="{{ url_for('account.mfa_setup') }}">Configurar MFA</a></p>
+  <section aria-labelledby="environment-summary-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="environment-summary-title" class="mt-0">Resumo do ambiente</h2>
+        <p>Totais consolidados dos módulos de infraestrutura.</p>
+      </div>
+    </div>
+    <div class="row g-3 dashboard-metrics">
+      {% set primary_metrics = [
+        ('datacenters', 'Datacenters', summary.datacenters, url_for('datacenter.index'), 'DC'),
+        ('rooms', 'Salas', summary.rooms, url_for('room.index'), 'SL'),
+        ('racks', 'Racks', summary.racks, url_for('rack.index'), 'RK'),
+        ('assets', 'Ativos', summary.assets, url_for('asset.index'), 'AT'),
+        ('virtual-machines', 'Máquinas Virtuais', summary.virtual_machines, url_for('virtual_machine.index'), 'VM')
+      ] %}
+      {% for metric_key, metric_name, metric_value, metric_url, metric_icon in primary_metrics %}
+        <div class="col-sm-6 col-xl">
+          <article class="card metric-card" data-metric="{{ metric_key }}" data-value="{{ metric_value }}">
+            <div class="card-body position-relative">
+              <div class="metric-icon" aria-hidden="true">{{ metric_icon }}</div>
+              <p class="metric-label">{{ metric_name }}</p>
+              <p class="metric-value">{{ metric_value }}</p>
+              <a class="stretched-link" href="{{ metric_url }}">
+                Ver {{ metric_name|lower }}<span class="visually-hidden">: {{ metric_value }} registros</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="dashboard-section" aria-labelledby="operational-summary-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="operational-summary-title" class="mt-0">Estado operacional</h2>
+        <p>Distribuição por status e utilização física dos Racks.</p>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-4">
+        <article class="card summary-card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <h3>Ativos por status</h3>
+              <span class="badge text-bg-primary rounded-pill">{{ summary.assets }}</span>
+            </div>
+            {% if summary.assets %}
+              <ul class="status-list">
+                {% for status in summary.asset_statuses %}
+                  <li>
+                    <span>{{ status.label }}</span>
+                    <span class="badge text-bg-{{ status.badge_class }} rounded-pill" data-asset-status="{{ status.value }}" data-count="{{ status.count }}">{{ status.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="dashboard-empty">Nenhum Ativo cadastrado.</p>
+            {% endif %}
+          </div>
+        </article>
+      </div>
+
+      <div class="col-lg-4">
+        <article class="card summary-card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <h3>VMs por status</h3>
+              <span class="badge text-bg-primary rounded-pill">{{ summary.virtual_machines }}</span>
+            </div>
+            {% if summary.virtual_machines %}
+              <ul class="status-list">
+                {% for status in summary.virtual_machine_statuses %}
+                  <li>
+                    <span>{{ status.label }}</span>
+                    <span class="badge text-bg-{{ status.badge_class }} rounded-pill" data-vm-status="{{ status.value }}" data-count="{{ status.count }}">{{ status.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="dashboard-empty">Nenhuma Máquina Virtual cadastrada.</p>
+            {% endif %}
+          </div>
+        </article>
+      </div>
+
+      <div class="col-lg-4">
+        <article class="card summary-card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <h3>Ocupação dos Racks</h3>
+              <span class="badge text-bg-primary rounded-pill">{{ summary.rack_utilization_percentage }}%</span>
+            </div>
+            {% if summary.rack_capacity_u %}
+              <label class="visually-hidden" for="rack-occupancy">Unidades de Rack utilizadas</label>
+              <progress id="rack-occupancy" class="rack-progress" value="{{ summary.rack_used_u }}" max="{{ summary.rack_capacity_u }}">
+                {{ summary.rack_utilization_percentage }}%
+              </progress>
+              <dl class="capacity-summary">
+                <div><dt>Capacidade</dt><dd>{{ summary.rack_capacity_u }} U</dd></div>
+                <div><dt>Utilizado</dt><dd>{{ summary.rack_used_u }} U</dd></div>
+                <div><dt>Livre</dt><dd>{{ summary.rack_free_u }} U</dd></div>
+              </dl>
+            {% else %}
+              <p class="dashboard-empty">Nenhum Rack cadastrado.</p>
+            {% endif %}
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {% if admin_summary %}
+    <section id="admin-dashboard" class="dashboard-section admin-section" aria-labelledby="admin-section-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="admin-section-title" class="mt-0">Visão administrativa</h2>
+          <p>Indicadores de acesso visíveis somente para administradores.</p>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.users') }}">Gerenciar usuários</a>
+      </div>
+      <div class="row g-3 admin-metrics">
+        <div class="col-sm-4">
+          <article class="card admin-metric-card" data-admin-metric="active-users" data-value="{{ admin_summary.active_users }}">
+            <div class="card-body">
+              <p>Usuários ativos</p>
+              <strong>{{ admin_summary.active_users }}</strong>
+            </div>
+          </article>
+        </div>
+        <div class="col-sm-4">
+          <article class="card admin-metric-card" data-admin-metric="inactive-users" data-value="{{ admin_summary.inactive_users }}">
+            <div class="card-body">
+              <p>Usuários inativos</p>
+              <strong>{{ admin_summary.inactive_users }}</strong>
+            </div>
+          </article>
+        </div>
+        <div class="col-sm-4">
+          <article class="card admin-metric-card" data-admin-metric="administrators" data-value="{{ admin_summary.administrators }}">
+            <div class="card-body">
+              <p>Administradores</p>
+              <strong>{{ admin_summary.administrators }}</strong>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-section" aria-labelledby="recent-activity-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="recent-activity-title" class="mt-0">Atividade recente</h2>
+          <p>Últimos eventos registrados na auditoria.</p>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.audit') }}">Ver auditoria</a>
+      </div>
+      {% if admin_summary.recent_activity %}
+        <div class="table-responsive list-table-wrapper" role="region" aria-label="Atividade recente" tabindex="0">
+          <table class="activity-table">
+            <caption class="visually-hidden">Atividade recente no sistema</caption>
+            <thead>
+              <tr><th scope="col">Data/hora</th><th scope="col">Evento</th><th scope="col">Ator</th><th scope="col">Recurso</th></tr>
+            </thead>
+            <tbody>
+              {% for activity in admin_summary.recent_activity %}
+                <tr>
+                  <td>{{ activity.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                  <td><span class="badge text-bg-light audit-event-badge">{{ activity.event_type }}</span></td>
+                  <td>{{ activity.actor_username }}</td>
+                  <td>{{ activity.resource }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="dashboard-empty dashboard-empty-bordered">Nenhuma atividade registrada.</p>
+      {% endif %}
+    </section>
   {% endif %}
-
-  {% if current_user.has_role(admin_role) %}
-    <p><a href="{{ url_for('admin.users') }}">Usuários</a></p>
-    <p><a href="{{ url_for('admin.audit') }}">Auditoria</a></p>
-  {% endif %}
-
-  <form method="post" action="{{ url_for('auth.logout') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Sair</button>
-  </form>
 {% endblock %}

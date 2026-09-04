@@ -1,21 +1,34 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import form_field %}
+
+{% block title %}Configurar MFA | InfraManager{% endblock %}
 
 {% block content %}
-  <h1>Configurar MFA</h1>
-  <p>Leia este QR Code com seu aplicativo autenticador e confirme o código atual.</p>
-  <p><img src="{{ qr_data_uri }}" alt="QR Code para configurar MFA"></p>
-
-  <form method="post">
-    {{ form.hidden_tag() }}
-    <p>
-      {{ form.code.label }}<br>
-      {{ form.code(inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
-    </p>
-    <p>{{ form.submit() }}</p>
-  </form>
-
-  <form method="post" action="{{ url_for('account.cancel_mfa_setup') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Cancelar</button>
-  </form>
+  <div class="form-page form-page-narrow">
+    <header class="form-page-header">
+      <h1>Configurar MFA</h1>
+      <p>Leia o QR Code com seu aplicativo autenticador e confirme o código atual.</p>
+    </header>
+    <div class="qr-code-panel">
+      <img src="{{ qr_data_uri }}" alt="QR Code para configurar MFA">
+      <p>Não compartilhe nem registre uma captura deste QR Code.</p>
+    </div>
+    <form class="form-panel" method="post">
+      {{ form.hidden_tag() }}
+      {{ form_field(
+        form.code,
+        "Digite os seis números exibidos no aplicativo autenticador.",
+        inputmode="numeric",
+        autocomplete="one-time-code",
+        maxlength="6"
+      ) }}
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary") }}
+      </div>
+    </form>
+    <form class="secondary-action-form" method="post" action="{{ url_for('account.cancel_mfa_setup') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-outline-secondary" type="submit">Cancelar configuração</button>
+    </form>
+  </div>
 {% endblock %}
