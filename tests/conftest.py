@@ -37,7 +37,12 @@ def client(app: Flask) -> FlaskClient:
 
 @pytest.fixture()
 def active_user(app: Flask) -> User:
-    user = User(username="login.demo", email="login.demo@example.com")
+    user = User(
+        username="login.demo",
+        email="login.demo@example.com",
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
+    )
     user.set_password("valid-test-password")
     db.session.add(user)
     db.session.commit()
@@ -50,6 +55,8 @@ def admin_user(app: Flask) -> User:
         username="admin.demo",
         email="admin.demo@example.com",
         role=UserRole.ADMIN.value,
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
     )
     user.set_password("valid-admin-password")
     db.session.add(user)
@@ -59,7 +66,12 @@ def admin_user(app: Flask) -> User:
 
 @pytest.fixture()
 def regular_user(app: Flask) -> User:
-    user = User(username="user.demo", email="user.demo@example.com")
+    user = User(
+        username="user.demo",
+        email="user.demo@example.com",
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
+    )
     user.set_password("valid-user-password")
     db.session.add(user)
     db.session.commit()
@@ -72,6 +84,8 @@ def operator_user(app: Flask) -> User:
         username="operator.demo",
         email="operator.demo@example.com",
         role=UserRole.OPERATOR.value,
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
     )
     user.set_password("valid-operator-password")
     db.session.add(user)
@@ -85,6 +99,8 @@ def viewer_user(app: Flask) -> User:
         username="viewer.demo",
         email="viewer.demo@example.com",
         role=UserRole.VIEWER.value,
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
     )
     user.set_password("valid-viewer-password")
     db.session.add(user)
@@ -101,6 +117,15 @@ def mfa_user(app: Flask) -> User:
         mfa_secret=pyotp.random_base32(),
     )
     user.set_password("valid-mfa-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture()
+def user_without_mfa(app: Flask) -> User:
+    user = User(username="setup.demo", email="setup.demo@example.com")
+    user.set_password("valid-setup-password")
     db.session.add(user)
     db.session.commit()
     return user

@@ -5,10 +5,12 @@ import pyotp
 import qrcode
 from flask import current_app
 from qrcode.image.svg import SvgPathImage
+from sqlalchemy.exc import SQLAlchemyError
 
-from app.auth.services import verify_totp
+from app.audit import record_event
+from app.auth.services import consume_totp, get_valid_totp_step
 from app.extensions import db
-from app.models import User
+from app.models import AuditEventType, User
 
 
 def generate_mfa_secret() -> str:
@@ -28,12 +30,25 @@ def build_mfa_qr_data_uri(user: User, secret: str) -> str:
 
 
 def enable_mfa(user: User, secret: str, code: str) -> bool:
-    if not verify_totp(secret, code):
+    accepted_step = get_valid_totp_step(secret, code)
+    if accepted_step is None:
         return False
 
     user.mfa_secret = secret
     user.mfa_enabled = True
-    db.session.commit()
+    user.mfa_last_used_step = accepted_step
+    try:
+        record_event(
+            AuditEventType.MFA_ENABLED,
+            actor=user,
+            target=user,
+            commit=False,
+        )
+        record_event(AuditEventType.LOGIN_SUCCESS, actor=user, commit=False)
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        raise
     return True
 
 
@@ -42,11 +57,21 @@ def disable_mfa(user: User, password: str, code: str) -> bool:
         not user.mfa_enabled
         or not user.mfa_secret
         or not user.check_password(password)
-        or not verify_totp(user.mfa_secret, code)
+        or not consume_totp(user, code)
     ):
         return False
 
     user.mfa_enabled = False
     user.mfa_secret = None
-    db.session.commit()
+    try:
+        record_event(
+            AuditEventType.MFA_DISABLED,
+            actor=user,
+            target=user,
+            commit=False,
+        )
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        raise
     return True

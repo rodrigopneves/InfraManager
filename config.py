@@ -1,5 +1,8 @@
+import base64
 import logging
 import os
+import secrets
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -11,7 +14,12 @@ class Config:
     AUTH_LOGIN_RATE_LIMIT = "5 per 15 minutes"
     MFA_ISSUER_NAME = "InfraManager"
     MFA_PENDING_TTL_SECONDS = 300
+    MFA_SETUP_RATE_LIMIT = "5 per 10 minutes"
+    MFA_DISABLE_RATE_LIMIT = "5 per 15 minutes"
+    MFA_ENCRYPTION_KEY = os.getenv("MFA_ENCRYPTION_KEY")
     MFA_VERIFY_RATE_LIMIT = "5 per 5 minutes"
+    MAX_CONTENT_LENGTH = 64 * 1024
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -29,6 +37,9 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     LOG_LEVEL = logging.WARNING
+    MFA_ENCRYPTION_KEY = base64.urlsafe_b64encode(
+        secrets.token_bytes(32)
+    ).decode("ascii")
     RATELIMIT_ENABLED = False
     SECRET_KEY = "testing-only-secret-key"
     TESTING = True

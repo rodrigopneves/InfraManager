@@ -2,14 +2,11 @@ import pytest
 from flask.testing import FlaskClient
 
 from app.models import User, VirtualMachine
+from tests.helpers import complete_login
 
 
 def login(client: FlaskClient, user: User, password: str) -> None:
-    response = client.post(
-        "/login",
-        data={"username": user.username, "password": password},
-    )
-    assert response.status_code == 302
+    complete_login(client, user.username, password)
 
 
 @pytest.mark.parametrize(

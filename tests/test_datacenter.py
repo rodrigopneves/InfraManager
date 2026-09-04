@@ -20,14 +20,11 @@ from app.models import (
     DatacenterStatus,
     User,
 )
+from tests.helpers import complete_login
 
 
 def login(client: FlaskClient, username: str, password: str) -> None:
-    response = client.post(
-        "/login", data={"username": username, "password": password}
-    )
-    assert response.status_code == 302
-    assert urlparse(response.location).path == "/dashboard"
+    complete_login(client, username, password)
 
 
 def login_admin(client: FlaskClient) -> None:

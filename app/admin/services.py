@@ -1,3 +1,5 @@
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.audit import record_event
 from app.extensions import db
 from app.models import AuditEventType, User, UserRole
@@ -44,16 +46,22 @@ def create_user(
     )
     user.set_password(password)
     db.session.add(user)
-    db.session.commit()
     details = {"role": user.role, "is_active": user.is_active}
     if source is not None:
         details["source"] = source
-    record_event(
-        AuditEventType.USER_CREATED,
-        actor=actor,
-        target=user,
-        details=details,
-    )
+    try:
+        db.session.flush()
+        record_event(
+            AuditEventType.USER_CREATED,
+            actor=actor,
+            target=user,
+            details=details,
+            commit=False,
+        )
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        raise
     return user
 
 
@@ -83,41 +91,51 @@ def update_user(
     user.email = email
     user.is_active = is_active
     user.role = role
-    db.session.commit()
-    if changed_fields:
-        record_event(
-            AuditEventType.USER_UPDATED,
-            actor=actor,
-            target=user,
-            details={"changed_fields": changed_fields},
-        )
-    if old_role != user.role:
-        record_event(
-            AuditEventType.USER_ROLE_CHANGED,
-            actor=actor,
-            target=user,
-            details={"old_role": old_role, "new_role": user.role},
-        )
-    if old_is_active != user.is_active:
-        event_type = (
-            AuditEventType.USER_ACTIVATED
-            if user.is_active
-            else AuditEventType.USER_DEACTIVATED
-        )
-        record_event(event_type, actor=actor, target=user)
+    try:
+        if changed_fields:
+            record_event(
+                AuditEventType.USER_UPDATED,
+                actor=actor,
+                target=user,
+                details={"changed_fields": changed_fields},
+                commit=False,
+            )
+        if old_role != user.role:
+            record_event(
+                AuditEventType.USER_ROLE_CHANGED,
+                actor=actor,
+                target=user,
+                details={"old_role": old_role, "new_role": user.role},
+                commit=False,
+            )
+        if old_is_active != user.is_active:
+            event_type = (
+                AuditEventType.USER_ACTIVATED
+                if user.is_active
+                else AuditEventType.USER_DEACTIVATED
+            )
+            record_event(event_type, actor=actor, target=user, commit=False)
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        raise
 
 
 def toggle_user_active(actor: User, user: User) -> None:
     new_status = not user.is_active
     ensure_admin_access_remains(actor, user, is_active=new_status, role=user.role)
     user.is_active = new_status
-    db.session.commit()
     event_type = (
         AuditEventType.USER_ACTIVATED
         if user.is_active
         else AuditEventType.USER_DEACTIVATED
     )
-    record_event(event_type, actor=actor, target=user)
+    try:
+        record_event(event_type, actor=actor, target=user, commit=False)
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        raise
 
 
 def ensure_admin_access_remains(

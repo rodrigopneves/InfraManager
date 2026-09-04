@@ -12,6 +12,8 @@ from app.account.routes import MFA_SETUP_SECRET_KEY
 from app.audit import record_event
 from app.extensions import db
 from app.models import AuditEventType, AuditLog, User, UserRole
+from tests.helpers import complete_login as complete_standard_login
+from tests.helpers import valid_unused_totp
 
 
 def post_login(
@@ -28,14 +30,13 @@ def post_login(
 
 
 def login_admin(client: FlaskClient) -> None:
-    response = post_login(client, "admin.demo", "valid-admin-password")
-    assert urlparse(response.location).path == "/dashboard"
+    complete_standard_login(client, "admin.demo", "valid-admin-password")
 
 
 def complete_mfa_login(client: FlaskClient, user: User) -> str:
     response = post_login(client, user.username, "valid-mfa-password")
     assert urlparse(response.location).path == "/mfa/verify"
-    code = pyotp.TOTP(user.mfa_secret).now()
+    code = valid_unused_totp(user)
     response = client.post("/mfa/verify", data={"code": code})
     assert urlparse(response.location).path == "/dashboard"
     return code
@@ -54,7 +55,7 @@ def test_successful_login_records_event_with_ip_and_limited_user_agent(
 ) -> None:
     long_user_agent = "test-agent/" + ("x" * 400)
 
-    response = post_login(
+    response = complete_standard_login(
         client,
         active_user.username,
         "valid-test-password",
@@ -140,7 +141,7 @@ def test_invalid_mfa_records_failure_without_code(
 def test_logout_records_authenticated_actor(
     client: FlaskClient, active_user: User
 ) -> None:
-    post_login(client, active_user.username, "valid-test-password")
+    complete_standard_login(client, active_user.username, "valid-test-password")
 
     response = client.post("/logout")
     audit_log = get_events(AuditEventType.LOGOUT)[0]
@@ -150,9 +151,9 @@ def test_logout_records_authenticated_actor(
 
 
 def test_enabling_mfa_records_event_without_secret_or_code(
-    client: FlaskClient, active_user: User
+    client: FlaskClient, user_without_mfa: User
 ) -> None:
-    post_login(client, active_user.username, "valid-test-password")
+    post_login(client, user_without_mfa.username, "valid-setup-password")
     client.get("/account/mfa/setup")
     with client.session_transaction() as session:
         secret = session[MFA_SETUP_SECRET_KEY]
@@ -163,10 +164,11 @@ def test_enabling_mfa_records_event_without_secret_or_code(
     serialized_log = json.dumps(audit_log.details)
 
     assert urlparse(response.location).path == "/dashboard"
-    assert audit_log.actor_user_id == active_user.id
-    assert audit_log.target_user_id == active_user.id
+    assert audit_log.actor_user_id == user_without_mfa.id
+    assert audit_log.target_user_id == user_without_mfa.id
     assert secret not in serialized_log
     assert code not in serialized_log
+    assert len(get_events(AuditEventType.LOGIN_SUCCESS)) == 1
 
 
 def test_disabling_mfa_records_event_and_no_sensitive_data(
@@ -174,7 +176,7 @@ def test_disabling_mfa_records_event_and_no_sensitive_data(
 ) -> None:
     complete_mfa_login(client, mfa_user)
     secret = mfa_user.mfa_secret
-    code = pyotp.TOTP(secret).now()
+    code = valid_unused_totp(mfa_user)
 
     response = client.post(
         "/account/mfa/disable",
@@ -183,7 +185,7 @@ def test_disabling_mfa_records_event_and_no_sensitive_data(
     audit_log = get_events(AuditEventType.MFA_DISABLED)[0]
     serialized_log = json.dumps(audit_log.details)
 
-    assert urlparse(response.location).path == "/dashboard"
+    assert urlparse(response.location).path == "/account/mfa/setup"
     assert audit_log.actor_user_id == mfa_user.id
     assert audit_log.target_user_id == mfa_user.id
     assert secret not in serialized_log
@@ -302,7 +304,7 @@ def test_non_admin_cannot_access_audit_page(
 ) -> None:
     active_user.role = role
     db.session.commit()
-    post_login(client, active_user.username, "valid-test-password")
+    complete_standard_login(client, active_user.username, "valid-test-password")
 
     response = client.get("/admin/audit")
 

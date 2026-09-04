@@ -1,4 +1,5 @@
 from flask import (
+    current_app,
     flash,
     make_response,
     redirect,
@@ -7,7 +8,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user, login_required
+from flask_login import current_user, login_required, login_user, logout_user
 
 from app.account import account
 from app.account.forms import DisableMfaForm, MfaCodeForm
@@ -17,20 +18,28 @@ from app.account.services import (
     enable_mfa,
     generate_mfa_secret,
 )
-from app.audit import record_event
-from app.models import AuditEventType
+from app.auth.services import get_pending_mfa_user, start_pending_mfa_login
+from app.extensions import limiter
 
 
 MFA_SETUP_SECRET_KEY = "pending_mfa_setup_secret"
 
 
 @account.route("/mfa/setup", methods=["GET", "POST"])
-@login_required
+@limiter.limit(
+    lambda: current_app.config["MFA_SETUP_RATE_LIMIT"], methods=["POST"]
+)
 def mfa_setup():
-    if current_user.mfa_enabled:
+    if current_user.is_authenticated:
         session.pop(MFA_SETUP_SECRET_KEY, None)
-        flash("MFA já está ativo para sua conta.", "info")
         return redirect(url_for("auth.dashboard"))
+
+    user = get_pending_mfa_user()
+    if user is None:
+        flash("Sua configuração expirou. Entre novamente.", "danger")
+        return redirect(url_for("auth.login"))
+    if user.mfa_enabled:
+        return redirect(url_for("auth.mfa_verify"))
 
     secret = session.get(MFA_SETUP_SECRET_KEY)
     if request.method == "GET" and not secret:
@@ -44,13 +53,9 @@ def mfa_setup():
 
     form = MfaCodeForm()
     if form.validate_on_submit():
-        if enable_mfa(current_user, secret, form.code.data):
-            session.pop(MFA_SETUP_SECRET_KEY, None)
-            record_event(
-                AuditEventType.MFA_ENABLED,
-                actor=current_user,
-                target=current_user,
-            )
+        if enable_mfa(user, secret, form.code.data):
+            session.clear()
+            login_user(user)
             flash("MFA ativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
@@ -59,7 +64,7 @@ def mfa_setup():
         form.code.data = ""
         flash("Código de autenticação inválido.", "danger")
 
-    qr_data_uri = build_mfa_qr_data_uri(current_user, secret)
+    qr_data_uri = build_mfa_qr_data_uri(user, secret)
     response = make_response(
         render_template(
             "account/mfa_setup.html", form=form, qr_data_uri=qr_data_uri
@@ -70,15 +75,19 @@ def mfa_setup():
 
 
 @account.post("/mfa/setup/cancel")
-@login_required
 def cancel_mfa_setup():
-    session.pop(MFA_SETUP_SECRET_KEY, None)
+    if current_user.is_authenticated:
+        return redirect(url_for("auth.dashboard"))
+    session.clear()
     flash("Configuração de MFA cancelada.", "info")
-    return redirect(url_for("auth.dashboard"))
+    return redirect(url_for("auth.login"))
 
 
 @account.route("/mfa/disable", methods=["GET", "POST"])
 @login_required
+@limiter.limit(
+    lambda: current_app.config["MFA_DISABLE_RATE_LIMIT"], methods=["POST"]
+)
 def mfa_disable():
     if not current_user.mfa_enabled or not current_user.mfa_secret:
         flash("MFA não está ativo para sua conta.", "info")
@@ -87,14 +96,11 @@ def mfa_disable():
     form = DisableMfaForm()
     if form.validate_on_submit():
         if disable_mfa(current_user, form.password.data, form.code.data):
-            session.pop(MFA_SETUP_SECRET_KEY, None)
-            record_event(
-                AuditEventType.MFA_DISABLED,
-                actor=current_user,
-                target=current_user,
-            )
-            flash("MFA desativado com sucesso.", "success")
-            return redirect(url_for("auth.dashboard"))
+            user = current_user._get_current_object()
+            logout_user()
+            start_pending_mfa_login(user)
+            flash("Configure novamente o MFA para continuar.", "success")
+            return redirect(url_for("account.mfa_setup"))
         form.code.data = ""
         flash("Não foi possível desativar o MFA.", "danger")
     elif request.method == "POST":

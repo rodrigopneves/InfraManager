@@ -1,9 +1,15 @@
+import time
+from datetime import timedelta
+from unittest.mock import patch
 from urllib.parse import urlparse
 
 import pytest
+import pyotp
+from flask import g
 from flask.testing import FlaskClient
 
 from app import create_app
+from app.auth.services import DUMMY_PASSWORD_HASH
 from app.extensions import db
 from app.models import User
 from config import Config, ProductionConfig, TestingConfig
@@ -16,11 +22,22 @@ def submit_login(
     *,
     follow_redirects: bool = False,
 ):
-    return client.post(
+    response = client.post(
         "/login",
         data={"username": username, "password": password},
-        follow_redirects=follow_redirects,
+        follow_redirects=False,
     )
+    if response.status_code == 302 and urlparse(response.location).path == "/mfa/verify":
+        user = db.session.scalar(
+            db.select(User).where(User.username == username.strip().lower())
+        )
+        assert user is not None
+        return client.post(
+            "/mfa/verify",
+            data={"code": pyotp.TOTP(user.mfa_secret).now()},
+            follow_redirects=follow_redirects,
+        )
+    return response
 
 
 def test_login_page_is_accessible(client: FlaskClient) -> None:
@@ -65,6 +82,47 @@ def test_unknown_username_is_rejected(client: FlaskClient) -> None:
 
     assert response.status_code == 200
     assert "Usuário ou senha inválidos.".encode() in response.data
+
+
+def test_unknown_username_executes_dummy_password_verification(
+    client: FlaskClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked_values = []
+
+    def record_check(password_hash: str, password: str) -> bool:
+        checked_values.append((password_hash, password))
+        return False
+
+    monkeypatch.setattr("app.auth.services.check_password_hash", record_check)
+
+    response = submit_login(
+        client, username="unknown.demo", password="submitted-password"
+    )
+
+    assert response.status_code == 200
+    assert checked_values == [(DUMMY_PASSWORD_HASH, "submitted-password")]
+    assert b"submitted-password" not in response.data
+
+
+def test_inactive_user_executes_dummy_password_verification(
+    client: FlaskClient,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    active_user.is_active = False
+    db.session.commit()
+    checked_values = []
+
+    def record_check(password_hash: str, password: str) -> bool:
+        checked_values.append((password_hash, password))
+        return False
+
+    monkeypatch.setattr("app.auth.services.check_password_hash", record_check)
+
+    response = submit_login(client, password="submitted-password")
+
+    assert response.status_code == 200
+    assert checked_values == [(DUMMY_PASSWORD_HASH, "submitted-password")]
 
 
 def test_inactive_user_is_rejected(
@@ -159,6 +217,8 @@ def test_session_cookie_and_secret_key_configuration() -> None:
     assert Config.SESSION_COOKIE_HTTPONLY is True
     assert Config.SESSION_COOKIE_SAMESITE == "Lax"
     assert Config.SESSION_PERMANENT is False
+    assert Config.PERMANENT_SESSION_LIFETIME == timedelta(hours=8)
+    assert Config.MAX_CONTENT_LENGTH == 64 * 1024
     assert ProductionConfig.SESSION_COOKIE_SECURE is True
     assert TestingConfig.SECRET_KEY == "testing-only-secret-key"
     assert ProductionConfig.SECRET_KEY == Config.SECRET_KEY
@@ -169,9 +229,43 @@ def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None
         ProductionConfig, "SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:"
     )
     monkeypatch.setattr(ProductionConfig, "SECRET_KEY", None)
+    monkeypatch.setattr(
+        ProductionConfig,
+        "MFA_ENCRYPTION_KEY",
+        TestingConfig.MFA_ENCRYPTION_KEY,
+    )
 
     with pytest.raises(RuntimeError, match="SECRET_KEY"):
         create_app("production")
+
+
+def test_non_permanent_session_cookie_expires_cryptographically(
+    app, client: FlaskClient, active_user: User
+) -> None:
+    started_at = time.time()
+    with patch("itsdangerous.timed.time.time", return_value=started_at):
+        submit_login(client)
+
+    with patch(
+        "itsdangerous.timed.time.time",
+        return_value=started_at + (8 * 60 * 60) + 1,
+    ):
+        g.pop("_login_user", None)
+        response = client.get("/dashboard")
+
+    assert response.status_code == 302
+    assert urlparse(response.location).path == "/login"
+
+
+def test_oversized_form_receives_safe_413_response(client: FlaskClient) -> None:
+    response = client.post(
+        "/login",
+        data={"username": "user.demo", "password": "x" * (65 * 1024)},
+    )
+
+    assert response.status_code == 413
+    assert "O conteúdo enviado excede o limite permitido.".encode() in response.data
+    assert b"xxxxxxxxxxxxxxxx" not in response.data
 
 
 @pytest.mark.parametrize(

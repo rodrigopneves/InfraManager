@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import error_page with context %}
+
+{% block title %}413 | InfraManager{% endblock %}
+
+{% block content %}
+  {{ error_page(413, "Solicitação muito grande", "O conteúdo enviado excede o limite permitido.", "Reduza o conteúdo e tente novamente.") }}
+{% endblock %}

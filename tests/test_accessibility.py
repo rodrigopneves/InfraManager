@@ -5,6 +5,7 @@ import pytest
 from flask.testing import FlaskClient
 
 from app.models import User, VirtualMachine
+from tests.helpers import complete_login
 
 
 class AccessibilityAttributeParser(HTMLParser):
@@ -24,11 +25,7 @@ class AccessibilityAttributeParser(HTMLParser):
 
 
 def login(client: FlaskClient, user: User, password: str) -> None:
-    response = client.post(
-        "/login",
-        data={"username": user.username, "password": password},
-    )
-    assert response.status_code == 302
+    complete_login(client, user.username, password)
 
 
 def test_base_layout_has_landmarks_skip_link_and_responsive_navigation(

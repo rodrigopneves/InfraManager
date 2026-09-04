@@ -364,9 +364,6 @@ MFA fortalece diretamente o controle relacionado a falhas de autenticação.
 
 MFA é obrigatório para `ADMIN`, `OPERATOR` e `VIEWER`.
 
-Na etapa 02.7, o suporte técnico é introduzido de forma opcional por usuário para
-preservar compatibilidade com as contas existentes. A imposição obrigatória para
-todos os perfis permanece um requisito do MVP e será aplicada em etapa posterior.
 TOTP reduz o risco de comprometimento apenas por senha, mas não constitui proteção
 completa contra phishing.
 
@@ -429,14 +426,16 @@ O MFA só deverá ser marcado como ativo após um código TOTP válido ser confi
 
 Enquanto a configuração não for confirmada, o usuário permanecerá em estado pré-MFA e não poderá acessar o Dashboard nem outras rotas protegidas.
 
-Na ativação opcional da etapa 02.7, um usuário que já possua sessão
-autenticada inicia o setup na área da conta. O QR Code é SVG gerado em memória e
-incorporado como `data URI`; nenhum arquivo ou endpoint público é criado. Abrir a
-página não ativa MFA. A ativação ocorre somente após validar um código TOTP.
+O usuário inicia o setup após validar a senha, ainda em estado pré-MFA. O QR Code é
+SVG gerado em memória e incorporado como `data URI`; nenhum arquivo ou endpoint
+público é criado. Abrir a página não ativa MFA. A ativação e a sessão autenticada
+ocorrem somente após validar um código TOTP.
 
-A verificação usa `PyOTP`, janela de tolerância `valid_window=1` e aceita somente
-códigos de seis dígitos. A rota de segundo fator permite no máximo 5 tentativas em
-5 minutos por origem com o backend de rate limiting configurado.
+A verificação usa `PyOTP`, janela de tolerância equivalente a `valid_window=1` e
+aceita somente códigos de seis dígitos. O último timestep aceito é persistido e a
+atualização condicional rejeita o mesmo timestep ou qualquer timestep anterior. A
+rota de segundo fator permite no máximo 5 tentativas em 5 minutos por origem com o
+backend de rate limiting configurado.
 
 ---
 
@@ -452,17 +451,25 @@ Não poderá:
 - aparecer em mensagens de erro;
 - ser incluído em screenshots de evidência.
 
-A estratégia final de armazenamento deverá considerar proteção adicional adequada ao MVP.
+Depois da confirmação, o segredo TOTP é armazenado com criptografia autenticada
+Fernet. A chave vem de `MFA_ENCRYPTION_KEY`, permanece externa ao banco e ao
+repositório e é obrigatória em produção. Valores legados em texto são identificados
+e falham de forma segura até a execução explícita do comando
+`flask encrypt-mfa-secrets`; a migration de schema não altera nem destrói esses
+valores. Rotação de chave exige procedimento operacional explícito antes da troca.
 
-Limitação conhecida da etapa 02.7: depois da confirmação, o segredo TOTP é
-armazenado no SQLite sem criptografia de campo. Ele não é exibido novamente,
-incluído em templates administrativos, mensagens de erro ou logs. Antes de uso em
-produção, deverá ser protegido em repouso com criptografia autenticada e chave
-externa ao banco e ao repositório, incluindo estratégia segura de rotação.
+Para atualizar uma instalação existente: fazer backup protegido do SQLite,
+configurar `MFA_ENCRYPTION_KEY`, executar `flask db upgrade` e então executar uma
+única vez `flask encrypt-mfa-secrets`. O comando é idempotente, não exibe segredos e
+converte somente valores legados identificados. A chave atual não deverá ser
+substituída enquanto não existir procedimento de recriptografia validado; uma troca
+direta provoca falha segura na leitura em vez de retornar plaintext.
 
 A desativação pelo titular exige simultaneamente a senha atual e um TOTP válido.
-Quando concluída, remove o segredo persistido. Reset administrativo permanece fora
-do escopo desta etapa.
+Quando concluída, remove o segredo persistido, encerra a sessão autenticada e
+mantém o usuário em estado pré-MFA para configuração imediata de um novo segredo.
+Sem concluir o novo setup, nenhuma rota autenticada fica acessível. Reset
+administrativo permanece fora do escopo desta etapa.
 
 ---
 

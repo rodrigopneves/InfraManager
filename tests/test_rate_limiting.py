@@ -117,7 +117,8 @@ def test_valid_login_works_before_limit(
     )
 
     assert response.status_code == 302
-    assert response.location.endswith("/dashboard")
+    assert response.location.endswith("/account/mfa/setup")
+    assert rate_limited_client.get("/dashboard").status_code == 302
 
 
 def test_different_remote_addresses_have_independent_limits(
@@ -175,3 +176,79 @@ def test_mfa_verification_has_a_dedicated_rate_limit(
     )
     assert blocked_response.status_code == 429
     assert invalid_code.encode() not in blocked_response.data
+
+
+def test_mfa_setup_has_a_dedicated_rate_limit(
+    rate_limited_client: FlaskClient, rate_limited_app: Flask
+) -> None:
+    user = User(username="setup.limit", email="setup.limit@example.com")
+    user.set_password("valid-test-password")
+    db.session.add(user)
+    db.session.commit()
+    remote_address = "198.51.100.30"
+    post_login(
+        rate_limited_client,
+        remote_address=remote_address,
+        username=user.username,
+        password="valid-test-password",
+    )
+    rate_limited_client.get(
+        "/account/mfa/setup",
+        environ_overrides={"REMOTE_ADDR": remote_address},
+    )
+
+    for _ in range(5):
+        response = rate_limited_client.post(
+            "/account/mfa/setup",
+            data={"code": "000000"},
+            environ_overrides={"REMOTE_ADDR": remote_address},
+        )
+        assert response.status_code == 200
+
+    blocked_response = rate_limited_client.post(
+        "/account/mfa/setup",
+        data={"code": "000000"},
+        environ_overrides={"REMOTE_ADDR": remote_address},
+    )
+    assert blocked_response.status_code == 429
+
+
+def test_mfa_disable_has_a_dedicated_rate_limit(
+    rate_limited_client: FlaskClient, rate_limited_app: Flask
+) -> None:
+    user = User(
+        username="disable.limit",
+        email="disable.limit@example.com",
+        mfa_enabled=True,
+        mfa_secret=pyotp.random_base32(),
+    )
+    user.set_password("valid-mfa-password")
+    db.session.add(user)
+    db.session.commit()
+    remote_address = "198.51.100.40"
+    post_login(
+        rate_limited_client,
+        remote_address=remote_address,
+        username=user.username,
+        password="valid-mfa-password",
+    )
+    rate_limited_client.post(
+        "/mfa/verify",
+        data={"code": pyotp.TOTP(user.mfa_secret).now()},
+        environ_overrides={"REMOTE_ADDR": remote_address},
+    )
+
+    for _ in range(5):
+        response = rate_limited_client.post(
+            "/account/mfa/disable",
+            data={"password": "wrong-password", "code": "000000"},
+            environ_overrides={"REMOTE_ADDR": remote_address},
+        )
+        assert response.status_code == 200
+
+    blocked_response = rate_limited_client.post(
+        "/account/mfa/disable",
+        data={"password": "wrong-password", "code": "000000"},
+        environ_overrides={"REMOTE_ADDR": remote_address},
+    )
+    assert blocked_response.status_code == 429

@@ -3,16 +3,20 @@ from urllib.parse import urlparse
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from app.admin.services import AdminOperationError, ensure_admin_access_remains
+from sqlalchemy.exc import OperationalError
+
+from app.admin.services import (
+    AdminOperationError,
+    ensure_admin_access_remains,
+    update_user,
+)
 from app.extensions import db
 from app.models import User, UserRole
+from tests.helpers import complete_login
 
 
 def login(client: FlaskClient, username: str, password: str) -> None:
-    response = client.post(
-        "/login", data={"username": username, "password": password}
-    )
-    assert response.status_code == 302
+    complete_login(client, username, password)
 
 
 def login_admin(client: FlaskClient) -> None:
@@ -336,3 +340,32 @@ def test_create_admin_command_rejects_duplicate(app: Flask, admin_user: User) ->
     assert result.exit_code != 0
     assert "Username já cadastrado." in result.output
     assert db.session.scalar(db.select(db.func.count()).select_from(User)) == 1
+
+
+def test_admin_change_rolls_back_when_audit_fails(
+    app: Flask,
+    admin_user: User,
+    regular_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_email = regular_user.email
+    original_role = regular_user.role
+
+    def fail_audit(*args, **kwargs):
+        raise OperationalError("audit insert", {}, Exception("audit failure"))
+
+    monkeypatch.setattr("app.admin.services.record_event", fail_audit)
+
+    with pytest.raises(OperationalError):
+        update_user(
+            admin_user,
+            regular_user,
+            username=regular_user.username,
+            email="changed.rollback@example.com",
+            is_active=True,
+            role=UserRole.OPERATOR.value,
+        )
+
+    db.session.refresh(regular_user)
+    assert regular_user.email == original_email
+    assert regular_user.role == original_role

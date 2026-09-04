@@ -471,6 +471,7 @@ role
 is_active
 mfa_enabled
 mfa_secret
+mfa_last_used_step
 created_at
 updated_at
 last_login_at
@@ -868,10 +869,10 @@ login_user(user)
 
 Isso evita que a primeira etapa seja confundida com autenticação completa.
 
-Na implementação da etapa 02.7, esse estado possui somente `user_id` e timestamp,
-expira após 5 minutos e é validado novamente contra status, configuração MFA e
-existência do usuário antes do segundo fator. A integridade do estado mantido no
-cliente depende da assinatura da sessão Flask.
+Esse estado possui somente `user_id` e timestamp, expira após 5 minutos e é
+validado novamente contra status e existência do usuário antes da configuração ou
+validação do segundo fator. A integridade do estado mantido no cliente depende da
+assinatura da sessão Flask.
 
 ---
 
@@ -909,15 +910,16 @@ MFA ativado
 
 O segredo TOTP deverá receber proteção adequada definida no `SECURITY.md`.
 
-O fluxo da etapa 02.7 usa `PyOTP` com tolerância de uma janela temporal. O QR Code
-é gerado em memória como SVG e entregue somente na rota autenticada de setup. O
-Blueprint `account` concentra ativação e desativação; o Blueprint `auth` concentra
-a verificação que conclui o login.
+O fluxo usa `PyOTP` com tolerância de uma janela temporal. O QR Code é gerado em
+memória como SVG e entregue somente durante o setup autorizado pelo estado pré-MFA.
+O Blueprint `account` concentra ativação e desativação; o Blueprint `auth`
+concentra a verificação que conclui o login.
 
-Esta etapa habilita MFA opcional por usuário, sem política baseada em perfil. A
-obrigatoriedade geral descrita nos requisitos arquiteturais permanece pendente para
-uma etapa posterior do MVP. A proteção criptográfica do segredo em repouso também
-permanece hardening necessário antes da produção.
+O MFA é obrigatório para todos os usuários, sem política de exceção por perfil. O
+segredo persistido usa criptografia autenticada Fernet com chave externa ao banco e
+ao repositório. O último timestep aceito fica em `mfa_last_used_step`; a atualização
+condicional desse campo rejeita timesteps iguais ou anteriores, inclusive diante de
+requisições concorrentes.
 
 ---
 

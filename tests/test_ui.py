@@ -1,14 +1,11 @@
 from flask.testing import FlaskClient
 
 from app.models import Asset, User
+from tests.helpers import complete_login
 
 
 def login(client: FlaskClient, user: User, password: str) -> None:
-    response = client.post(
-        "/login",
-        data={"username": user.username, "password": password},
-    )
-    assert response.status_code == 302
+    complete_login(client, user.username, password)
 
 
 def test_public_layout_loads_bootstrap_and_custom_styles(

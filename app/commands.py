@@ -1,8 +1,10 @@
 import click
 from flask.cli import with_appcontext
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.admin.services import create_user
 from app.extensions import db
+from app.mfa_crypto import MfaEncryptionError, encrypt_mfa_secret, is_legacy_mfa_secret
 from app.models import User, UserRole, validate_email, validate_username
 
 
@@ -38,3 +40,24 @@ def create_admin_command() -> None:
         source="cli",
     )
     click.echo("Administrador criado com sucesso.")
+
+
+@click.command("encrypt-mfa-secrets")
+@with_appcontext
+def encrypt_mfa_secrets_command() -> None:
+    users = db.session.scalars(
+        db.select(User).where(User._mfa_secret.is_not(None))
+    ).all()
+    legacy_users = [
+        user for user in users if is_legacy_mfa_secret(user._mfa_secret)
+    ]
+    try:
+        for user in legacy_users:
+            user._mfa_secret = encrypt_mfa_secret(user._mfa_secret)
+        db.session.commit()
+    except (MfaEncryptionError, SQLAlchemyError) as error:
+        db.session.rollback()
+        raise click.ClickException(
+            "Não foi possível migrar os segredos MFA."
+        ) from error
+    click.echo(f"Segredos MFA migrados: {len(legacy_users)}.")

@@ -7,14 +7,11 @@ from app.dashboard.services import (
 )
 from app.extensions import db
 from app.models import Asset, User, VirtualMachine, VirtualMachineStatus
+from tests.helpers import complete_login
 
 
 def login(client: FlaskClient, user: User, password: str) -> None:
-    response = client.post(
-        "/login",
-        data={"username": user.username, "password": password},
-    )
-    assert response.status_code == 302
+    complete_login(client, user.username, password)
 
 
 def test_dashboard_summary_is_zero_with_empty_database(app: Flask) -> None:
