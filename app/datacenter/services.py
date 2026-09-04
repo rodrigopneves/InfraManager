@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.audit import record_event
 from app.extensions import db
-from app.models import AuditEventType, Datacenter, Room, User
+from app.models import AuditEventType, Datacenter, Rack, Room, User
 
 
 DATACENTERS_PER_PAGE = 20
@@ -30,6 +30,19 @@ def list_datacenters(page: int) -> Pagination:
         per_page=DATACENTERS_PER_PAGE,
         error_out=True,
     )
+
+
+def get_datacenter_rack_counts(datacenter_ids: list[int]) -> dict[int, int]:
+    if not datacenter_ids:
+        return {}
+    rows = db.session.execute(
+        db.select(Room.datacenter_id, db.func.count(Rack.id))
+        .select_from(Room)
+        .outerjoin(Rack, Rack.room_id == Room.id)
+        .where(Room.datacenter_id.in_(datacenter_ids))
+        .group_by(Room.datacenter_id)
+    )
+    return {datacenter_id: count for datacenter_id, count in rows}
 
 
 def get_datacenter_or_404(datacenter_id: int) -> Datacenter:

@@ -535,6 +535,9 @@ Campos:
 - descrição;
 - status.
 
+O Datacenter é identificado pelo relacionamento da Sala selecionada. A capacidade
+deverá ser um inteiro entre 1 e 100 U.
+
 ---
 
 ## RF-032 — Relacionamento Rack/Sala

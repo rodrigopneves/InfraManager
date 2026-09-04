@@ -8,6 +8,7 @@ from app.room.forms import RoomForm
 from app.room.services import (
     RoomCodeConflictError,
     RoomDatacenterNotFoundError,
+    RoomHasRacksError,
     create_room,
     delete_room,
     get_room_or_404,
@@ -145,7 +146,11 @@ def edit(room_id: int):
 @admin_required
 def delete(room_id: int):
     selected_room = get_room_or_404(room_id)
-    delete_room(current_user, selected_room)
+    try:
+        delete_room(current_user, selected_room)
+    except RoomHasRacksError as error:
+        flash(str(error), "error")
+        return redirect(url_for("room.detail", room_id=selected_room.id))
     flash("Sala excluída com sucesso.", "success")
     return redirect(url_for("room.index"))
 

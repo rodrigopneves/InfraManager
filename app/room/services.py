@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.audit import record_event
 from app.extensions import db
-from app.models import AuditEventType, Datacenter, Room, User
+from app.models import AuditEventType, Datacenter, Rack, Room, User
 
 
 ROOMS_PER_PAGE = 20
@@ -15,6 +15,10 @@ class RoomCodeConflictError(ValueError):
 
 
 class RoomDatacenterNotFoundError(ValueError):
+    pass
+
+
+class RoomHasRacksError(ValueError):
     pass
 
 
@@ -34,7 +38,7 @@ def _raise_room_integrity_error(
 def list_rooms(page: int) -> Pagination:
     query = (
         db.select(Room)
-        .options(selectinload(Room.datacenter))
+        .options(selectinload(Room.datacenter), selectinload(Room.racks))
         .order_by(Room.code, Room.id)
     )
     return db.paginate(query, page=page, per_page=ROOMS_PER_PAGE, error_out=True)
@@ -43,7 +47,7 @@ def list_rooms(page: int) -> Pagination:
 def get_room_or_404(room_id: int) -> Room:
     query = (
         db.select(Room)
-        .options(selectinload(Room.datacenter))
+        .options(selectinload(Room.datacenter), selectinload(Room.racks))
         .where(Room.id == room_id)
     )
     return db.first_or_404(query)
@@ -163,6 +167,14 @@ def update_room(
 
 
 def delete_room(actor: User, room: Room) -> None:
+    has_racks = db.session.scalar(
+        db.select(db.exists().where(Rack.room_id == room.id))
+    )
+    if has_racks:
+        raise RoomHasRacksError(
+            "A Sala não pode ser excluída enquanto possuir Racks."
+        )
+
     room_id = room.id
     db.session.delete(room)
     try:

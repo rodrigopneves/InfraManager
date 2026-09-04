@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ rack.name }}</h1>
+
+  <dl>
+    <dt>Código</dt>
+    <dd>{{ rack.code }}</dd>
+    <dt>Datacenter</dt>
+    <dd><a href="{{ url_for('datacenter.detail', datacenter_id=rack.room.datacenter.id) }}">{{ rack.room.datacenter.code }} — {{ rack.room.datacenter.name }}</a></dd>
+    <dt>Sala</dt>
+    <dd><a href="{{ url_for('room.detail', room_id=rack.room.id) }}">{{ rack.room.code }} — {{ rack.room.name }}</a></dd>
+    <dt>Capacidade</dt>
+    <dd>{{ rack.capacity_u }} U</dd>
+    <dt>Status</dt>
+    <dd>{{ rack.status_label }}</dd>
+    <dt>Descrição</dt>
+    <dd>{{ rack.description or "-" }}</dd>
+  </dl>
+
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('rack.edit', rack_id=rack.id) }}">Editar</a></p>
+    <p><a href="{{ url_for('rack.delete_confirm', rack_id=rack.id) }}">Excluir</a></p>
+  {% endif %}
+
+  <p><a href="{{ url_for('rack.index') }}">Voltar</a></p>
+{% endblock %}

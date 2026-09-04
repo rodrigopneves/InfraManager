@@ -13,6 +13,7 @@
         <th>Código</th>
         <th>Nome</th>
         <th>Datacenter</th>
+        <th>Racks</th>
         <th>Status</th>
         <th>Ações</th>
       </tr>
@@ -23,6 +24,7 @@
           <td>{{ room.code }}</td>
           <td>{{ room.name }}</td>
           <td><a href="{{ url_for('datacenter.detail', datacenter_id=room.datacenter.id) }}">{{ room.datacenter.code }}</a></td>
+          <td>{{ room.racks|length }}</td>
           <td>{{ room.status_label }}</td>
           <td>
             <a href="{{ url_for('room.detail', room_id=room.id) }}">Detalhes</a>
@@ -33,7 +35,7 @@
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="5">Nenhuma Sala cadastrada.</td></tr>
+        <tr><td colspan="6">Nenhuma Sala cadastrada.</td></tr>
       {% endfor %}
     </tbody>
   </table>

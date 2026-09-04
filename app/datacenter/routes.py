@@ -11,6 +11,7 @@ from app.datacenter.services import (
     datacenter_code_exists,
     delete_datacenter,
     get_datacenter_or_404,
+    get_datacenter_rack_counts,
     list_datacenters,
     update_datacenter,
 )
@@ -27,9 +28,13 @@ read_access_required = roles_required(
 def index():
     page = request.args.get("page", 1, type=int)
     pagination = list_datacenters(page)
+    rack_counts = get_datacenter_rack_counts(
+        [selected_datacenter.id for selected_datacenter in pagination.items]
+    )
     return render_template(
         "datacenter/index.html",
         pagination=pagination,
+        rack_counts=rack_counts,
         admin_role=UserRole.ADMIN,
     )
 

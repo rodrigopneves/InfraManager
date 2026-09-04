@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Confirmar exclusão</h1>
+  <p>
+    Confirme a exclusão do Rack
+    <strong>{{ rack.code }} — {{ rack.name }}</strong>.
+  </p>
+
+  <form method="post" action="{{ url_for('rack.delete', rack_id=rack.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Confirmar exclusão</button>
+  </form>
+
+  <p><a href="{{ url_for('rack.detail', rack_id=rack.id) }}">Cancelar</a></p>
+{% endblock %}

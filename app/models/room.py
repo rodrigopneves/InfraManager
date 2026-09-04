@@ -94,6 +94,12 @@ class Room(db.Model):
     )
 
     datacenter = db.relationship("Datacenter", back_populates="rooms")
+    racks = db.relationship(
+        "Rack",
+        back_populates="room",
+        passive_deletes=True,
+        order_by="Rack.code",
+    )
 
     @validates("datacenter_id")
     def validate_datacenter_id(self, _key: str, datacenter_id: int) -> int:

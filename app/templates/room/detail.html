@@ -14,9 +14,40 @@
     <dd>{{ room.description or "-" }}</dd>
   </dl>
 
+  <h2>Racks</h2>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('rack.create', room_id=room.id) }}">Novo Rack nesta Sala</a></p>
+  {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Capacidade</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rack in room.racks %}
+        <tr>
+          <td>{{ rack.code }}</td>
+          <td>{{ rack.name }}</td>
+          <td>{{ rack.capacity_u }} U</td>
+          <td>{{ rack.status_label }}</td>
+          <td><a href="{{ url_for('rack.detail', rack_id=rack.id) }}">Detalhes</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Nenhum Rack cadastrado nesta Sala.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('room.edit', room_id=room.id) }}">Editar</a></p>
-    <p><a href="{{ url_for('room.delete_confirm', room_id=room.id) }}">Excluir</a></p>
+    {% if not room.racks %}
+      <p><a href="{{ url_for('room.delete_confirm', room_id=room.id) }}">Excluir</a></p>
+    {% endif %}
   {% endif %}
 
   <p><a href="{{ url_for('room.index') }}">Voltar</a></p>

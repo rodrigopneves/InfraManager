@@ -25,6 +25,9 @@ class AuditEventType(str, Enum):
     ROOM_CREATE = "ROOM.CREATE"
     ROOM_UPDATE = "ROOM.UPDATE"
     ROOM_DELETE = "ROOM.DELETE"
+    RACK_CREATE = "RACK.CREATE"
+    RACK_UPDATE = "RACK.UPDATE"
+    RACK_DELETE = "RACK.DELETE"
 
 
 VALID_AUDIT_EVENT_TYPES = frozenset(event.value for event in AuditEventType)

@@ -240,6 +240,7 @@ assets
 virtual_machines
 datacenter
 room
+rack
 users
 audit
 ```
@@ -256,6 +257,7 @@ app/
 ├── virtual_machines/
 ├── datacenter/
 ├── room/
+├── rack/
 ├── users/
 └── audit/
 ```
@@ -312,6 +314,11 @@ inframanager/
 │   │   └── services.py
 │   │
 │   ├── room/
+│   │   ├── routes.py
+│   │   ├── forms.py
+│   │   └── services.py
+│   │
+│   ├── rack/
 │   │   ├── routes.py
 │   │   ├── forms.py
 │   │   └── services.py
@@ -635,19 +642,29 @@ Datacenter
 
 # 19. Modelo Rack
 
-Campos:
+Implementado na etapa 03.3 com os campos:
 
 ```text
 id
 room_id
 name
 code
-rack_units
+capacity_u
 description
 status
 created_at
 updated_at
 ```
+
+Todo Rack pertence obrigatoriamente a uma Sala. `code` é normalizado para
+maiúsculas e possui unicidade composta por `(room_id, code)`. `capacity_u` aceita
+inteiros entre 1 e 100, com validação na aplicação e constraint no banco. O
+relacionamento `Room.racks` é 1:N, sem cascade de exclusão, e a FK utiliza
+`ON DELETE RESTRICT`.
+
+O Blueprint usa o prefixo `/racks`, pagina 20 itens e restringe escritas a
+administradores. A listagem carrega Rack, Sala e Datacenter sem N+1; as telas de
+Sala mostram os Racks associados e bloqueiam a exclusão quando houver dependências.
 
 Relacionamento:
 
@@ -739,8 +756,8 @@ ip_address: 192.0.2.10
 details: {"reason": "authentication_failed"}
 ```
 
-As operações de Datacenter e Sala persistem a mudança e seu evento de auditoria na
-mesma transação.
+As operações de Datacenter, Sala e Rack persistem a mudança e seu evento de
+auditoria na mesma transação.
 
 ---
 
@@ -941,7 +958,7 @@ Para o MVP será utilizado modelo simples baseado em roles.
 | Usuários | Sim | Não | Não |
 | Auditoria | Sim | Não | Não |
 
-Datacenter e Sala possuem CRUD completo; Rack permanece planejado. Exclusões
+Datacenter, Sala e Rack possuem CRUD completo. Exclusões
 respeitam as dependências existentes e todas as operações de escrita aplicam
 autorização, validação, CSRF e auditoria.
 
@@ -1121,6 +1138,7 @@ templates/
 │
 ├── datacenter/
 ├── room/
+├── rack/
 │
 ├── users/
 │
@@ -1324,6 +1342,8 @@ tests/
 ├── test_datacenter.py
 ├── test_room.py
 ├── test_room_migration.py
+├── test_rack.py
+├── test_rack_migration.py
 └── test_audit.py
 ```
 
@@ -1349,6 +1369,7 @@ sample_asset
 sample_vm
 sample_datacenter
 sample_room
+sample_rack
 ```
 
 Isso facilitará testes de autorização e CRUD.

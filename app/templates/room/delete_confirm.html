@@ -7,10 +7,14 @@
     <strong>{{ room.code }} — {{ room.name }}</strong>.
   </p>
 
-  <form method="post" action="{{ url_for('room.delete', room_id=room.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Confirmar exclusão</button>
-  </form>
+  {% if room.racks %}
+    <p role="alert">A Sala não pode ser excluída enquanto possuir Racks.</p>
+  {% else %}
+    <form method="post" action="{{ url_for('room.delete', room_id=room.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Confirmar exclusão</button>
+    </form>
+  {% endif %}
 
   <p><a href="{{ url_for('room.detail', room_id=room.id) }}">Cancelar</a></p>
 {% endblock %}

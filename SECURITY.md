@@ -915,6 +915,14 @@ ROOM.UPDATE
 ROOM.DELETE
 ```
 
+Eventos implementados na etapa 03.3:
+
+```text
+RACK.CREATE
+RACK.UPDATE
+RACK.DELETE
+```
+
 Eventos reservados para etapas futuras:
 
 ```text
@@ -925,13 +933,9 @@ ASSET.DELETE
 VM.CREATE
 VM.UPDATE
 VM.DELETE
-
-RACK.CREATE
-RACK.UPDATE
-RACK.DELETE
 ```
 
-Datacenter e Sala possuem CRUD completo; Rack permanece planejado. Suas operações
+Datacenter, Sala e Rack possuem CRUD completo. Suas operações
 de escrita são auditadas e suas exclusões validam as dependências já existentes.
 
 ---
@@ -964,7 +968,7 @@ somente motivo genérico de falha, perfil e status atribuídos, origem CLI, nome
 campos alterados e transição de perfil. Valores anteriores de username/e-mail não
 são armazenados.
 
-Eventos de Datacenter e Sala usam `resource_type`, `resource_id` e `result`
+Eventos de Datacenter, Sala e Rack usam `resource_type`, `resource_id` e `result`
 controlados, sem copiar nome, código, localização, descrição ou conteúdo integral
 do formulário. A alteração do recurso e o respectivo AuditLog são confirmados na
 mesma transação.
@@ -976,9 +980,9 @@ ser omitido da tabela administrativa.
 
 Nos fluxos anteriores à etapa 03.1, falhas de persistência da auditoria executam
 rollback da tentativa, geram erro no Application Log somente com o tipo do evento e
-não interrompem a operação principal já concluída. Nas operações de Datacenter e
-Sala, a alteração e a auditoria pertencem à mesma transação e sofrem rollback em
-conjunto.
+não interrompem a operação principal já concluída. Nas operações de Datacenter,
+Sala e Rack, a alteração e a auditoria pertencem à mesma transação e sofrem
+rollback em conjunto.
 Não existe `try/except: pass` nem inclusão do conteúdo do evento no log técnico.
 
 ---
