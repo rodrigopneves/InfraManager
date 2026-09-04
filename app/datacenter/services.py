@@ -1,9 +1,10 @@
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
 from app.audit import record_event
 from app.extensions import db
-from app.models import AuditEventType, Datacenter, User
+from app.models import AuditEventType, Datacenter, Room, User
 
 
 DATACENTERS_PER_PAGE = 20
@@ -13,8 +14,16 @@ class DatacenterCodeConflictError(ValueError):
     pass
 
 
+class DatacenterHasRoomsError(ValueError):
+    pass
+
+
 def list_datacenters(page: int) -> Pagination:
-    query = db.select(Datacenter).order_by(Datacenter.code, Datacenter.id)
+    query = (
+        db.select(Datacenter)
+        .options(selectinload(Datacenter.rooms))
+        .order_by(Datacenter.code, Datacenter.id)
+    )
     return db.paginate(
         query,
         page=page,
@@ -24,7 +33,12 @@ def list_datacenters(page: int) -> Pagination:
 
 
 def get_datacenter_or_404(datacenter_id: int) -> Datacenter:
-    return db.get_or_404(Datacenter, datacenter_id)
+    query = (
+        db.select(Datacenter)
+        .options(selectinload(Datacenter.rooms))
+        .where(Datacenter.id == datacenter_id)
+    )
+    return db.first_or_404(query)
 
 
 def datacenter_code_exists(
@@ -127,6 +141,14 @@ def update_datacenter(
 
 
 def delete_datacenter(actor: User, datacenter: Datacenter) -> None:
+    has_rooms = db.session.scalar(
+        db.select(db.exists().where(Room.datacenter_id == datacenter.id))
+    )
+    if has_rooms:
+        raise DatacenterHasRoomsError(
+            "O Datacenter não pode ser excluído enquanto possuir Salas."
+        )
+
     datacenter_id = datacenter.id
     db.session.delete(datacenter)
     try:

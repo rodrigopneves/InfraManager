@@ -239,6 +239,7 @@ dashboard
 assets
 virtual_machines
 datacenter
+room
 users
 audit
 ```
@@ -254,6 +255,7 @@ app/
 ├── assets/
 ├── virtual_machines/
 ├── datacenter/
+├── room/
 ├── users/
 └── audit/
 ```
@@ -305,6 +307,11 @@ inframanager/
 │   │   └── services.py
 │   │
 │   ├── datacenter/
+│   │   ├── routes.py
+│   │   ├── forms.py
+│   │   └── services.py
+│   │
+│   ├── room/
 │   │   ├── routes.py
 │   │   ├── forms.py
 │   │   └── services.py
@@ -592,17 +599,28 @@ administradores.
 
 # 18. Modelo Room
 
-Campos:
+Implementado na etapa 03.2 com os campos:
 
 ```text
 id
 datacenter_id
 name
+code
 description
 status
 created_at
 updated_at
 ```
+
+Toda Sala pertence obrigatoriamente a um Datacenter. `code` é normalizado para
+maiúsculas e possui unicidade composta por `(datacenter_id, code)`. `status` aceita
+`active` e `inactive`. O relacionamento `Datacenter.rooms` é 1:N, sem cascade de
+exclusão, e a FK SQLite usa `ON DELETE RESTRICT` com `PRAGMA foreign_keys=ON` em
+todas as conexões SQLite.
+
+O Blueprint usa o prefixo `/rooms`, lista globalmente com paginação de 20 itens e
+restringe escritas a administradores. A tela do Datacenter exibe suas Salas e sua
+listagem apresenta a respectiva quantidade sem consultas N+1.
 
 Relacionamento:
 
@@ -721,8 +739,8 @@ ip_address: 192.0.2.10
 details: {"reason": "authentication_failed"}
 ```
 
-As operações de Datacenter persistem a mudança e seu evento de auditoria na mesma
-transação.
+As operações de Datacenter e Sala persistem a mudança e seu evento de auditoria na
+mesma transação.
 
 ---
 
@@ -923,7 +941,9 @@ Para o MVP será utilizado modelo simples baseado em roles.
 | Usuários | Sim | Não | Não |
 | Auditoria | Sim | Não | Não |
 
-Datacenter, Sala e Rack possuem CRUD completo. Exclusões deverão respeitar dependências e todas as operações de escrita deverão aplicar autorização, validação, CSRF e auditoria.
+Datacenter e Sala possuem CRUD completo; Rack permanece planejado. Exclusões
+respeitam as dependências existentes e todas as operações de escrita aplicam
+autorização, validação, CSRF e auditoria.
 
 ---
 
@@ -1100,6 +1120,7 @@ templates/
 ├── virtual_machines/
 │
 ├── datacenter/
+├── room/
 │
 ├── users/
 │
@@ -1301,6 +1322,8 @@ tests/
 ├── test_assets.py
 ├── test_virtual_machines.py
 ├── test_datacenter.py
+├── test_room.py
+├── test_room_migration.py
 └── test_audit.py
 ```
 
@@ -1325,6 +1348,7 @@ authenticated_admin
 sample_asset
 sample_vm
 sample_datacenter
+sample_room
 ```
 
 Isso facilitará testes de autorização e CRUD.

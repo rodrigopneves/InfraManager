@@ -13,6 +13,7 @@
         <th>Código</th>
         <th>Nome</th>
         <th>Localização</th>
+        <th>Salas</th>
         <th>Status</th>
         <th>Ações</th>
       </tr>
@@ -23,6 +24,7 @@
           <td>{{ datacenter.code }}</td>
           <td>{{ datacenter.name }}</td>
           <td>{{ datacenter.location }}</td>
+          <td>{{ datacenter.rooms|length }}</td>
           <td>{{ datacenter.status_label }}</td>
           <td>
             <a href="{{ url_for('datacenter.detail', datacenter_id=datacenter.id) }}">Detalhes</a>
@@ -33,7 +35,7 @@
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="5">Nenhum Datacenter cadastrado.</td></tr>
+        <tr><td colspan="6">Nenhum Datacenter cadastrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

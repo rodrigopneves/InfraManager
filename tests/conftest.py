@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
-from app.models import Datacenter, User, UserRole
+from app.models import Datacenter, Room, User, UserRole
 
 
 @pytest.fixture()
@@ -108,3 +108,16 @@ def sample_datacenter(app: Flask) -> Datacenter:
     db.session.add(datacenter)
     db.session.commit()
     return datacenter
+
+
+@pytest.fixture()
+def sample_room(app: Flask, sample_datacenter: Datacenter) -> Room:
+    room = Room(
+        datacenter_id=sample_datacenter.id,
+        name="Sala Laboratório",
+        code="ROOM-LAB-01",
+        description="Sala fictícia para testes.",
+    )
+    db.session.add(room)
+    db.session.commit()
+    return room

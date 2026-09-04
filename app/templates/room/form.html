@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <p>
+      {{ form.datacenter_id.label }}<br>
+      {{ form.datacenter_id() }}
+      {% for error in form.datacenter_id.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+    </p>
+    <p>
+      {{ form.name.label }}<br>
+      {{ form.name() }}
+      {% for error in form.name.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+    </p>
+    <p>
+      {{ form.code.label }}<br>
+      {{ form.code() }}
+      {% for error in form.code.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+    </p>
+    <p>
+      {{ form.description.label }}<br>
+      {{ form.description() }}
+      {% for error in form.description.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+    </p>
+    <p>
+      {{ form.status.label }} {{ form.status() }}
+      {% for error in form.status.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+    </p>
+    <p>{{ form.submit() }}</p>
+  </form>
+
+  <p><a href="{{ cancel_url }}">Cancelar</a></p>
+{% endblock %}

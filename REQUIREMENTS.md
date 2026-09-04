@@ -504,6 +504,7 @@ O módulo de Sala deverá oferecer CRUD completo: cadastrar, listar, visualizar 
 Campos:
 
 - nome;
+- código;
 - datacenter;
 - descrição;
 - status.

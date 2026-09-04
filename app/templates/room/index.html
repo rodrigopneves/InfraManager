@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Salas</h1>
+
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('room.create') }}">Nova Sala</a></p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Datacenter</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in pagination.items %}
+        <tr>
+          <td>{{ room.code }}</td>
+          <td>{{ room.name }}</td>
+          <td><a href="{{ url_for('datacenter.detail', datacenter_id=room.datacenter.id) }}">{{ room.datacenter.code }}</a></td>
+          <td>{{ room.status_label }}</td>
+          <td>
+            <a href="{{ url_for('room.detail', room_id=room.id) }}">Detalhes</a>
+            {% if current_user.has_role(admin_role) %}
+              <a href="{{ url_for('room.edit', room_id=room.id) }}">Editar</a>
+              <a href="{{ url_for('room.delete_confirm', room_id=room.id) }}">Excluir</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Nenhuma Sala cadastrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('room.index', page=pagination.prev_num) }}">Anterior</a>
+  {% endif %}
+  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('room.index', page=pagination.next_num) }}">Próxima</a>
+  {% endif %}
+{% endblock %}

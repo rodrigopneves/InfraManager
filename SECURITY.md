@@ -907,6 +907,14 @@ DATACENTER.UPDATE
 DATACENTER.DELETE
 ```
 
+Eventos implementados na etapa 03.2:
+
+```text
+ROOM.CREATE
+ROOM.UPDATE
+ROOM.DELETE
+```
+
 Eventos reservados para etapas futuras:
 
 ```text
@@ -918,16 +926,13 @@ VM.CREATE
 VM.UPDATE
 VM.DELETE
 
-ROOM.CREATE
-ROOM.UPDATE
-ROOM.DELETE
-
 RACK.CREATE
 RACK.UPDATE
 RACK.DELETE
 ```
 
-Datacenter, Sala e Rack possuem CRUD completo. Suas operações de escrita deverão ser auditadas e suas exclusões deverão validar dependências.
+Datacenter e Sala possuem CRUD completo; Rack permanece planejado. Suas operações
+de escrita são auditadas e suas exclusões validam as dependências já existentes.
 
 ---
 
@@ -959,9 +964,10 @@ somente motivo genérico de falha, perfil e status atribuídos, origem CLI, nome
 campos alterados e transição de perfil. Valores anteriores de username/e-mail não
 são armazenados.
 
-Eventos de Datacenter usam `resource_type`, `resource_id` e `result` controlados,
-sem copiar nome, localização, descrição ou conteúdo integral do formulário. A
-alteração do Datacenter e o respectivo AuditLog são confirmados na mesma transação.
+Eventos de Datacenter e Sala usam `resource_type`, `resource_id` e `result`
+controlados, sem copiar nome, código, localização, descrição ou conteúdo integral
+do formulário. A alteração do recurso e o respectivo AuditLog são confirmados na
+mesma transação.
 
 O endereço IP vem exclusivamente de `request.remote_addr`. A aplicação não
 interpreta `X-Forwarded-For` nesta fase; a confiança no proxy será configurada e
@@ -970,8 +976,9 @@ ser omitido da tabela administrativa.
 
 Nos fluxos anteriores à etapa 03.1, falhas de persistência da auditoria executam
 rollback da tentativa, geram erro no Application Log somente com o tipo do evento e
-não interrompem a operação principal já concluída. Nas operações de Datacenter, a
-alteração e a auditoria pertencem à mesma transação e sofrem rollback em conjunto.
+não interrompem a operação principal já concluída. Nas operações de Datacenter e
+Sala, a alteração e a auditoria pertencem à mesma transação e sofrem rollback em
+conjunto.
 Não existe `try/except: pass` nem inclusão do conteúdo do evento no log técnico.
 
 ---

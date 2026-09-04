@@ -14,9 +14,38 @@
     <dd>{{ datacenter.description or "-" }}</dd>
   </dl>
 
+  <h2>Salas</h2>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('room.create', datacenter_id=datacenter.id) }}">Nova Sala neste Datacenter</a></p>
+  {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in datacenter.rooms %}
+        <tr>
+          <td>{{ room.code }}</td>
+          <td>{{ room.name }}</td>
+          <td>{{ room.status_label }}</td>
+          <td><a href="{{ url_for('room.detail', room_id=room.id) }}">Detalhes</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">Nenhuma Sala cadastrada neste Datacenter.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('datacenter.edit', datacenter_id=datacenter.id) }}">Editar</a></p>
-    <p><a href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a></p>
+    {% if not datacenter.rooms %}
+      <p><a href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a></p>
+    {% endif %}
   {% endif %}
 
   <p><a href="{{ url_for('datacenter.index') }}">Voltar</a></p>

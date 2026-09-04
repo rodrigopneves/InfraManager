@@ -6,6 +6,7 @@ from app.datacenter import datacenter
 from app.datacenter.forms import DatacenterForm
 from app.datacenter.services import (
     DatacenterCodeConflictError,
+    DatacenterHasRoomsError,
     create_datacenter,
     datacenter_code_exists,
     delete_datacenter,
@@ -118,7 +119,13 @@ def edit(datacenter_id: int):
 @admin_required
 def delete(datacenter_id: int):
     selected_datacenter = get_datacenter_or_404(datacenter_id)
-    delete_datacenter(current_user, selected_datacenter)
+    try:
+        delete_datacenter(current_user, selected_datacenter)
+    except DatacenterHasRoomsError as error:
+        flash(str(error), "error")
+        return redirect(
+            url_for("datacenter.detail", datacenter_id=selected_datacenter.id)
+        )
     flash("Datacenter excluído com sucesso.", "success")
     return redirect(url_for("datacenter.index"))
 

@@ -29,6 +29,7 @@ def create_app(config: str | object | None = None) -> Flask:
     from app.account import account
     from app.admin import admin
     from app.datacenter import datacenter
+    from app.room import room
     from app.commands import create_admin_command
     from app.routes import main
 
@@ -36,6 +37,7 @@ def create_app(config: str | object | None = None) -> Flask:
     app.register_blueprint(admin)
     app.register_blueprint(auth)
     app.register_blueprint(datacenter)
+    app.register_blueprint(room)
     app.register_blueprint(main)
     app.cli.add_command(create_admin_command)
     app.register_error_handler(Forbidden, _handle_forbidden_error)

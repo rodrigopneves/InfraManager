@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ room.name }}</h1>
+
+  <dl>
+    <dt>Código</dt>
+    <dd>{{ room.code }}</dd>
+    <dt>Datacenter</dt>
+    <dd><a href="{{ url_for('datacenter.detail', datacenter_id=room.datacenter.id) }}">{{ room.datacenter.code }} — {{ room.datacenter.name }}</a></dd>
+    <dt>Status</dt>
+    <dd>{{ room.status_label }}</dd>
+    <dt>Descrição</dt>
+    <dd>{{ room.description or "-" }}</dd>
+  </dl>
+
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('room.edit', room_id=room.id) }}">Editar</a></p>
+    <p><a href="{{ url_for('room.delete_confirm', room_id=room.id) }}">Excluir</a></p>
+  {% endif %}
+
+  <p><a href="{{ url_for('room.index') }}">Voltar</a></p>
+{% endblock %}

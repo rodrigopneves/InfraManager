@@ -97,6 +97,13 @@ class Datacenter(db.Model):
         db.DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
     )
 
+    rooms = db.relationship(
+        "Room",
+        back_populates="datacenter",
+        passive_deletes=True,
+        order_by="Room.code",
+    )
+
     @validates("name")
     def normalize_and_validate_name(self, _key: str, name: str) -> str:
         return normalize_datacenter_name(name)

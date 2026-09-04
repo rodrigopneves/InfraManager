@@ -35,10 +35,11 @@ CI/CD               ⏳
 Documentação final  ⏳
 ```
 
-A etapa 02 entrega Application Factory, persistência e migrations, autenticação,
-CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP opcional e
-auditoria de autenticação/usuários. O ponto WSGI padrão é `wsgi:app`; `run.py`
-permanece como entrada de desenvolvimento e para comandos Flask.
+As etapas 02, 03.1 e 03.2 entregam Application Factory, persistência e migrations,
+autenticação, CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA
+TOTP opcional, auditoria e os CRUDs de Datacenters e Salas. O ponto WSGI padrão é
+`wsgi:app`; `run.py` permanece como entrada de desenvolvimento e para comandos
+Flask.
 
 Débitos conhecidos para hardening e produção:
 
@@ -396,7 +397,11 @@ Datacenter
 
 Um ativo físico poderá opcionalmente estar associado a um rack.
 
-Datacenter, Sala e Rack terão CRUD completo: cadastro, listagem, visualização de detalhes, edição e exclusão. Escritas deverão aplicar autorização server-side, validação, CSRF, auditoria e verificação de dependências.
+Datacenter e Sala possuem CRUD completo; Rack permanece para a próxima etapa.
+Cada Sala pertence obrigatoriamente a um Datacenter e seu código é único dentro
+desse Datacenter. Escritas aplicam autorização server-side, validação, CSRF,
+auditoria e verificação de dependências. Um Datacenter com Salas não pode ser
+excluído.
 
 ---
 
@@ -530,6 +535,14 @@ DATACENTER.UPDATE
 DATACENTER.DELETE
 ```
 
+Na etapa 03.2 foram introduzidos:
+
+```text
+ROOM.CREATE
+ROOM.UPDATE
+ROOM.DELETE
+```
+
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
 limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
@@ -537,9 +550,9 @@ primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
 Nginx/ProxyFix.
 
 A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
-identificar recursos de infraestrutura. No CRUD de Datacenters, a alteração e o
-AuditLog usam a mesma transação; os fluxos anteriores mantêm o comportamento já
-existente.
+identificar recursos de infraestrutura. Nos CRUDs de Datacenters e Salas, a
+alteração e o AuditLog usam a mesma transação; os fluxos anteriores mantêm o
+comportamento já existente.
 
 O log não deverá armazenar:
 
@@ -571,6 +584,7 @@ inframanager/
 │   ├── assets/
 │   ├── virtual_machines/
 │   ├── datacenter/
+│   ├── room/
 │   ├── users/
 │   ├── audit/
 │   ├── templates/
@@ -991,7 +1005,7 @@ Nenhuma evidência deverá conter segredos.
 - [ ] Ativos
 - [ ] Máquinas Virtuais
 - [x] CRUD completo de Datacenter
-- [ ] CRUD completo de Sala
+- [x] CRUD completo de Sala
 - [ ] CRUD completo de Rack
 
 ## Fase 7 — Auditoria
