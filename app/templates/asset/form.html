@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    {% for field in [form.rack_id, form.name, form.asset_tag, form.serial_number, form.manufacturer, form.model, form.asset_type, form.rack_unit_start, form.rack_units, form.status, form.description] %}
+      <p>
+        {{ field.label }}<br>
+        {{ field() }}
+        {% for error in field.errors %}<span role="alert">{{ error }}</span>{% endfor %}
+      </p>
+    {% endfor %}
+    <p>{{ form.submit() }}</p>
+  </form>
+  <p><a href="{{ cancel_url }}">Cancelar</a></p>
+{% endblock %}

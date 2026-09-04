@@ -7,10 +7,14 @@
     <strong>{{ rack.code }} — {{ rack.name }}</strong>.
   </p>
 
-  <form method="post" action="{{ url_for('rack.delete', rack_id=rack.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Confirmar exclusão</button>
-  </form>
+  {% if rack.assets %}
+    <p role="alert">O Rack não pode ser excluído enquanto possuir Ativos.</p>
+  {% else %}
+    <form method="post" action="{{ url_for('rack.delete', rack_id=rack.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Confirmar exclusão</button>
+    </form>
+  {% endif %}
 
   <p><a href="{{ url_for('rack.detail', rack_id=rack.id) }}">Cancelar</a></p>
 {% endblock %}

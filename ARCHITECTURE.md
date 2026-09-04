@@ -236,7 +236,7 @@ O sistema será dividido inicialmente nos seguintes Blueprints:
 auth
 account
 dashboard
-assets
+asset
 virtual_machines
 datacenter
 room
@@ -253,7 +253,7 @@ app/
 ├── auth/
 ├── account/
 ├── dashboard/
-├── assets/
+├── asset/
 ├── virtual_machines/
 ├── datacenter/
 ├── room/
@@ -298,7 +298,7 @@ inframanager/
 │   ├── dashboard/
 │   │   └── routes.py
 │   │
-│   ├── assets/
+│   ├── asset/
 │   │   ├── routes.py
 │   │   ├── forms.py
 │   │   └── services.py
@@ -517,28 +517,35 @@ Os códigos não deverão ser armazenados em texto puro.
 
 # 15. Modelo Asset
 
-Campos iniciais:
+Implementado na etapa 03.4 com os campos:
 
 ```text
 id
+rack_id
+name
 asset_tag
-hostname
-asset_type
+serial_number
 manufacturer
 model
-serial_number
-ip_address
-operating_system
-department
-responsible
-location
+asset_type
+rack_unit_start
+rack_units
+description
 status
-notes
 created_at
 updated_at
-created_by
-updated_by
 ```
+
+Todo Ativo pertence obrigatoriamente a um Rack. `asset_tag` é normalizado para
+maiúsculas e possui unicidade global. Os tipos são controlados e abrangem servidor,
+switch, roteador, firewall, storage, appliance, access point, notebook, desktop e
+outro. A posição física usa o intervalo inclusivo iniciado por `rack_unit_start` e
+com tamanho `rack_units`.
+
+O service rejeita posições além de `Rack.capacity_u` e sobreposições com outros
+Ativos do mesmo Rack. A FK usa `ON DELETE RESTRICT`, não há cascade, e Racks com
+Ativos não podem ser excluídos. O Blueprint `/assets` pagina 20 itens e carrega a
+hierarquia completa sem N+1.
 
 ---
 
@@ -682,17 +689,17 @@ Rack
 
 # 20. Ativo e Rack
 
-Quando apropriado, um ativo poderá estar associado a um Rack.
+Na etapa 03.4, todo Ativo está obrigatoriamente associado a um Rack.
 
 Será previsto no Asset:
 
 ```text
 rack_id
 rack_unit_start
-rack_unit_height
+rack_units
 ```
 
-Essa associação será opcional.
+Essa associação é obrigatória no model atual.
 
 Exemplo:
 
@@ -756,7 +763,7 @@ ip_address: 192.0.2.10
 details: {"reason": "authentication_failed"}
 ```
 
-As operações de Datacenter, Sala e Rack persistem a mudança e seu evento de
+As operações de Datacenter, Sala, Rack e Ativo persistem a mudança e seu evento de
 auditoria na mesma transação.
 
 ---
@@ -939,8 +946,8 @@ Para o MVP será utilizado modelo simples baseado em roles.
 |---|---:|---:|---:|
 | Dashboard | Sim | Sim | Sim |
 | Visualizar ativos | Sim | Sim | Sim |
-| Criar ativos | Sim | Sim | Não |
-| Editar ativos | Sim | Sim | Não |
+| Criar ativos | Sim | Não | Não |
+| Editar ativos | Sim | Não | Não |
 | Excluir ativos | Sim | Não | Não |
 | Visualizar VMs | Sim | Sim | Sim |
 | Criar VMs | Sim | Sim | Não |
@@ -958,7 +965,7 @@ Para o MVP será utilizado modelo simples baseado em roles.
 | Usuários | Sim | Não | Não |
 | Auditoria | Sim | Não | Não |
 
-Datacenter, Sala e Rack possuem CRUD completo. Exclusões
+Datacenter, Sala, Rack e Ativo possuem CRUD completo. Exclusões
 respeitam as dependências existentes e todas as operações de escrita aplicam
 autorização, validação, CSRF e auditoria.
 
@@ -1132,7 +1139,7 @@ templates/
 ├── dashboard/
 │   └── index.html
 │
-├── assets/
+├── asset/
 │
 ├── virtual_machines/
 │
@@ -1337,7 +1344,8 @@ tests/
 ├── test_auth.py
 ├── test_mfa.py
 ├── test_rbac.py
-├── test_assets.py
+├── test_asset.py
+├── test_asset_migration.py
 ├── test_virtual_machines.py
 ├── test_datacenter.py
 ├── test_room.py

@@ -35,9 +35,9 @@ CI/CD               ⏳
 Documentação final  ⏳
 ```
 
-As etapas 02, 03.1, 03.2 e 03.3 entregam Application Factory, persistência e migrations,
+As etapas 02, 03.1, 03.2, 03.3 e 03.4 entregam Application Factory, persistência e migrations,
 autenticação, CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA
-TOTP opcional, auditoria e os CRUDs de Datacenters, Salas e Racks. O ponto WSGI padrão é
+TOTP opcional, auditoria e os CRUDs de Datacenters, Salas, Racks e Ativos. O ponto WSGI padrão é
 `wsgi:app`; `run.py` permanece como entrada de desenvolvimento e para comandos
 Flask.
 
@@ -395,14 +395,15 @@ Datacenter
  Equipamento
 ```
 
-Um ativo físico poderá opcionalmente estar associado a um rack.
+Todo ativo físico pertence obrigatoriamente a um Rack nesta etapa.
 
-Datacenter, Sala e Rack possuem CRUD completo.
+Datacenter, Sala, Rack e Ativo possuem CRUD completo.
 Cada Sala pertence obrigatoriamente a um Datacenter e seu código é único dentro
 desse Datacenter. Cada Rack pertence a uma Sala, possui capacidade entre 1 e 100 U
 e código único nessa Sala. Escritas aplicam autorização server-side, validação,
 CSRF, auditoria e verificação de dependências. Datacenters com Salas e Salas com
-Racks não podem ser excluídos.
+Racks não podem ser excluídos. Ativos respeitam a capacidade física do Rack e não
+podem ocupar intervalos de U sobrepostos.
 
 ---
 
@@ -552,6 +553,14 @@ RACK.UPDATE
 RACK.DELETE
 ```
 
+Na etapa 03.4 foram introduzidos:
+
+```text
+ASSET.CREATE
+ASSET.UPDATE
+ASSET.DELETE
+```
+
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
 limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
@@ -559,7 +568,7 @@ primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
 Nginx/ProxyFix.
 
 A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
-identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas e Racks, a
+identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas, Racks e Ativos, a
 alteração e o AuditLog usam a mesma transação; os fluxos anteriores mantêm o
 comportamento já existente.
 
@@ -590,7 +599,7 @@ inframanager/
 │   ├── models/
 │   ├── auth/
 │   ├── dashboard/
-│   ├── assets/
+│   ├── asset/
 │   ├── virtual_machines/
 │   ├── datacenter/
 │   ├── room/
@@ -1012,7 +1021,7 @@ Nenhuma evidência deverá conter segredos.
 
 ## Fase 6 — CRUD
 
-- [ ] Ativos
+- [x] Ativos
 - [ ] Máquinas Virtuais
 - [x] CRUD completo de Datacenter
 - [x] CRUD completo de Sala

@@ -8,6 +8,8 @@ from app.rack.forms import RackForm
 from app.rack.services import (
     RackCodeConflictError,
     RackRoomNotFoundError,
+    RackHasAssetsError,
+    RackCapacityBelowAssetsError,
     create_rack,
     delete_rack,
     get_rack_or_404,
@@ -49,8 +51,13 @@ def index():
 @read_access_required
 def detail(rack_id: int):
     selected_rack = get_rack_or_404(rack_id)
+    used_u = sum(asset.rack_units for asset in selected_rack.assets)
     return render_template(
-        "rack/detail.html", rack=selected_rack, admin_role=UserRole.ADMIN
+        "rack/detail.html",
+        rack=selected_rack,
+        used_u=used_u,
+        free_u=selected_rack.capacity_u - used_u,
+        admin_role=UserRole.ADMIN,
     )
 
 
@@ -128,6 +135,8 @@ def edit(rack_id: int):
                 form.room_id.errors.append(str(error))
             except RackCodeConflictError as error:
                 form.code.errors.append(str(error))
+            except RackCapacityBelowAssetsError as error:
+                form.capacity_u.errors.append(str(error))
             else:
                 flash("Rack atualizado com sucesso.", "success")
                 return redirect(url_for("rack.detail", rack_id=selected_rack.id))
@@ -144,7 +153,11 @@ def edit(rack_id: int):
 @admin_required
 def delete(rack_id: int):
     selected_rack = get_rack_or_404(rack_id)
-    delete_rack(current_user, selected_rack)
+    try:
+        delete_rack(current_user, selected_rack)
+    except RackHasAssetsError as error:
+        flash(str(error), "error")
+        return redirect(url_for("rack.detail", rack_id=selected_rack.id))
     flash("Rack excluído com sucesso.", "success")
     return redirect(url_for("rack.index"))
 

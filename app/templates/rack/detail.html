@@ -18,9 +18,40 @@
     <dd>{{ rack.description or "-" }}</dd>
   </dl>
 
+  <h2>Ocupação</h2>
+  <dl>
+    <dt>Capacidade</dt><dd>{{ rack.capacity_u }} U</dd>
+    <dt>Utilizado</dt><dd>{{ used_u }} U</dd>
+    <dt>Livre</dt><dd>{{ free_u }} U</dd>
+  </dl>
+
+  <h2>Ativos</h2>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('asset.create', rack_id=rack.id) }}">Novo Ativo neste Rack</a></p>
+  {% endif %}
+  <table>
+    <thead><tr><th>U</th><th>Identificador</th><th>Nome</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>
+      {% for asset in rack.assets %}
+        <tr>
+          <td>{{ asset.rack_position_label }}</td>
+          <td>{{ asset.asset_tag }}</td>
+          <td>{{ asset.name }}</td>
+          <td>{{ asset.type_label }}</td>
+          <td>{{ asset.status_label }}</td>
+          <td><a href="{{ url_for('asset.detail', asset_id=asset.id) }}">Detalhes</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Nenhum Ativo cadastrado neste Rack.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('rack.edit', rack_id=rack.id) }}">Editar</a></p>
-    <p><a href="{{ url_for('rack.delete_confirm', rack_id=rack.id) }}">Excluir</a></p>
+    {% if not rack.assets %}
+      <p><a href="{{ url_for('rack.delete_confirm', rack_id=rack.id) }}">Excluir</a></p>
+    {% endif %}
   {% endif %}
 
   <p><a href="{{ url_for('rack.index') }}">Voltar</a></p>

@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
-from app.models import Datacenter, Rack, Room, User, UserRole
+from app.models import Asset, AssetType, Datacenter, Rack, Room, User, UserRole
 
 
 @pytest.fixture()
@@ -135,3 +135,22 @@ def sample_rack(app: Flask, sample_room: Room) -> Rack:
     db.session.add(rack)
     db.session.commit()
     return rack
+
+
+@pytest.fixture()
+def sample_asset(app: Flask, sample_rack: Rack) -> Asset:
+    asset = Asset(
+        rack_id=sample_rack.id,
+        name="Servidor Laboratório",
+        asset_tag="SRV-LAB-01",
+        serial_number="SN-DEMO-001",
+        manufacturer="Fabricante Demo",
+        model="Modelo Demo",
+        asset_type=AssetType.SERVER.value,
+        rack_unit_start=10,
+        rack_units=2,
+        description="Ativo fictício para testes.",
+    )
+    db.session.add(asset)
+    db.session.commit()
+    return asset

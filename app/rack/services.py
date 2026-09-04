@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.audit import record_event
 from app.extensions import db
-from app.models import AuditEventType, Rack, Room, User
+from app.models import Asset, AuditEventType, Rack, Room, User
 
 
 RACKS_PER_PAGE = 20
@@ -15,6 +15,14 @@ class RackCodeConflictError(ValueError):
 
 
 class RackRoomNotFoundError(ValueError):
+    pass
+
+
+class RackHasAssetsError(ValueError):
+    pass
+
+
+class RackCapacityBelowAssetsError(ValueError):
     pass
 
 
@@ -30,7 +38,10 @@ def _raise_rack_integrity_error(error: IntegrityError, room_id: int) -> None:
 def list_racks(page: int) -> Pagination:
     query = (
         db.select(Rack)
-        .options(selectinload(Rack.room).selectinload(Room.datacenter))
+        .options(
+            selectinload(Rack.room).selectinload(Room.datacenter),
+            selectinload(Rack.assets),
+        )
         .order_by(Rack.code, Rack.id)
     )
     return db.paginate(query, page=page, per_page=RACKS_PER_PAGE, error_out=True)
@@ -39,7 +50,10 @@ def list_racks(page: int) -> Pagination:
 def get_rack_or_404(rack_id: int) -> Rack:
     query = (
         db.select(Rack)
-        .options(selectinload(Rack.room).selectinload(Room.datacenter))
+        .options(
+            selectinload(Rack.room).selectinload(Room.datacenter),
+            selectinload(Rack.assets),
+        )
         .where(Rack.id == rack_id)
     )
     return db.first_or_404(query)
@@ -122,6 +136,15 @@ def update_rack(
     status: str,
 ) -> None:
     room = get_room(room_id)
+    highest_occupied_unit = db.session.scalar(
+        db.select(db.func.max(Asset.rack_unit_start + Asset.rack_units - 1)).where(
+            Asset.rack_id == rack.id
+        )
+    )
+    if highest_occupied_unit is not None and capacity_u < highest_occupied_unit:
+        raise RackCapacityBelowAssetsError(
+            "A capacidade não pode ser menor que a última U ocupada por um Ativo."
+        )
     new_values = {
         "room_id": room.id,
         "name": name,
@@ -162,6 +185,14 @@ def update_rack(
 
 
 def delete_rack(actor: User, rack: Rack) -> None:
+    has_assets = db.session.scalar(
+        db.select(db.exists().where(Asset.rack_id == rack.id))
+    )
+    if has_assets:
+        raise RackHasAssetsError(
+            "O Rack não pode ser excluído enquanto possuir Ativos."
+        )
+
     rack_id = rack.id
     db.session.delete(rack)
     try:

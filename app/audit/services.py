@@ -16,6 +16,7 @@ ALLOWED_DETAIL_KEYS = {
     AuditEventType.DATACENTER_UPDATE: frozenset({"changed_fields"}),
     AuditEventType.ROOM_UPDATE: frozenset({"changed_fields"}),
     AuditEventType.RACK_UPDATE: frozenset({"changed_fields"}),
+    AuditEventType.ASSET_UPDATE: frozenset({"changed_fields"}),
 }
 ALLOWED_CHANGED_FIELDS = {
     AuditEventType.USER_UPDATED: frozenset(
@@ -30,6 +31,21 @@ ALLOWED_CHANGED_FIELDS = {
     AuditEventType.RACK_UPDATE: frozenset(
         {"room_id", "name", "code", "capacity_u", "description", "status"}
     ),
+    AuditEventType.ASSET_UPDATE: frozenset(
+        {
+            "rack_id",
+            "name",
+            "asset_tag",
+            "serial_number",
+            "manufacturer",
+            "model",
+            "asset_type",
+            "rack_unit_start",
+            "rack_units",
+            "description",
+            "status",
+        }
+    ),
 }
 EVENT_RESOURCE_TYPES = {
     AuditEventType.DATACENTER_CREATE: "datacenter",
@@ -41,6 +57,9 @@ EVENT_RESOURCE_TYPES = {
     AuditEventType.RACK_CREATE: "rack",
     AuditEventType.RACK_UPDATE: "rack",
     AuditEventType.RACK_DELETE: "rack",
+    AuditEventType.ASSET_CREATE: "asset",
+    AuditEventType.ASSET_UPDATE: "asset",
+    AuditEventType.ASSET_DELETE: "asset",
 }
 MAX_DETAILS_LENGTH = 1000
 MAX_USER_AGENT_LENGTH = 255

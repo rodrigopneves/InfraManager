@@ -7,6 +7,7 @@
   <p><a href="{{ url_for('datacenter.index') }}">Datacenters</a></p>
   <p><a href="{{ url_for('room.index') }}">Salas</a></p>
   <p><a href="{{ url_for('rack.index') }}">Racks</a></p>
+  <p><a href="{{ url_for('asset.index') }}">Ativos</a></p>
   {% if current_user.mfa_enabled %}
     <p><a href="{{ url_for('account.mfa_disable') }}">Desativar MFA</a></p>
   {% else %}

@@ -99,6 +99,12 @@ class Rack(db.Model):
     )
 
     room = db.relationship("Room", back_populates="racks")
+    assets = db.relationship(
+        "Asset",
+        back_populates="rack",
+        passive_deletes="all",
+        order_by="Asset.rack_unit_start",
+    )
 
     @validates("room_id")
     def validate_room_id(self, _key: str, room_id: int) -> int:

@@ -72,8 +72,6 @@ O Operador poderá:
 
 - visualizar Dashboard;
 - visualizar ativos;
-- cadastrar ativos;
-- editar ativos;
 - visualizar máquinas virtuais;
 - cadastrar máquinas virtuais;
 - editar máquinas virtuais;
@@ -83,6 +81,7 @@ O Operador poderá:
 
 O Operador não poderá:
 
+- cadastrar, editar ou excluir ativos físicos;
 - excluir registros críticos;
 - administrar usuários;
 - alterar permissões;
@@ -244,13 +243,13 @@ O sistema deverá possuir página para listagem dos ativos cadastrados.
 
 A listagem deverá apresentar pelo menos:
 
-- hostname;
-- patrimônio;
+- patrimônio/identificador;
+- nome;
 - tipo;
-- fabricante;
-- modelo;
-- endereço IP;
-- localização;
+- datacenter;
+- sala;
+- rack;
+- posição em U;
 - status.
 
 ---
@@ -261,19 +260,17 @@ Usuários autorizados deverão poder cadastrar ativos.
 
 Campos:
 
-- patrimônio;
-- hostname;
-- tipo;
+- rack;
+- nome;
+- patrimônio/identificador;
+- número de série;
 - fabricante;
 - modelo;
-- número de série;
-- endereço IP;
-- sistema operacional;
-- setor;
-- responsável;
-- localização;
-- status;
-- observações.
+- tipo;
+- U inicial;
+- quantidade de U;
+- descrição;
+- status.
 
 ---
 
@@ -284,6 +281,7 @@ O sistema deverá permitir inicialmente os seguintes tipos:
 - Servidor;
 - Storage;
 - Switch;
+- Roteador;
 - Firewall;
 - Access Point;
 - Notebook;
@@ -298,9 +296,8 @@ O sistema deverá permitir inicialmente os seguintes tipos:
 Um ativo poderá possuir os seguintes status:
 
 - Ativo;
-- Em manutenção;
-- Reserva;
-- Desativado.
+- Inativo;
+- Manutenção.
 
 ---
 

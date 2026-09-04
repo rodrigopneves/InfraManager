@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Ativos</h1>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('asset.create') }}">Novo Ativo</a></p>
+  {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>Identificador</th><th>Nome</th><th>Tipo</th><th>Datacenter</th>
+        <th>Sala</th><th>Rack</th><th>Posição</th><th>Status</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for asset in pagination.items %}
+        <tr>
+          <td>{{ asset.asset_tag }}</td>
+          <td>{{ asset.name }}</td>
+          <td>{{ asset.type_label }}</td>
+          <td><a href="{{ url_for('datacenter.detail', datacenter_id=asset.rack.room.datacenter.id) }}">{{ asset.rack.room.datacenter.code }}</a></td>
+          <td><a href="{{ url_for('room.detail', room_id=asset.rack.room.id) }}">{{ asset.rack.room.code }}</a></td>
+          <td><a href="{{ url_for('rack.detail', rack_id=asset.rack.id) }}">{{ asset.rack.code }}</a></td>
+          <td>{{ asset.rack_position_label }}</td>
+          <td>{{ asset.status_label }}</td>
+          <td>
+            <a href="{{ url_for('asset.detail', asset_id=asset.id) }}">Detalhes</a>
+            {% if current_user.has_role(admin_role) %}
+              <a href="{{ url_for('asset.edit', asset_id=asset.id) }}">Editar</a>
+              <a href="{{ url_for('asset.delete_confirm', asset_id=asset.id) }}">Excluir</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9">Nenhum Ativo cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if pagination.has_prev %}<a href="{{ url_for('asset.index', page=pagination.prev_num) }}">Anterior</a>{% endif %}
+  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
+  {% if pagination.has_next %}<a href="{{ url_for('asset.index', page=pagination.next_num) }}">Próxima</a>{% endif %}
+{% endblock %}

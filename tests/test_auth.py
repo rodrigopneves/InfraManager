@@ -194,6 +194,9 @@ def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None
         "/racks/create",
         "/racks/1/edit",
         "/racks/1/delete",
+        "/assets/create",
+        "/assets/1/edit",
+        "/assets/1/delete",
     ],
 )
 def test_mutating_routes_reject_missing_csrf_token(path: str) -> None:

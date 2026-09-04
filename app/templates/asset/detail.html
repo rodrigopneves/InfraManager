@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ asset.name }}</h1>
+  <dl>
+    <dt>Patrimônio/Identificador</dt><dd>{{ asset.asset_tag }}</dd>
+    <dt>Tipo</dt><dd>{{ asset.type_label }}</dd>
+    <dt>Número de série</dt><dd>{{ asset.serial_number or "-" }}</dd>
+    <dt>Fabricante</dt><dd>{{ asset.manufacturer or "-" }}</dd>
+    <dt>Modelo</dt><dd>{{ asset.model or "-" }}</dd>
+    <dt>Datacenter</dt><dd><a href="{{ url_for('datacenter.detail', datacenter_id=asset.rack.room.datacenter.id) }}">{{ asset.rack.room.datacenter.code }} — {{ asset.rack.room.datacenter.name }}</a></dd>
+    <dt>Sala</dt><dd><a href="{{ url_for('room.detail', room_id=asset.rack.room.id) }}">{{ asset.rack.room.code }} — {{ asset.rack.room.name }}</a></dd>
+    <dt>Rack</dt><dd><a href="{{ url_for('rack.detail', rack_id=asset.rack.id) }}">{{ asset.rack.code }} — {{ asset.rack.name }}</a></dd>
+    <dt>Posição</dt><dd>{{ asset.rack_position_label }}</dd>
+    <dt>Status</dt><dd>{{ asset.status_label }}</dd>
+    <dt>Descrição</dt><dd>{{ asset.description or "-" }}</dd>
+  </dl>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('asset.edit', asset_id=asset.id) }}">Editar</a></p>
+    <p><a href="{{ url_for('asset.delete_confirm', asset_id=asset.id) }}">Excluir</a></p>
+  {% endif %}
+  <p><a href="{{ url_for('asset.index') }}">Voltar</a></p>
+{% endblock %}
