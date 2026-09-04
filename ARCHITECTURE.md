@@ -1349,7 +1349,8 @@ tests/
 ├── test_rbac.py
 ├── test_asset.py
 ├── test_asset_migration.py
-├── test_virtual_machines.py
+├── test_virtual_machine.py
+├── test_virtual_machine_migration.py
 ├── test_datacenter.py
 ├── test_room.py
 ├── test_room_migration.py

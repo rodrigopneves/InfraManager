@@ -1,4 +1,4 @@
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy.orm import selectinload
 
@@ -17,6 +17,9 @@ from app.extensions import db
 from app.models import AuditLog, User
 
 
+AUDIT_LOGS_PER_PAGE = 20
+
+
 @admin.get("/users")
 @admin_required
 def users():
@@ -29,19 +32,28 @@ def users():
 @admin.get("/audit")
 @admin_required
 def audit():
-    audit_logs = db.session.scalars(
+    page = request.args.get("page", 1, type=int)
+    query = (
         db.select(AuditLog)
         .options(selectinload(AuditLog.actor), selectinload(AuditLog.target))
         .order_by(
             AuditLog.created_at.desc(),
             AuditLog.id.desc(),
         )
-    ).all()
+    )
+    pagination = db.paginate(
+        query,
+        page=page,
+        per_page=AUDIT_LOGS_PER_PAGE,
+        error_out=True,
+    )
     entries = [
         {"log": audit_log, "details": format_details(audit_log.details)}
-        for audit_log in audit_logs
+        for audit_log in pagination.items
     ]
-    return render_template("admin/audit.html", entries=entries)
+    return render_template(
+        "admin/audit.html", entries=entries, pagination=pagination
+    )
 
 
 @admin.route("/users/new", methods=["GET", "POST"])

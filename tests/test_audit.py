@@ -349,6 +349,76 @@ def test_audit_page_orders_newest_events_first(
     assert response.data.index(b"LOGOUT") < response.data.index(b"LOGIN_FAILURE")
 
 
+def test_audit_page_paginates_twenty_entries_and_orders_between_pages(
+    client: FlaskClient, admin_user: User
+) -> None:
+    login_admin(client)
+    db.session.execute(db.delete(AuditLog))
+    now = datetime.now(timezone.utc)
+    db.session.add_all(
+        [
+            AuditLog(
+                event_type=AuditEventType.LOGIN_FAILURE,
+                ip_address=f"192.0.2.{index}",
+                details={"reason": "authentication_failed"},
+                created_at=now + timedelta(minutes=index),
+            )
+            for index in range(1, 22)
+        ]
+    )
+    db.session.commit()
+
+    first_page = client.get("/admin/audit")
+    second_page = client.get("/admin/audit?page=2")
+
+    assert first_page.status_code == 200
+    assert first_page.data.count(b"<tr>") == 21
+    assert b"192.0.2.21" in first_page.data
+    assert b"192.0.2.1</td>" not in first_page.data
+    assert first_page.data.index(b"192.0.2.21") < first_page.data.index(
+        b"192.0.2.20"
+    )
+    assert "Próxima".encode() in first_page.data
+    assert "Anterior".encode() not in first_page.data
+
+    assert second_page.status_code == 200
+    assert second_page.data.count(b"<tr>") == 2
+    assert b"192.0.2.1</td>" in second_page.data
+    assert b"192.0.2.21" not in second_page.data
+    assert "Anterior".encode() in second_page.data
+    assert "Próxima".encode() not in second_page.data
+    assert client.get("/admin/audit?page=999").status_code == 404
+
+
+def test_paginated_audit_keeps_actor_target_and_resource_fields(
+    client: FlaskClient, admin_user: User, active_user: User
+) -> None:
+    login_admin(client)
+    db.session.execute(db.delete(AuditLog))
+    db.session.add(
+        AuditLog(
+            event_type=AuditEventType.VM_CREATE,
+            actor_user_id=admin_user.id,
+            target_user_id=active_user.id,
+            ip_address="198.51.100.10",
+            details={},
+            resource_type="virtual_machine",
+            resource_id=77,
+            result="success",
+        )
+    )
+    db.session.commit()
+
+    response = client.get("/admin/audit")
+
+    assert response.status_code == 200
+    assert admin_user.username.encode() in response.data
+    assert active_user.username.encode() in response.data
+    assert b"198.51.100.10" in response.data
+    assert b"virtual_machine #77" in response.data
+    assert b"success" in response.data
+
+
 def test_create_admin_cli_records_event_without_actor(app) -> None:
     result = app.test_cli_runner().invoke(
         args=["create-admin"],
