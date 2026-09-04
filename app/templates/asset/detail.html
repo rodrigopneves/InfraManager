@@ -15,6 +15,31 @@
     <dt>Status</dt><dd>{{ asset.status_label }}</dd>
     <dt>Descrição</dt><dd>{{ asset.description or "-" }}</dd>
   </dl>
+  {% if asset.asset_type == "server" %}
+    <h2>Máquinas Virtuais</h2>
+    <p>Total de VMs: {{ asset.virtual_machines|length }}</p>
+    {% if current_user.has_role(admin_role) %}
+      <p><a href="{{ url_for('virtual_machine.create', host_asset_id=asset.id) }}">Nova Máquina Virtual</a></p>
+    {% endif %}
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Hostname</th><th>IP</th><th>Ambiente</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for virtual_machine in asset.virtual_machines %}
+          <tr>
+            <td><a href="{{ url_for('virtual_machine.detail', virtual_machine_id=virtual_machine.id) }}">{{ virtual_machine.name }}</a></td>
+            <td>{{ virtual_machine.hostname or "-" }}</td>
+            <td>{{ virtual_machine.ip_address or "-" }}</td>
+            <td>{{ virtual_machine.environment_label }}</td>
+            <td>{{ virtual_machine.status_label }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5">Nenhuma Máquina Virtual hospedada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
   {% if current_user.has_role(admin_role) %}
     <p><a href="{{ url_for('asset.edit', asset_id=asset.id) }}">Editar</a></p>
     <p><a href="{{ url_for('asset.delete_confirm', asset_id=asset.id) }}">Excluir</a></p>

@@ -4,7 +4,16 @@ from sqlalchemy.orm import selectinload
 
 from app.audit import record_event
 from app.extensions import db
-from app.models import Asset, AuditEventType, Rack, Room, User, normalize_asset_tag
+from app.models import (
+    Asset,
+    AssetType,
+    AuditEventType,
+    Rack,
+    Room,
+    User,
+    VirtualMachine,
+    normalize_asset_tag,
+)
 
 
 ASSETS_PER_PAGE = 20
@@ -24,6 +33,20 @@ class AssetRackCapacityError(ValueError):
 
 class AssetRackOverlapError(ValueError):
     pass
+
+
+class AssetHasVirtualMachinesError(ValueError):
+    pass
+
+
+def asset_has_virtual_machines(asset_id: int) -> bool:
+    return bool(
+        db.session.scalar(
+            db.select(db.func.count())
+            .select_from(VirtualMachine)
+            .where(VirtualMachine.host_asset_id == asset_id)
+        )
+    )
 
 
 def _raise_asset_integrity_error(error: IntegrityError, rack_id: int) -> None:
@@ -54,7 +77,8 @@ def get_asset_or_404(asset_id: int) -> Asset:
         .options(
             selectinload(Asset.rack)
             .selectinload(Rack.room)
-            .selectinload(Room.datacenter)
+            .selectinload(Room.datacenter),
+            selectinload(Asset.virtual_machines),
         )
         .where(Asset.id == asset_id)
     )
@@ -184,6 +208,13 @@ def update_asset(
     status: str,
 ) -> None:
     rack = get_rack(rack_id)
+    if (
+        asset_type != AssetType.SERVER.value
+        and asset_has_virtual_machines(asset.id)
+    ):
+        raise AssetHasVirtualMachinesError(
+            "O tipo do Ativo não pode ser alterado enquanto ele hospedar Máquinas Virtuais."
+        )
     asset_tag = normalize_asset_tag(asset_tag)
     if asset_tag_exists(asset_tag, exclude_asset_id=asset.id):
         raise AssetTagConflictError(
@@ -239,6 +270,10 @@ def update_asset(
 
 
 def delete_asset(actor: User, asset: Asset) -> None:
+    if asset_has_virtual_machines(asset.id):
+        raise AssetHasVirtualMachinesError(
+            "O Ativo não pode ser excluído enquanto hospedar Máquinas Virtuais."
+        )
     asset_id = asset.id
     db.session.delete(asset)
     try:

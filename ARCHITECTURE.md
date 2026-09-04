@@ -237,7 +237,7 @@ auth
 account
 dashboard
 asset
-virtual_machines
+virtual_machine
 datacenter
 room
 rack
@@ -254,7 +254,7 @@ app/
 ├── account/
 ├── dashboard/
 ├── asset/
-├── virtual_machines/
+├── virtual_machine/
 ├── datacenter/
 ├── room/
 ├── rack/
@@ -303,7 +303,7 @@ inframanager/
 │   │   ├── forms.py
 │   │   └── services.py
 │   │
-│   ├── virtual_machines/
+│   ├── virtual_machine/
 │   │   ├── routes.py
 │   │   ├── forms.py
 │   │   └── services.py
@@ -551,10 +551,11 @@ hierarquia completa sem N+1.
 
 # 16. Modelo VirtualMachine
 
-Campos:
+Implementado na etapa 03.5 com os campos:
 
 ```text
 id
+host_asset_id
 name
 hostname
 ip_address
@@ -562,17 +563,11 @@ operating_system
 environment
 vcpu
 memory_mb
-storage_gb
-application
-responsible
-cluster
-host_asset_id
+disk_gb
 status
-notes
+description
 created_at
 updated_at
-created_by
-updated_by
 ```
 
 Relacionamento desejado:
@@ -585,7 +580,17 @@ Asset (Host físico)
         └── VM-03
 ```
 
-O relacionamento com o host poderá ser opcional.
+O relacionamento com o host é obrigatório e aceita somente Ativos cujo tipo seja
+`server`. A FK usa `ON DELETE RESTRICT`, não há cascade, e um Ativo que hospede VMs
+não pode ser excluído. O nome da VM possui unicidade global. Endereços IPv4 e IPv6
+são validados com a biblioteca padrão `ipaddress`. Recursos são persistidos como
+vCPU, memória em MB e disco em GB; não existe controle agregado de capacidade do
+host nesta etapa.
+
+O Blueprint `/virtual-machines` pagina 20 registros e carrega antecipadamente a
+hierarquia Asset → Rack → Room → Datacenter. Escritas são restritas a
+Administradores e persistem `VM.CREATE`, `VM.UPDATE` ou `VM.DELETE` na mesma
+transação da alteração.
 
 ---
 
@@ -763,8 +768,8 @@ ip_address: 192.0.2.10
 details: {"reason": "authentication_failed"}
 ```
 
-As operações de Datacenter, Sala, Rack e Ativo persistem a mudança e seu evento de
-auditoria na mesma transação.
+As operações de Datacenter, Sala, Rack, Ativo e Máquina Virtual persistem a mudança
+e seu evento de auditoria na mesma transação.
 
 ---
 
@@ -796,11 +801,9 @@ Asset
 VirtualMachine
 ```
 
-Nem todos os relacionamentos deverão ser obrigatórios.
-
-Uma VM poderá existir sem host associado.
-
-Um ativo poderá existir sem rack associado.
+Os relacionamentos da hierarquia de infraestrutura são obrigatórios: toda Máquina
+Virtual possui um host do tipo Servidor, todo Ativo pertence a um Rack, todo Rack
+pertence a uma Sala e toda Sala pertence a um Datacenter.
 
 ---
 
@@ -950,8 +953,8 @@ Para o MVP será utilizado modelo simples baseado em roles.
 | Editar ativos | Sim | Não | Não |
 | Excluir ativos | Sim | Não | Não |
 | Visualizar VMs | Sim | Sim | Sim |
-| Criar VMs | Sim | Sim | Não |
-| Editar VMs | Sim | Sim | Não |
+| Criar VMs | Sim | Não | Não |
+| Editar VMs | Sim | Não | Não |
 | Excluir VMs | Sim | Não | Não |
 | Ver Datacenter | Sim | Sim | Sim |
 | Criar/editar Datacenter | Sim | Não | Não |
@@ -965,7 +968,7 @@ Para o MVP será utilizado modelo simples baseado em roles.
 | Usuários | Sim | Não | Não |
 | Auditoria | Sim | Não | Não |
 
-Datacenter, Sala, Rack e Ativo possuem CRUD completo. Exclusões
+Datacenter, Sala, Rack, Ativo e Máquina Virtual possuem CRUD completo. Exclusões
 respeitam as dependências existentes e todas as operações de escrita aplicam
 autorização, validação, CSRF e auditoria.
 
@@ -1141,7 +1144,7 @@ templates/
 │
 ├── asset/
 │
-├── virtual_machines/
+├── virtual_machine/
 │
 ├── datacenter/
 ├── room/

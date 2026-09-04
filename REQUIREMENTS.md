@@ -73,8 +73,6 @@ O Operador poderá:
 - visualizar Dashboard;
 - visualizar ativos;
 - visualizar máquinas virtuais;
-- cadastrar máquinas virtuais;
-- editar máquinas virtuais;
 - visualizar datacenters;
 - visualizar salas;
 - visualizar racks.
@@ -380,12 +378,14 @@ Campos:
 - vCPU;
 - memória RAM;
 - armazenamento;
-- aplicação;
-- responsável;
-- cluster;
 - host;
 - status;
-- observações.
+- descrição.
+
+Na etapa 03.5, cada Máquina Virtual pertence obrigatoriamente a um Ativo do tipo
+Servidor. O nome possui unicidade global, e o host físico pode ser alterado somente
+para outro Ativo do tipo Servidor. Cluster, aplicação, responsável, múltiplos discos
+e integrações externas permanecem fora desta etapa.
 
 ---
 
@@ -397,6 +397,7 @@ A VM poderá pertencer a:
 - Homologação;
 - Desenvolvimento;
 - Teste.
+- Outro.
 
 ---
 
@@ -404,16 +405,19 @@ A VM poderá pertencer a:
 
 Valores iniciais:
 
-- Ligada;
+- Em execução;
 - Desligada;
+- Suspensa;
 - Manutenção;
-- Descomissionada.
 
 ---
 
 ## RF-021 — Editar Máquina Virtual
 
 Usuários autorizados deverão poder modificar os dados da VM.
+
+Na etapa 03.5, somente Administradores podem cadastrar, editar ou excluir Máquinas
+Virtuais. Operadores e usuários de Consulta possuem acesso somente de leitura.
 
 Toda alteração deverá gerar log de auditoria.
 

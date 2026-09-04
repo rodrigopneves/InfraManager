@@ -31,6 +31,9 @@ class AuditEventType(str, Enum):
     ASSET_CREATE = "ASSET.CREATE"
     ASSET_UPDATE = "ASSET.UPDATE"
     ASSET_DELETE = "ASSET.DELETE"
+    VM_CREATE = "VM.CREATE"
+    VM_UPDATE = "VM.UPDATE"
+    VM_DELETE = "VM.DELETE"
 
 
 VALID_AUDIT_EVENT_TYPES = frozenset(event.value for event in AuditEventType)

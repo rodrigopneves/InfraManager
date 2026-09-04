@@ -8,6 +8,7 @@ from app.asset.services import (
     AssetRackCapacityError,
     AssetRackNotFoundError,
     AssetRackOverlapError,
+    AssetHasVirtualMachinesError,
     AssetTagConflictError,
     asset_tag_exists,
     create_asset,
@@ -58,6 +59,8 @@ def _apply_service_error(form: AssetForm, error: ValueError) -> None:
         form.rack_id.errors.append(str(error))
     elif isinstance(error, AssetTagConflictError):
         form.asset_tag.errors.append(str(error))
+    elif isinstance(error, AssetHasVirtualMachinesError):
+        form.asset_type.errors.append(str(error))
     else:
         form.rack_units.errors.append(str(error))
 
@@ -144,6 +147,7 @@ def edit(asset_id: int):
                 AssetTagConflictError,
                 AssetRackCapacityError,
                 AssetRackOverlapError,
+                AssetHasVirtualMachinesError,
             ) as error:
                 _apply_service_error(form, error)
             else:
@@ -164,7 +168,11 @@ def edit(asset_id: int):
 @admin_required
 def delete(asset_id: int):
     selected_asset = get_asset_or_404(asset_id)
-    delete_asset(current_user, selected_asset)
+    try:
+        delete_asset(current_user, selected_asset)
+    except AssetHasVirtualMachinesError as error:
+        flash(str(error), "error")
+        return redirect(url_for("asset.detail", asset_id=selected_asset.id))
     flash("Ativo excluído com sucesso.", "success")
     return redirect(url_for("asset.index"))
 

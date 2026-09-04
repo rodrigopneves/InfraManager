@@ -32,6 +32,7 @@ def create_app(config: str | object | None = None) -> Flask:
     from app.room import room
     from app.rack import rack
     from app.asset import asset
+    from app.virtual_machine import virtual_machine
     from app.commands import create_admin_command
     from app.routes import main
 
@@ -42,6 +43,7 @@ def create_app(config: str | object | None = None) -> Flask:
     app.register_blueprint(room)
     app.register_blueprint(rack)
     app.register_blueprint(asset)
+    app.register_blueprint(virtual_machine)
     app.register_blueprint(main)
     app.cli.add_command(create_admin_command)
     app.register_error_handler(Forbidden, _handle_forbidden_error)

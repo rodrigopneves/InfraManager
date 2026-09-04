@@ -8,6 +8,7 @@
   <p><a href="{{ url_for('room.index') }}">Salas</a></p>
   <p><a href="{{ url_for('rack.index') }}">Racks</a></p>
   <p><a href="{{ url_for('asset.index') }}">Ativos</a></p>
+  <p><a href="{{ url_for('virtual_machine.index') }}">Máquinas Virtuais</a></p>
   {% if current_user.mfa_enabled %}
     <p><a href="{{ url_for('account.mfa_disable') }}">Desativar MFA</a></p>
   {% else %}

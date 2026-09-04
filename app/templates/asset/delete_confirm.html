@@ -3,9 +3,13 @@
 {% block content %}
   <h1>Confirmar exclusão</h1>
   <p>Confirme a exclusão do Ativo <strong>{{ asset.asset_tag }} — {{ asset.name }}</strong>.</p>
-  <form method="post" action="{{ url_for('asset.delete', asset_id=asset.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Confirmar exclusão</button>
-  </form>
+  {% if asset.virtual_machines %}
+    <p role="alert">O Ativo não pode ser excluído enquanto hospedar Máquinas Virtuais.</p>
+  {% else %}
+    <form method="post" action="{{ url_for('asset.delete', asset_id=asset.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Confirmar exclusão</button>
+    </form>
+  {% endif %}
   <p><a href="{{ url_for('asset.detail', asset_id=asset.id) }}">Cancelar</a></p>
 {% endblock %}

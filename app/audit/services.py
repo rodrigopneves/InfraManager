@@ -17,6 +17,7 @@ ALLOWED_DETAIL_KEYS = {
     AuditEventType.ROOM_UPDATE: frozenset({"changed_fields"}),
     AuditEventType.RACK_UPDATE: frozenset({"changed_fields"}),
     AuditEventType.ASSET_UPDATE: frozenset({"changed_fields"}),
+    AuditEventType.VM_UPDATE: frozenset({"changed_fields"}),
 }
 ALLOWED_CHANGED_FIELDS = {
     AuditEventType.USER_UPDATED: frozenset(
@@ -46,6 +47,21 @@ ALLOWED_CHANGED_FIELDS = {
             "status",
         }
     ),
+    AuditEventType.VM_UPDATE: frozenset(
+        {
+            "host_asset_id",
+            "name",
+            "hostname",
+            "ip_address",
+            "operating_system",
+            "vcpu",
+            "memory_mb",
+            "disk_gb",
+            "environment",
+            "status",
+            "description",
+        }
+    ),
 }
 EVENT_RESOURCE_TYPES = {
     AuditEventType.DATACENTER_CREATE: "datacenter",
@@ -60,6 +76,9 @@ EVENT_RESOURCE_TYPES = {
     AuditEventType.ASSET_CREATE: "asset",
     AuditEventType.ASSET_UPDATE: "asset",
     AuditEventType.ASSET_DELETE: "asset",
+    AuditEventType.VM_CREATE: "virtual_machine",
+    AuditEventType.VM_UPDATE: "virtual_machine",
+    AuditEventType.VM_DELETE: "virtual_machine",
 }
 MAX_DETAILS_LENGTH = 1000
 MAX_USER_AGENT_LENGTH = 255

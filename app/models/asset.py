@@ -162,6 +162,12 @@ class Asset(db.Model):
     )
 
     rack = db.relationship("Rack", back_populates="assets")
+    virtual_machines = db.relationship(
+        "VirtualMachine",
+        back_populates="host_asset",
+        passive_deletes="all",
+        order_by="VirtualMachine.name",
+    )
 
     @validates("rack_id")
     def validate_rack_id(self, _key: str, rack_id: int) -> int:

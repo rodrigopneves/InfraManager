@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ virtual_machine.name }}</h1>
+  <dl>
+    <dt>Hostname</dt><dd>{{ virtual_machine.hostname or "-" }}</dd>
+    <dt>Endereço IP</dt><dd>{{ virtual_machine.ip_address or "-" }}</dd>
+    <dt>Sistema Operacional</dt><dd>{{ virtual_machine.operating_system or "-" }}</dd>
+    <dt>Ambiente</dt><dd>{{ virtual_machine.environment_label }}</dd>
+    <dt>Status</dt><dd>{{ virtual_machine.status_label }}</dd>
+    <dt>vCPU</dt><dd>{{ virtual_machine.vcpu }}</dd>
+    <dt>Memória</dt><dd>{{ virtual_machine.memory_label }}</dd>
+    <dt>Disco</dt><dd>{{ virtual_machine.disk_gb }} GB</dd>
+    <dt>Descrição</dt><dd>{{ virtual_machine.description or "-" }}</dd>
+    <dt>Host físico</dt><dd><a href="{{ url_for('asset.detail', asset_id=virtual_machine.host_asset.id) }}">{{ virtual_machine.host_asset.asset_tag }} — {{ virtual_machine.host_asset.name }}</a></dd>
+    <dt>Rack</dt><dd><a href="{{ url_for('rack.detail', rack_id=virtual_machine.host_asset.rack.id) }}">{{ virtual_machine.host_asset.rack.code }} — {{ virtual_machine.host_asset.rack.name }}</a></dd>
+    <dt>Sala</dt><dd><a href="{{ url_for('room.detail', room_id=virtual_machine.host_asset.rack.room.id) }}">{{ virtual_machine.host_asset.rack.room.code }} — {{ virtual_machine.host_asset.rack.room.name }}</a></dd>
+    <dt>Datacenter</dt><dd><a href="{{ url_for('datacenter.detail', datacenter_id=virtual_machine.host_asset.rack.room.datacenter.id) }}">{{ virtual_machine.host_asset.rack.room.datacenter.code }} — {{ virtual_machine.host_asset.rack.room.datacenter.name }}</a></dd>
+  </dl>
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('virtual_machine.edit', virtual_machine_id=virtual_machine.id) }}">Editar</a></p>
+    <p><a href="{{ url_for('virtual_machine.delete_confirm', virtual_machine_id=virtual_machine.id) }}">Excluir</a></p>
+  {% endif %}
+  <p><a href="{{ url_for('virtual_machine.index') }}">Voltar</a></p>
+{% endblock %}

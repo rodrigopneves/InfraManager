@@ -7,7 +7,16 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
-from app.models import Asset, AssetType, Datacenter, Rack, Room, User, UserRole
+from app.models import (
+    Asset,
+    AssetType,
+    Datacenter,
+    Rack,
+    Room,
+    User,
+    UserRole,
+    VirtualMachine,
+)
 
 
 @pytest.fixture()
@@ -154,3 +163,24 @@ def sample_asset(app: Flask, sample_rack: Rack) -> Asset:
     db.session.add(asset)
     db.session.commit()
     return asset
+
+
+@pytest.fixture()
+def sample_virtual_machine(
+    app: Flask, sample_asset: Asset
+) -> VirtualMachine:
+    virtual_machine = VirtualMachine(
+        host_asset_id=sample_asset.id,
+        name="VM-LAB-01",
+        hostname="vm-lab-01.example.test",
+        ip_address="192.0.2.10",
+        operating_system="Ubuntu Server 24.04",
+        vcpu=2,
+        memory_mb=4096,
+        disk_gb=80,
+        environment="test",
+        description="VM fictícia para testes.",
+    )
+    db.session.add(virtual_machine)
+    db.session.commit()
+    return virtual_machine

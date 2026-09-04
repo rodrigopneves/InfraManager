@@ -633,11 +633,12 @@ Pode:
 Pode:
 
 - visualizar;
-- criar;
-- editar.
+- pesquisar;
+- filtrar.
 
 Não pode:
 
+- criar, editar ou excluir recursos de infraestrutura;
 - excluir registros críticos;
 - administrar usuários;
 - consultar funções administrativas restritas.
@@ -931,7 +932,7 @@ ASSET.UPDATE
 ASSET.DELETE
 ```
 
-Eventos reservados para etapas futuras:
+Eventos implementados na etapa 03.5:
 
 ```text
 VM.CREATE
@@ -939,7 +940,7 @@ VM.UPDATE
 VM.DELETE
 ```
 
-Datacenter, Sala, Rack e Ativo possuem CRUD completo. Suas operações
+Datacenter, Sala, Rack, Ativo e Máquina Virtual possuem CRUD completo. Suas operações
 de escrita são auditadas e suas exclusões validam as dependências já existentes.
 
 ---
@@ -972,7 +973,7 @@ somente motivo genérico de falha, perfil e status atribuídos, origem CLI, nome
 campos alterados e transição de perfil. Valores anteriores de username/e-mail não
 são armazenados.
 
-Eventos de Datacenter, Sala, Rack e Ativo usam `resource_type`, `resource_id` e `result`
+Eventos de Datacenter, Sala, Rack, Ativo e Máquina Virtual usam `resource_type`, `resource_id` e `result`
 controlados, sem copiar nome, código, localização, descrição ou conteúdo integral
 do formulário. A alteração do recurso e o respectivo AuditLog são confirmados na
 mesma transação.
@@ -985,7 +986,7 @@ ser omitido da tabela administrativa.
 Nos fluxos anteriores à etapa 03.1, falhas de persistência da auditoria executam
 rollback da tentativa, geram erro no Application Log somente com o tipo do evento e
 não interrompem a operação principal já concluída. Nas operações de Datacenter,
-Sala, Rack e Ativo, a alteração e a auditoria pertencem à mesma transação e sofrem
+Sala, Rack, Ativo e Máquina Virtual, a alteração e a auditoria pertencem à mesma transação e sofrem
 rollback em conjunto.
 Não existe `try/except: pass` nem inclusão do conteúdo do evento no log técnico.
 

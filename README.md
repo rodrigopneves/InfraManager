@@ -35,9 +35,9 @@ CI/CD               ⏳
 Documentação final  ⏳
 ```
 
-As etapas 02, 03.1, 03.2, 03.3 e 03.4 entregam Application Factory, persistência e migrations,
+As etapas 02, 03.1, 03.2, 03.3, 03.4 e 03.5 entregam Application Factory, persistência e migrations,
 autenticação, CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA
-TOTP opcional, auditoria e os CRUDs de Datacenters, Salas, Racks e Ativos. O ponto WSGI padrão é
+TOTP opcional, auditoria e os CRUDs de Datacenters, Salas, Racks, Ativos e Máquinas Virtuais. O ponto WSGI padrão é
 `wsgi:app`; `run.py` permanece como entrada de desenvolvimento e para comandos
 Flask.
 
@@ -308,10 +308,11 @@ Pode:
 Pode:
 
 - visualizar;
-- cadastrar;
-- editar.
+- pesquisar;
+- utilizar filtros.
 
-Não poderá executar determinadas operações administrativas ou exclusões críticas.
+Não poderá criar, editar ou excluir recursos de infraestrutura nem executar funções
+administrativas.
 
 ## VIEWER
 
@@ -362,9 +363,6 @@ O módulo permitirá gerenciamento de:
 - RAM;
 - armazenamento;
 - host;
-- cluster;
-- aplicação;
-- responsável;
 - status.
 
 Ambientes previstos:
@@ -374,7 +372,14 @@ Produção
 Homologação
 Desenvolvimento
 Teste
+Outro
 ```
+
+Na etapa 03.5, toda Máquina Virtual pertence obrigatoriamente a um Ativo do tipo
+Servidor. O nome é globalmente único, IPv4 e IPv6 são validados no servidor, e os
+recursos são armazenados como vCPU, memória em MB e disco em GB. Os status são Em
+execução, Desligada, Suspensa e Manutenção. Somente Administradores podem criar,
+editar e excluir; Operadores e usuários de Consulta possuem leitura.
 
 ---
 
@@ -397,13 +402,22 @@ Datacenter
 
 Todo ativo físico pertence obrigatoriamente a um Rack nesta etapa.
 
-Datacenter, Sala, Rack e Ativo possuem CRUD completo.
+Datacenter, Sala, Rack, Ativo e Máquina Virtual possuem CRUD completo.
 Cada Sala pertence obrigatoriamente a um Datacenter e seu código é único dentro
 desse Datacenter. Cada Rack pertence a uma Sala, possui capacidade entre 1 e 100 U
 e código único nessa Sala. Escritas aplicam autorização server-side, validação,
 CSRF, auditoria e verificação de dependências. Datacenters com Salas e Salas com
 Racks não podem ser excluídos. Ativos respeitam a capacidade física do Rack e não
-podem ocupar intervalos de U sobrepostos.
+podem ocupar intervalos de U sobrepostos. Um Ativo Servidor pode hospedar várias
+Máquinas Virtuais e não pode ser excluído enquanto possuir alguma VM.
+
+```text
+Datacenter
+└── Sala
+    └── Rack
+        └── Ativo Servidor
+            └── Máquina Virtual
+```
 
 ---
 
@@ -561,6 +575,14 @@ ASSET.UPDATE
 ASSET.DELETE
 ```
 
+Na etapa 03.5 foram introduzidos:
+
+```text
+VM.CREATE
+VM.UPDATE
+VM.DELETE
+```
+
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
 limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
@@ -568,7 +590,7 @@ primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
 Nginx/ProxyFix.
 
 A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
-identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas, Racks e Ativos, a
+identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas, Racks, Ativos e Máquinas Virtuais, a
 alteração e o AuditLog usam a mesma transação; os fluxos anteriores mantêm o
 comportamento já existente.
 
@@ -582,9 +604,9 @@ O log não deverá armazenar:
 - token;
 - session ID.
 
-Não há nesta etapa retenção automática, exportação, integração com SIEM/syslog,
-correlação ou alertas. Eventos de ativos, VMs e dos demais módulos de infraestrutura
-serão adicionados com os respectivos módulos.
+Não há nesta etapa retenção automática, exportação ou integração com SIEM/syslog.
+Os eventos de Ativos e Máquinas Virtuais já fazem parte da auditoria; novos eventos
+de infraestrutura serão adicionados com os respectivos módulos.
 
 ---
 
@@ -600,7 +622,7 @@ inframanager/
 │   ├── auth/
 │   ├── dashboard/
 │   ├── asset/
-│   ├── virtual_machines/
+│   ├── virtual_machine/
 │   ├── datacenter/
 │   ├── room/
 │   ├── rack/
@@ -1022,7 +1044,7 @@ Nenhuma evidência deverá conter segredos.
 ## Fase 6 — CRUD
 
 - [x] Ativos
-- [ ] Máquinas Virtuais
+- [x] Máquinas Virtuais
 - [x] CRUD completo de Datacenter
 - [x] CRUD completo de Sala
 - [x] CRUD completo de Rack
