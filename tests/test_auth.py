@@ -185,6 +185,9 @@ def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None
         "/admin/users/new",
         "/admin/users/1/edit",
         "/admin/users/1/toggle-active",
+        "/datacenters/create",
+        "/datacenters/1/edit",
+        "/datacenters/1/delete",
     ],
 )
 def test_mutating_routes_reject_missing_csrf_token(path: str) -> None:

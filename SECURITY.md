@@ -899,6 +899,14 @@ USER_DEACTIVATED
 USER_ROLE_CHANGED
 ```
 
+Eventos implementados na etapa 03.1:
+
+```text
+DATACENTER.CREATE
+DATACENTER.UPDATE
+DATACENTER.DELETE
+```
+
 Eventos reservados para etapas futuras:
 
 ```text
@@ -909,10 +917,6 @@ ASSET.DELETE
 VM.CREATE
 VM.UPDATE
 VM.DELETE
-
-DATACENTER.CREATE
-DATACENTER.UPDATE
-DATACENTER.DELETE
 
 ROOM.CREATE
 ROOM.UPDATE
@@ -929,7 +933,7 @@ Datacenter, Sala e Rack possuem CRUD completo. Suas operações de escrita dever
 
 # 37. Dados de Auditoria
 
-O registro persistido na etapa 02.8 possui:
+O registro original persistido desde a etapa 02.8 possui:
 
 ```text
 id
@@ -942,20 +946,33 @@ details
 created_at
 ```
 
+A etapa 03.1 acrescentou os campos opcionais:
+
+```text
+resource_type (opcional)
+resource_id (opcional)
+result (opcional)
+```
+
 `details` é um JSON curto com lista branca específica por evento. São permitidos
 somente motivo genérico de falha, perfil e status atribuídos, origem CLI, nomes de
 campos alterados e transição de perfil. Valores anteriores de username/e-mail não
 são armazenados.
+
+Eventos de Datacenter usam `resource_type`, `resource_id` e `result` controlados,
+sem copiar nome, localização, descrição ou conteúdo integral do formulário. A
+alteração do Datacenter e o respectivo AuditLog são confirmados na mesma transação.
 
 O endereço IP vem exclusivamente de `request.remote_addr`. A aplicação não
 interpreta `X-Forwarded-For` nesta fase; a confiança no proxy será configurada e
 testada junto com Nginx/ProxyFix. O User-Agent é truncado em 255 caracteres e pode
 ser omitido da tabela administrativa.
 
-Falhas de persistência da auditoria executam rollback da tentativa, geram erro no
-Application Log somente com o tipo do evento e não interrompem a operação principal
-já concluída. Não existe `try/except: pass` nem inclusão do conteúdo do evento no
-log técnico.
+Nos fluxos anteriores à etapa 03.1, falhas de persistência da auditoria executam
+rollback da tentativa, geram erro no Application Log somente com o tipo do evento e
+não interrompem a operação principal já concluída. Nas operações de Datacenter, a
+alteração e a auditoria pertencem à mesma transação e sofrem rollback em conjunto.
+Não existe `try/except: pass` nem inclusão do conteúdo do evento no log técnico.
 
 ---
 

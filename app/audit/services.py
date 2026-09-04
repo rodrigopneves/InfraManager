@@ -13,8 +13,21 @@ ALLOWED_DETAIL_KEYS = {
     AuditEventType.USER_CREATED: frozenset({"role", "is_active", "source"}),
     AuditEventType.USER_UPDATED: frozenset({"changed_fields"}),
     AuditEventType.USER_ROLE_CHANGED: frozenset({"old_role", "new_role"}),
+    AuditEventType.DATACENTER_UPDATE: frozenset({"changed_fields"}),
 }
-ALLOWED_CHANGED_FIELDS = frozenset({"username", "email", "is_active", "role"})
+ALLOWED_CHANGED_FIELDS = {
+    AuditEventType.USER_UPDATED: frozenset(
+        {"username", "email", "is_active", "role"}
+    ),
+    AuditEventType.DATACENTER_UPDATE: frozenset(
+        {"name", "code", "location", "description", "status"}
+    ),
+}
+EVENT_RESOURCE_TYPES = {
+    AuditEventType.DATACENTER_CREATE: "datacenter",
+    AuditEventType.DATACENTER_UPDATE: "datacenter",
+    AuditEventType.DATACENTER_DELETE: "datacenter",
+}
 MAX_DETAILS_LENGTH = 1000
 MAX_USER_AGENT_LENGTH = 255
 VALID_ROLES = frozenset(role.value for role in UserRole)
@@ -26,11 +39,16 @@ def record_event(
     actor: User | None = None,
     target: User | None = None,
     details: Mapping[str, object] | None = None,
+    resource_type: str | None = None,
+    resource_id: int | None = None,
+    result: str | None = None,
+    commit: bool = True,
 ) -> AuditLog | None:
     if not isinstance(event_type, AuditEventType):
         raise ValueError("Audit event type must use AuditEventType.")
 
     safe_details = _sanitize_details(event_type, details or {})
+    _validate_resource(event_type, resource_type, resource_id, result)
     ip_address = None
     user_agent = None
     if has_request_context():
@@ -45,7 +63,14 @@ def record_event(
         ip_address=ip_address,
         user_agent=user_agent,
         details=safe_details,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        result=result,
     )
+    if not commit:
+        db.session.add(audit_log)
+        return audit_log
+
     try:
         db.session.add(audit_log)
         db.session.commit()
@@ -74,7 +99,10 @@ def _sanitize_details(
             if not all(isinstance(field, str) for field in value):
                 raise ValueError("Audit changed fields must contain strings.")
             changed_fields = sorted(set(value))
-            if not set(changed_fields) <= ALLOWED_CHANGED_FIELDS:
+            allowed_changed_fields = ALLOWED_CHANGED_FIELDS.get(
+                event_type, frozenset()
+            )
+            if not set(changed_fields) <= allowed_changed_fields:
                 raise ValueError("Audit changed fields contain unsupported values.")
             sanitized[key] = changed_fields
         elif key == "is_active":
@@ -97,6 +125,28 @@ def _sanitize_details(
     if len(json.dumps(sanitized, ensure_ascii=False)) > MAX_DETAILS_LENGTH:
         raise ValueError("Audit details are too long.")
     return sanitized
+
+
+def _validate_resource(
+    event_type: AuditEventType,
+    resource_type: str | None,
+    resource_id: int | None,
+    result: str | None,
+) -> None:
+    expected_resource_type = EVENT_RESOURCE_TYPES.get(event_type)
+    if expected_resource_type is None:
+        if any(value is not None for value in (resource_type, resource_id, result)):
+            raise ValueError("Audit resource is not supported for this event.")
+        return
+
+    if (
+        resource_type != expected_resource_type
+        or not isinstance(resource_id, int)
+        or isinstance(resource_id, bool)
+        or resource_id <= 0
+        or result != "success"
+    ):
+        raise ValueError("Audit resource data is invalid.")
 
 
 def format_details(details: Mapping[str, object]) -> str:

@@ -570,7 +570,7 @@ O relacionamento com o host poderá ser opcional.
 
 # 17. Modelo Datacenter
 
-Campos:
+Implementado na etapa 03.1 com os campos:
 
 ```text
 id
@@ -582,6 +582,11 @@ status
 created_at
 updated_at
 ```
+
+`code` é normalizado para maiúsculas e possui unicidade no banco. `status` aceita
+somente `active` e `inactive`, com `active` como valor padrão. O Blueprint usa o
+prefixo `/datacenters`, pagina as listagens e restringe todas as escritas a
+administradores.
 
 ---
 
@@ -672,7 +677,7 @@ O inventário visual completo de rack não faz parte do MVP.
 
 # 21. Modelo AuditLog
 
-Campos implementados na etapa 02.8:
+Campos originais implementados na etapa 02.8:
 
 ```text
 id
@@ -685,13 +690,23 @@ details
 created_at
 ```
 
+Campos opcionais acrescentados na etapa 03.1:
+
+```text
+resource_type
+resource_id
+result
+```
+
 `actor_user_id` e `target_user_id` são relacionamentos opcionais distintos com
 `User`. Isso permite registrar falhas anônimas de autenticação e identificar o
 usuário afetado por uma ação administrativa. A interface trata relações ausentes
 sem impedir a consulta.
 
 `details` utiliza JSON compatível com SQLite, limitado a metadados permitidos por
-evento. Não recebe objetos arbitrários, formulários, requisições ou sessões.
+evento. Não recebe objetos arbitrários, formulários, requisições ou sessões. Os
+campos opcionais `resource_type`, `resource_id` e `result`, acrescentados na etapa
+03.1, identificam recursos de infraestrutura sem alterar eventos anteriores.
 
 Índices simples são mantidos em `event_type`, `created_at`, `actor_user_id` e
 `target_user_id`.
@@ -706,8 +721,8 @@ ip_address: 192.0.2.10
 details: {"reason": "authentication_failed"}
 ```
 
-Campos genéricos de recurso e resultado poderão ser acrescentados quando a
-auditoria dos futuros módulos de infraestrutura for implementada.
+As operações de Datacenter persistem a mudança e seu evento de auditoria na mesma
+transação.
 
 ---
 

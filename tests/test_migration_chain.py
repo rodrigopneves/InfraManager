@@ -8,8 +8,8 @@ from app.extensions import db
 from config import TestingConfig
 
 
-AUDIT_REVISION = "b7d3a1f6c942"
-PREVIOUS_REVISION = "8f2c9a4d1e7b"
+DATACENTER_REVISION = "d4e8a1c2f903"
+PREVIOUS_REVISION = "b7d3a1f6c942"
 
 
 def test_empty_database_upgrade_and_single_downgrade_round_trip(
@@ -32,9 +32,11 @@ def test_empty_database_upgrade_and_single_downgrade_round_trip(
     )
     assert downgrade_result.exit_code == 0, downgrade_result.output
     with app.app_context():
-        assert "audit_logs" not in inspect(db.engine).get_table_names()
+        table_names = inspect(db.engine).get_table_names()
+        assert "audit_logs" in table_names
+        assert "datacenters" not in table_names
 
-    second_upgrade = runner.invoke(args=["db", "upgrade", AUDIT_REVISION])
+    second_upgrade = runner.invoke(args=["db", "upgrade", DATACENTER_REVISION])
     assert second_upgrade.exit_code == 0, second_upgrade.output
     _assert_head_schema(app)
 
@@ -46,10 +48,15 @@ def _assert_head_schema(app: Flask) -> None:
         user_columns = {
             column["name"] for column in inspector.get_columns("users")
         }
+        audit_columns = {
+            column["name"] for column in inspector.get_columns("audit_logs")
+        }
 
     assert "users" in table_names
     assert "audit_logs" in table_names
+    assert "datacenters" in table_names
     assert "role" in user_columns
     assert "is_admin" not in user_columns
     assert "mfa_enabled" in user_columns
     assert "mfa_secret" in user_columns
+    assert {"resource_type", "resource_id", "result"} <= audit_columns

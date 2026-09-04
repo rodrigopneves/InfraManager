@@ -11,6 +11,8 @@
         <th>Ator</th>
         <th>Alvo</th>
         <th>IP</th>
+        <th>Recurso</th>
+        <th>Resultado</th>
         <th>Detalhes</th>
       </tr>
     </thead>
@@ -39,10 +41,18 @@
             {% endif %}
           </td>
           <td>{{ audit_log.ip_address or "-" }}</td>
+          <td>
+            {% if audit_log.resource_type and audit_log.resource_id %}
+              {{ audit_log.resource_type }} #{{ audit_log.resource_id }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ audit_log.result or "-" }}</td>
           <td>{{ entry.details }}</td>
         </tr>
       {% else %}
-        <tr><td colspan="6">Nenhum evento registrado.</td></tr>
+        <tr><td colspan="8">Nenhum evento registrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

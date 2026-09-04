@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Datacenters</h1>
+
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('datacenter.create') }}">Novo Datacenter</a></p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Localização</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for datacenter in pagination.items %}
+        <tr>
+          <td>{{ datacenter.code }}</td>
+          <td>{{ datacenter.name }}</td>
+          <td>{{ datacenter.location }}</td>
+          <td>{{ datacenter.status_label }}</td>
+          <td>
+            <a href="{{ url_for('datacenter.detail', datacenter_id=datacenter.id) }}">Detalhes</a>
+            {% if current_user.has_role(admin_role) %}
+              <a href="{{ url_for('datacenter.edit', datacenter_id=datacenter.id) }}">Editar</a>
+              <a href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Nenhum Datacenter cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('datacenter.index', page=pagination.prev_num) }}">Anterior</a>
+  {% endif %}
+  <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('datacenter.index', page=pagination.next_num) }}">Próxima</a>
+  {% endif %}
+{% endblock %}

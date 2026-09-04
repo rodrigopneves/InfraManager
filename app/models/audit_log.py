@@ -19,6 +19,9 @@ class AuditEventType(str, Enum):
     USER_ACTIVATED = "USER_ACTIVATED"
     USER_DEACTIVATED = "USER_DEACTIVATED"
     USER_ROLE_CHANGED = "USER_ROLE_CHANGED"
+    DATACENTER_CREATE = "DATACENTER.CREATE"
+    DATACENTER_UPDATE = "DATACENTER.UPDATE"
+    DATACENTER_DELETE = "DATACENTER.DELETE"
 
 
 VALID_AUDIT_EVENT_TYPES = frozenset(event.value for event in AuditEventType)
@@ -48,6 +51,9 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(255), nullable=True)
     details = db.Column(db.JSON, nullable=False, default=dict)
+    resource_type = db.Column(db.String(50), nullable=True)
+    resource_id = db.Column(db.Integer, nullable=True)
+    result = db.Column(db.String(20), nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True), nullable=False, default=utc_now, index=True
     )

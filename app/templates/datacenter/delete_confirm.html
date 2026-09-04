@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Confirmar exclusão</h1>
+  <p>
+    Confirme a exclusão do Datacenter
+    <strong>{{ datacenter.code }} — {{ datacenter.name }}</strong>.
+  </p>
+
+  <form method="post" action="{{ url_for('datacenter.delete', datacenter_id=datacenter.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Confirmar exclusão</button>
+  </form>
+
+  <p><a href="{{ url_for('datacenter.detail', datacenter_id=datacenter.id) }}">Cancelar</a></p>
+{% endblock %}

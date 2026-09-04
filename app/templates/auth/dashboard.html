@@ -4,6 +4,7 @@
   <h1>Bem-vindo, {{ current_user.username }}.</h1>
 
   <p>MFA: {{ "ativo" if current_user.mfa_enabled else "desativado" }}</p>
+  <p><a href="{{ url_for('datacenter.index') }}">Datacenters</a></p>
   {% if current_user.mfa_enabled %}
     <p><a href="{{ url_for('account.mfa_disable') }}">Desativar MFA</a></p>
   {% else %}

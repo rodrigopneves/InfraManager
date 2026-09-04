@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ datacenter.name }}</h1>
+
+  <dl>
+    <dt>Código</dt>
+    <dd>{{ datacenter.code }}</dd>
+    <dt>Localização</dt>
+    <dd>{{ datacenter.location }}</dd>
+    <dt>Status</dt>
+    <dd>{{ datacenter.status_label }}</dd>
+    <dt>Descrição</dt>
+    <dd>{{ datacenter.description or "-" }}</dd>
+  </dl>
+
+  {% if current_user.has_role(admin_role) %}
+    <p><a href="{{ url_for('datacenter.edit', datacenter_id=datacenter.id) }}">Editar</a></p>
+    <p><a href="{{ url_for('datacenter.delete_confirm', datacenter_id=datacenter.id) }}">Excluir</a></p>
+  {% endif %}
+
+  <p><a href="{{ url_for('datacenter.index') }}">Voltar</a></p>
+{% endblock %}

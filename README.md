@@ -504,7 +504,7 @@ A documentação definitiva será atualizada durante o desenvolvimento.
 
 # Auditoria
 
-Na etapa 02.8 são registrados:
+Na etapa 02.8 foram introduzidos:
 
 ```text
 LOGIN_SUCCESS
@@ -522,11 +522,24 @@ USER_DEACTIVATED
 USER_ROLE_CHANGED
 ```
 
+Na etapa 03.1 foram introduzidos:
+
+```text
+DATACENTER.CREATE
+DATACENTER.UPDATE
+DATACENTER.DELETE
+```
+
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
 limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
 primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
 Nginx/ProxyFix.
+
+A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
+identificar recursos de infraestrutura. No CRUD de Datacenters, a alteração e o
+AuditLog usam a mesma transação; os fluxos anteriores mantêm o comportamento já
+existente.
 
 O log não deverá armazenar:
 
@@ -539,8 +552,8 @@ O log não deverá armazenar:
 - session ID.
 
 Não há nesta etapa retenção automática, exportação, integração com SIEM/syslog,
-correlação ou alertas. Eventos de ativos, VMs e infraestrutura serão adicionados
-com os respectivos módulos.
+correlação ou alertas. Eventos de ativos, VMs e dos demais módulos de infraestrutura
+serão adicionados com os respectivos módulos.
 
 ---
 
@@ -977,7 +990,7 @@ Nenhuma evidência deverá conter segredos.
 
 - [ ] Ativos
 - [ ] Máquinas Virtuais
-- [ ] CRUD completo de Datacenter
+- [x] CRUD completo de Datacenter
 - [ ] CRUD completo de Sala
 - [ ] CRUD completo de Rack
 

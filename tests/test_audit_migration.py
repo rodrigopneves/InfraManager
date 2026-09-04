@@ -21,7 +21,7 @@ def test_audit_migration_creates_expected_table_and_indexes(
     previous_revision = runner.invoke(args=["db", "upgrade", "8f2c9a4d1e7b"])
     assert previous_revision.exit_code == 0, previous_revision.output
 
-    migration_result = runner.invoke(args=["db", "upgrade"])
+    migration_result = runner.invoke(args=["db", "upgrade", "b7d3a1f6c942"])
     assert migration_result.exit_code == 0, migration_result.output
 
     with app.app_context():

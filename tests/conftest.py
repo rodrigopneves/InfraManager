@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db
-from app.models import User, UserRole
+from app.models import Datacenter, User, UserRole
 
 
 @pytest.fixture()
@@ -58,6 +58,32 @@ def regular_user(app: Flask) -> User:
 
 
 @pytest.fixture()
+def operator_user(app: Flask) -> User:
+    user = User(
+        username="operator.demo",
+        email="operator.demo@example.com",
+        role=UserRole.OPERATOR.value,
+    )
+    user.set_password("valid-operator-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture()
+def viewer_user(app: Flask) -> User:
+    user = User(
+        username="viewer.demo",
+        email="viewer.demo@example.com",
+        role=UserRole.VIEWER.value,
+    )
+    user.set_password("valid-viewer-password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture()
 def mfa_user(app: Flask) -> User:
     user = User(
         username="mfa.demo",
@@ -69,3 +95,16 @@ def mfa_user(app: Flask) -> User:
     db.session.add(user)
     db.session.commit()
     return user
+
+
+@pytest.fixture()
+def sample_datacenter(app: Flask) -> Datacenter:
+    datacenter = Datacenter(
+        name="Datacenter Laboratório",
+        code="DC-LAB-01",
+        location="São Paulo",
+        description="Ambiente fictício para testes.",
+    )
+    db.session.add(datacenter)
+    db.session.commit()
+    return datacenter
