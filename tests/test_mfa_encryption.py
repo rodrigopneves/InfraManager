@@ -1,3 +1,5 @@
+import logging
+
 from cryptography.fernet import Fernet
 import pyotp
 import pytest
@@ -106,11 +108,18 @@ def test_cli_encrypts_legacy_secrets_once_without_printing_them(app) -> None:
     assert "Segredos MFA migrados: 0." in second_result.output
 
 
-def test_production_rejects_invalid_mfa_encryption_key() -> None:
+def test_production_rejects_invalid_mfa_encryption_key(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     class InvalidMfaKeyProductionConfig(ProductionConfig):
         SECRET_KEY = "production-test-only-secret"
         SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
         MFA_ENCRYPTION_KEY = "invalid-key"
 
+    caplog.set_level(logging.CRITICAL, logger="app")
+
     with pytest.raises(RuntimeError, match="MFA encryption configuration"):
         create_app(InvalidMfaKeyProductionConfig)
+
+    assert "invalid MFA encryption configuration" in caplog.text
+    assert InvalidMfaKeyProductionConfig.MFA_ENCRYPTION_KEY not in caplog.text

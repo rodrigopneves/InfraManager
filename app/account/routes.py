@@ -18,7 +18,14 @@ from app.account.services import (
     generate_mfa_secret,
 )
 from app.auth.services import get_pending_mfa_user, start_pending_mfa_login
+from app.audit import record_event
 from app.extensions import limiter
+from app.models import (
+    AuditEventType,
+    SecurityAlertSeverity,
+    SecurityAlertType,
+)
+from app.security_alerts import record_security_event
 
 
 MFA_SETUP_SECRET_KEY = "pending_mfa_setup_secret"
@@ -58,9 +65,21 @@ def mfa_setup():
             flash("MFA ativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
+        record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Código de autenticação inválido.", "danger")
     elif request.method == "POST":
         form.code.data = ""
+        record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Código de autenticação inválido.", "danger")
 
     qr_data_uri = build_mfa_qr_data_uri(user, secret)
@@ -97,9 +116,23 @@ def mfa_disable():
             flash("Configure novamente o MFA para continuar.", "success")
             return redirect(url_for("account.mfa_setup"))
         form.code.data = ""
+        user = current_user._get_current_object()
+        record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Não foi possível desativar o MFA.", "danger")
     elif request.method == "POST":
         form.code.data = ""
+        user = current_user._get_current_object()
+        record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Não foi possível desativar o MFA.", "danger")
 
     return render_template("account/mfa_disable.html", form=form)

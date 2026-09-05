@@ -56,6 +56,7 @@
                   <ul class="dropdown-menu">
                     <li><a class="dropdown-item{{ ' active' if request.endpoint and request.endpoint.startswith('admin.user') else '' }}" href="{{ url_for('admin.users') }}"{% if request.endpoint and request.endpoint.startswith('admin.user') %} aria-current="page"{% endif %}>Usuários</a></li>
                     <li><a class="dropdown-item{{ ' active' if request.endpoint == 'admin.audit' else '' }}" href="{{ url_for('admin.audit') }}"{% if request.endpoint == 'admin.audit' %} aria-current="page"{% endif %}>Auditoria</a></li>
+                    <li><a class="dropdown-item{{ ' active' if request.endpoint == 'admin.security_alerts' else '' }}" href="{{ url_for('admin.security_alerts') }}"{% if request.endpoint == 'admin.security_alerts' %} aria-current="page"{% endif %}>Alertas de segurança</a></li>
                   </ul>
                 </li>
               {% endif %}

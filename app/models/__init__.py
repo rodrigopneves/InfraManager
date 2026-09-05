@@ -8,6 +8,12 @@ from app.models.user import (
     validate_username,
 )
 from app.models.audit_log import AuditEventType, AuditLog
+from app.models.security_alert import (
+    SecurityAlert,
+    SecurityAlertSeverity,
+    SecurityAlertStatus,
+    SecurityAlertType,
+)
 from app.models.datacenter import (
     Datacenter,
     DatacenterStatus,
@@ -89,6 +95,10 @@ __all__ = [
     "UserRole",
     "AuditEventType",
     "AuditLog",
+    "SecurityAlert",
+    "SecurityAlertSeverity",
+    "SecurityAlertStatus",
+    "SecurityAlertType",
     "Datacenter",
     "DatacenterStatus",
     "DATACENTER_CODE_MAX_LENGTH",

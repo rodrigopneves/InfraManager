@@ -517,7 +517,13 @@ Controles:
 - CRUD Audit;
 - eventos administrativos.
 
-Um mecanismo simples de alertas complementará a auditoria. Falhas repetidas de Login/MFA, bloqueios por rate limiting e tentativas de acesso administrativo negadas gerarão alertas `WARNING` ou `CRITICAL`, com data/hora, origem resumida, contagem e estado de revisão, visíveis aos Administradores. Integrações externas não fazem parte do MVP.
+Um mecanismo simples de alertas complementa a auditoria. Falhas de Login/MFA,
+contas inativas, bloqueios por rate limiting, acessos administrativos negados e
+erros internos dos fluxos sensíveis geram `SecurityAlert` com severidade
+`WARNING` ou `ERROR`. Eventos equivalentes são agregados por 15 minutos, com
+contagem e estado de revisão, e ficam visíveis somente aos Administradores em
+`/admin/security-alerts`. `CRITICAL` está reservado para condições realmente
+graves e não é atribuído automaticamente a tentativas individuais.
 
 A documentação definitiva será atualizada durante o desenvolvimento.
 
@@ -584,7 +590,7 @@ VM.DELETE
 ```
 
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
-limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
+sanitizado e limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
 primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
 Nginx/ProxyFix.
@@ -604,7 +610,14 @@ O log não deverá armazenar:
 - token;
 - session ID.
 
-Não há nesta etapa retenção automática, exportação ou integração com SIEM/syslog.
+O `AuditLog` registra quem fez o quê; o `SecurityAlert` registra possíveis abusos
+ou falhas de segurança. Alertas persistem tipo, severidade, usuário opcional,
+`remote_addr`, User-Agent limitado, endpoint, primeira/última ocorrência, contagem
+e estado, nunca formulário ou cabeçalhos sensíveis. Não se confia em
+`X-Forwarded-For` antes da futura configuração de Nginx/ProxyFix.
+
+Recomenda-se retenção de 90 dias para alertas, conforme política institucional.
+Não há retenção automática, exportação ou integração com SIEM/syslog nesta etapa.
 Os eventos de Ativos e Máquinas Virtuais já fazem parte da auditoria; novos eventos
 de infraestrutura serão adicionados com os respectivos módulos.
 
@@ -1054,7 +1067,7 @@ Nenhuma evidência deverá conter segredos.
 - [x] AuditLog
 - [x] eventos de autenticação e administração de usuários
 - [x] consulta administrativa
-- [ ] alertas simples de segurança
+- [x] alertas simples de segurança
 
 ## Fase 8 — Segurança
 

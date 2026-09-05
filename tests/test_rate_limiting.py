@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 
 from app import create_app
 from app.extensions import db, limiter
-from app.models import User
+from app.models import SecurityAlert, SecurityAlertType, User
 from config import TestingConfig
 
 
@@ -67,8 +67,12 @@ def test_exceeding_login_limit_returns_safe_429_response(
     exceed_login_limit(rate_limited_client, "192.0.2.20")
 
     response = post_login(rate_limited_client, remote_address="192.0.2.20")
+    repeated_response = post_login(
+        rate_limited_client, remote_address="192.0.2.20"
+    )
 
     assert response.status_code == 429
+    assert repeated_response.status_code == 429
     assert (
         "Muitas tentativas foram realizadas. "
         "Aguarde alguns minutos e tente novamente."
@@ -78,6 +82,15 @@ def test_exceeding_login_limit_returns_safe_429_response(
     assert b"sensitive-test-password" not in response_content
     assert b"flask-limiter" not in response_content
     assert b"5 per 15" not in response_content
+    alert = db.session.scalar(
+        db.select(SecurityAlert).where(
+            SecurityAlert.event_type == SecurityAlertType.RATE_LIMIT.value
+        )
+    )
+    assert alert is not None
+    assert alert.endpoint == "auth.login"
+    assert alert.ip_address == "192.0.2.20"
+    assert alert.occurrence_count == 2
 
 
 def test_get_login_and_health_remain_available_after_limit(

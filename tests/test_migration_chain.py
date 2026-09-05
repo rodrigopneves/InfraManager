@@ -10,7 +10,7 @@ from config import TestingConfig
 
 
 ASSET_REVISION = "e1a5b7c9d302"
-HEAD_REVISION = "a4c8e2d7f105"
+HEAD_REVISION = "d9f4b2a7c610"
 
 
 def test_empty_database_upgrade_and_single_downgrade_round_trip(
@@ -55,6 +55,10 @@ def _assert_head_schema(app: Flask) -> None:
         audit_columns = {
             column["name"] for column in inspector.get_columns("audit_logs")
         }
+        security_alert_columns = {
+            column["name"]
+            for column in inspector.get_columns("security_alerts")
+        }
         user_checks = {
             constraint["name"]
             for constraint in inspector.get_check_constraints("users")
@@ -67,6 +71,7 @@ def _assert_head_schema(app: Flask) -> None:
     assert "racks" in table_names
     assert "assets" in table_names
     assert "virtual_machines" in table_names
+    assert "security_alerts" in table_names
     assert "role" in user_columns
     assert "is_admin" not in user_columns
     assert "mfa_enabled" in user_columns
@@ -75,6 +80,14 @@ def _assert_head_schema(app: Flask) -> None:
     assert "mfa_last_used_step" in user_columns
     assert "ck_users_role" in user_checks
     assert {"resource_type", "resource_id", "result"} <= audit_columns
+    assert {
+        "event_type",
+        "severity",
+        "status",
+        "occurrence_count",
+        "first_seen_at",
+        "last_seen_at",
+    } <= security_alert_columns
 
 
 def test_mfa_migration_preserves_legacy_secret_for_explicit_encryption(

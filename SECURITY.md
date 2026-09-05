@@ -1025,9 +1025,9 @@ A rota `GET /admin/audit` é protegida por autorização server-side para `admin
 ordena os registros do mais recente para o mais antigo e não oferece edição ou
 exclusão.
 
-Não há retenção ou remoção automática, exportação, assinatura criptográfica,
-integração com SIEM/syslog remoto ou correlação de eventos nesta etapa. Alertas de
-segurança continuam como requisito futuro do MVP.
+Não há retenção ou remoção automática, exportação, assinatura criptográfica ou
+integração com SIEM/syslog remoto. Alertas operacionais são mantidos em tabela
+separada e não alteram a imutabilidade da trilha de auditoria.
 
 ---
 
@@ -1048,14 +1048,33 @@ Authorization header
 
 ## Alertas de Segurança
 
-Para atender A09, eventos críticos ou repetidos deverão gerar um alerta simples, além do AuditLog. Gatilhos mínimos:
+Para atender A09, o `SecurityAlert` complementa, sem duplicar, o `AuditLog`.
+São monitorados:
 
-- múltiplas falhas de Login para a mesma origem ou conta em uma janela curta;
-- múltiplas falhas de MFA;
-- bloqueio por rate limiting (`429`);
-- tentativa de acesso a função administrativa negada (`403`).
+- falha de Login e tentativa de conta inativa (`WARNING`);
+- falha de MFA (`WARNING`);
+- bloqueio por rate limiting (`429`, `WARNING`);
+- tentativa de acesso a função administrativa negada (`403`, `WARNING`);
+- inconsistência de configuração ou descriptografia MFA (`ERROR`);
+- erro interno inesperado em fluxo de autenticação/MFA (`ERROR`).
 
-O alerta deverá conter somente data/hora, tipo, severidade (`WARNING` ou `CRITICAL`), origem resumida, contagem e estado (`novo` ou `revisado`). Administradores deverão visualizar alertas recentes em tela/consulta própria. Não registrar senha, TOTP, segredo, token, cookie ou session ID. E-mail, SMS e integração com SIEM ficam fora do MVP.
+O limiar inicial é uma ocorrência, permitindo registrar cada categoria relevante;
+eventos equivalentes por tipo, severidade, usuário, `remote_addr` e endpoint são
+agregados por 15 minutos enquanto estiverem no estado `new`. A tabela armazena
+primeira/última ocorrência, contagem, estado, usuário opcional, IP, endpoint e
+User-Agent sanitizado e limitado a 255 caracteres. O User-Agent não é considerado
+identificador confiável nem faz parte da chave de correlação.
+
+Somente administradores consultam e marcam alertas como revisados em
+`/admin/security-alerts`; a revisão também gera AuditLog. Não são armazenados
+senha, hash de senha, TOTP, segredo MFA, chave Fernet, token CSRF, cookie,
+Authorization ou corpo da requisição. O IP vem exclusivamente de
+`request.remote_addr`; `X-Forwarded-For` permanece não confiável até a futura
+configuração coordenada de Nginx e ProxyFix.
+
+Recomenda-se retenção operacional de 90 dias, sujeita à política institucional e
+à legislação aplicável. Não há expurgo automático nesta etapa. E-mail, SMS e SIEM
+continuam fora do escopo.
 
 ---
 

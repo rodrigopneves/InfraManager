@@ -1,7 +1,8 @@
 import logging
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request, session
+from flask_login import current_user
 from flask_wtf.csrf import CSRFError
 from werkzeug.exceptions import (
     BadRequest,
@@ -23,11 +24,11 @@ def create_app(config: str | object | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     selected_config = _resolve_config(config)
     app.config.from_object(selected_config)
+    _configure_logging(app)
 
     if _uses_production_config(selected_config):
         _validate_production_config(app)
 
-    _configure_logging(app)
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
@@ -81,12 +82,18 @@ def _validate_production_config(app: Flask) -> None:
     missing_settings = [name for name, value in required_settings.items() if not value]
     if missing_settings:
         missing_names = ", ".join(missing_settings)
+        app.logger.critical(
+            "Production startup blocked by missing required configuration."
+        )
         raise RuntimeError(
             f"Missing required production environment variables: {missing_names}."
         )
     try:
         validate_mfa_encryption_key(app.config["MFA_ENCRYPTION_KEY"])
     except MfaEncryptionError as error:
+        app.logger.critical(
+            "Production startup blocked by invalid MFA encryption configuration."
+        )
         raise RuntimeError("MFA encryption configuration is invalid.") from error
 
 
@@ -95,6 +102,20 @@ def _handle_csrf_error(_error: CSRFError) -> tuple[str, int]:
 
 
 def _handle_rate_limit_error(_error: TooManyRequests) -> tuple[str, int]:
+    from app.auth.services import PENDING_MFA_USER_ID_KEY
+    from app.models import SecurityAlertSeverity, SecurityAlertType
+    from app.security_alerts import record_security_event
+
+    user_id = (
+        int(current_user.get_id())
+        if current_user.is_authenticated
+        else session.get(PENDING_MFA_USER_ID_KEY)
+    )
+    record_security_event(
+        SecurityAlertType.RATE_LIMIT,
+        SecurityAlertSeverity.WARNING,
+        user_id=user_id if isinstance(user_id, int) else None,
+    )
     return render_template("errors/429.html"), 429
 
 
@@ -117,8 +138,30 @@ def _handle_request_too_large_error(
 
 
 def _handle_internal_server_error(
-    _error: InternalServerError,
+    error: InternalServerError,
 ) -> tuple[str, int]:
+    from app.auth.services import PENDING_MFA_USER_ID_KEY
+    from app.models import SecurityAlertSeverity, SecurityAlertType
+    from app.security_alerts import record_security_event
+
+    original_error = error.original_exception
+    if isinstance(original_error, MfaEncryptionError):
+        record_security_event(
+            SecurityAlertType.MFA_DECRYPTION_FAILURE,
+            SecurityAlertSeverity.ERROR,
+            user_id=(
+                session.get(PENDING_MFA_USER_ID_KEY)
+                if isinstance(session.get(PENDING_MFA_USER_ID_KEY), int)
+                else None
+            ),
+            emit_log=False,
+        )
+    elif original_error is not None and request.blueprint in {"auth", "account"}:
+        record_security_event(
+            SecurityAlertType.INTERNAL_AUTH_ERROR,
+            SecurityAlertSeverity.ERROR,
+            emit_log=False,
+        )
     return render_template("errors/500.html"), 500
 
 

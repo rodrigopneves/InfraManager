@@ -282,7 +282,8 @@ inframanager/
 │   │   ├── datacenter.py
 │   │   ├── room.py
 │   │   ├── rack.py
-│   │   └── audit_log.py
+│   │   ├── audit_log.py
+│   │   └── security_alert.py
 │   │
 │   ├── auth/
 │   │   ├── routes.py
@@ -1304,9 +1305,18 @@ Os dois possuem finalidades diferentes.
 
 ## Alertas de Segurança
 
-Um serviço simples de alertas deverá correlacionar eventos críticos ou repetidos, como falhas sucessivas de Login/MFA, respostas 429 e tentativas de acesso administrativo negadas. Cada alerta deverá registrar data/hora, tipo, severidade, origem resumida, contagem e estado (`novo` ou `revisado`), sem incluir segredos.
+O `SecurityAlert` é separado do `AuditLog`: auditoria responde “quem fez o quê”,
+enquanto o alerta registra indícios de abuso ou falhas em controles de segurança.
+O serviço central abre o alerta na primeira ocorrência e correlaciona eventos com
+o mesmo tipo, severidade, usuário, IP e endpoint em uma janela persistente de 15
+minutos. Enquanto o alerta estiver
+`new`, novas ocorrências incrementam a contagem e atualizam a última ocorrência;
+após revisão administrativa, uma nova ocorrência abre outro alerta.
 
-No MVP, o alerta será persistido/registrado com nível `WARNING` ou `CRITICAL` e exibido em uma consulta administrativa de alertas recentes. Integrações externas de e-mail, SMS ou SIEM ficam fora do escopo.
+Os níveis persistidos são `WARNING`, `ERROR` e `CRITICAL`; esta etapa não gera
+`CRITICAL` automaticamente, reservando-o para condições futuras realmente graves.
+A consulta paginada e a revisão ficam em `/admin/security-alerts`, somente para
+administradores. Não há e-mail, SMS, SIEM ou expurgo automático no MVP.
 
 ---
 

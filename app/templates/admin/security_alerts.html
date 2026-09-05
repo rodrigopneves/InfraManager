@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import empty_state, page_header, pagination_nav %}
+
+{% block title %}Alertas de segurança | InfraManager{% endblock %}
+
+{% block content %}
+  {{ page_header(
+    "Alertas de segurança",
+    "Eventos operacionais que podem indicar abuso ou falha de segurança."
+  ) }}
+
+  <form class="row g-3 align-items-end mb-4" method="get" action="{{ url_for('admin.security_alerts') }}">
+    <div class="col-md-4">
+      <label class="form-label" for="severity">Severidade</label>
+      <select class="form-select" id="severity" name="severity">
+        <option value="">Todas</option>
+        {% for severity in severities %}
+          <option value="{{ severity.value }}"{{ ' selected' if selected_severity == severity.value else '' }}>{{ severity.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label" for="event_type">Evento</label>
+      <select class="form-select" id="event_type" name="event_type">
+        <option value="">Todos</option>
+        {% for event_type in event_types %}
+          <option value="{{ event_type.value }}"{{ ' selected' if selected_event_type == event_type.value else '' }}>{{ event_type.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Filtrar</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.security_alerts') }}">Limpar</a>
+    </div>
+  </form>
+
+  {% if alerts %}
+    <div class="table-responsive list-table-wrapper" role="region" aria-label="Alertas de segurança" tabindex="0">
+      <table class="table table-hover align-middle list-table">
+        <caption class="visually-hidden">Alertas de segurança recentes</caption>
+        <thead><tr><th scope="col">Última ocorrência</th><th scope="col">Evento</th><th scope="col">Severidade</th><th scope="col">Usuário</th><th scope="col">Origem</th><th scope="col">Endpoint</th><th scope="col">Contagem</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for alert in alerts %}
+            <tr>
+              <td><time datetime="{{ alert.last_seen_at.isoformat() }}">{{ alert.last_seen_at.strftime('%d/%m/%Y %H:%M') }}</time></td>
+              <td><span class="badge text-bg-light audit-event-badge">{{ alert.event_type }}</span></td>
+              <td><span class="badge {{ 'text-bg-danger' if alert.severity in ['ERROR', 'CRITICAL'] else 'text-bg-warning' }}">{{ alert.severity }}</span></td>
+              <td>{% if alert.user %}{{ alert.user.username }}{% elif alert.user_id %}Usuário #{{ alert.user_id }}{% else %}-{% endif %}</td>
+              <td>{{ alert.ip_address or "-" }}</td>
+              <td>{{ alert.endpoint or "-" }}</td>
+              <td>{{ alert.occurrence_count }}</td>
+              <td>
+                {% if alert.status == 'new' %}
+                  <form method="post" action="{{ url_for('admin.review_security_alert', alert_id=alert.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Marcar revisado</button>
+                  </form>
+                {% else %}
+                  <span class="badge text-bg-secondary">Revisado</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination_nav(pagination, 'admin.security_alerts', 'Alertas de segurança', {'severity': selected_severity, 'event_type': selected_event_type}) }}
+  {% else %}
+    {{ empty_state(
+      "Nenhum alerta registrado.",
+      "Eventos de segurança relevantes serão apresentados aqui."
+    ) }}
+  {% endif %}
+{% endblock %}

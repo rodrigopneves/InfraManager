@@ -1,11 +1,12 @@
 import json
 from collections.abc import Mapping
 
-from flask import current_app, has_request_context, request
+from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
 from app.models import AuditEventType, AuditLog, User, UserRole
+from app.request_metadata import get_request_metadata
 
 
 ALLOWED_DETAIL_KEYS = {
@@ -79,9 +80,9 @@ EVENT_RESOURCE_TYPES = {
     AuditEventType.VM_CREATE: "virtual_machine",
     AuditEventType.VM_UPDATE: "virtual_machine",
     AuditEventType.VM_DELETE: "virtual_machine",
+    AuditEventType.SECURITY_ALERT_REVIEWED: "security_alert",
 }
 MAX_DETAILS_LENGTH = 1000
-MAX_USER_AGENT_LENGTH = 255
 VALID_ROLES = frozenset(role.value for role in UserRole)
 
 
@@ -101,19 +102,14 @@ def record_event(
 
     safe_details = _sanitize_details(event_type, details or {})
     _validate_resource(event_type, resource_type, resource_id, result)
-    ip_address = None
-    user_agent = None
-    if has_request_context():
-        ip_address = (request.remote_addr or "")[:45] or None
-        raw_user_agent = request.headers.get("User-Agent", "")
-        user_agent = raw_user_agent[:MAX_USER_AGENT_LENGTH] or None
+    metadata = get_request_metadata()
 
     audit_log = AuditLog(
         event_type=event_type,
         actor_user_id=actor.id if actor is not None else None,
         target_user_id=target.id if target is not None else None,
-        ip_address=ip_address,
-        user_agent=user_agent,
+        ip_address=metadata.ip_address,
+        user_agent=metadata.user_agent,
         details=safe_details,
         resource_type=resource_type,
         resource_id=resource_id,

@@ -26,6 +26,8 @@ from app.dashboard.services import (
 )
 from app.extensions import db, limiter
 from app.models import AuditEventType, User, UserRole
+from app.models import SecurityAlertSeverity, SecurityAlertType
+from app.security_alerts import record_security_event
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -51,6 +53,11 @@ def login():
                         AuditEventType.LOGIN_FAILURE,
                         details={"reason": "authentication_failed"},
                     )
+                    record_security_event(
+                        SecurityAlertType.MFA_CONFIGURATION_FAILURE,
+                        SecurityAlertSeverity.ERROR,
+                        user=user,
+                    )
                     flash("Usuário ou senha inválidos.", "danger")
                     return render_template("auth/login.html", form=form)
                 return redirect(url_for("auth.mfa_verify"))
@@ -61,12 +68,26 @@ def login():
             AuditEventType.LOGIN_FAILURE,
             details={"reason": "authentication_failed"},
         )
+        security_event_type = (
+            SecurityAlertType.INACTIVE_ACCOUNT
+            if user is not None and not user.is_active
+            else SecurityAlertType.LOGIN_FAILURE
+        )
+        record_security_event(
+            security_event_type,
+            SecurityAlertSeverity.WARNING,
+            user=user if user is not None and not user.is_active else None,
+        )
         flash("Usuário ou senha inválidos.", "danger")
     elif request.method == "POST":
         clear_pending_mfa_login()
         record_event(
             AuditEventType.LOGIN_FAILURE,
             details={"reason": "authentication_failed"},
+        )
+        record_security_event(
+            SecurityAlertType.LOGIN_FAILURE,
+            SecurityAlertSeverity.WARNING,
         )
         flash("Usuário ou senha inválidos.", "danger")
 
@@ -104,10 +125,20 @@ def mfa_verify():
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
         record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Código de autenticação inválido.", "danger")
     elif request.method == "POST":
         form.code.data = ""
         record_event(AuditEventType.MFA_FAILURE, target=user)
+        record_security_event(
+            SecurityAlertType.MFA_FAILURE,
+            SecurityAlertSeverity.WARNING,
+            user=user,
+        )
         flash("Código de autenticação inválido.", "danger")
 
     return render_template("auth/mfa_verify.html", form=form)
