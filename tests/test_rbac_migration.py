@@ -6,6 +6,7 @@ from sqlalchemy import inspect, text
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 def test_migration_converts_legacy_admin_flags(tmp_path: Path) -> None:
@@ -61,3 +62,4 @@ def test_migration_converts_legacy_admin_flags(tmp_path: Path) -> None:
     assert migrated_mfa == {"legacy.admin": 0, "legacy.viewer": 0}
     assert "mfa_enabled" in columns
     assert "mfa_secret" in columns
+    dispose_database(app)

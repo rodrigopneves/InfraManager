@@ -2,10 +2,17 @@ import time
 from urllib.parse import urlparse
 
 import pyotp
+from flask import Flask
 from flask.testing import FlaskClient
 
 from app.extensions import db
 from app.models import User
+
+
+def dispose_database(application: Flask) -> None:
+    with application.app_context():
+        db.session.remove()
+        db.engine.dispose()
 
 
 def valid_unused_totp(user: User) -> str:

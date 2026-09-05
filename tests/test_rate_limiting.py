@@ -27,6 +27,7 @@ def rate_limited_app() -> Iterator[Flask]:
         limiter.reset()
         db.session.remove()
         db.drop_all()
+        db.engine.dispose()
 
 
 @pytest.fixture()

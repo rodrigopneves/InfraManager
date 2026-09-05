@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 ROOM_REVISION = "a6f2c9d8e417"
@@ -36,6 +37,7 @@ def test_rack_migration_upgrade_downgrade_and_reupgrade(tmp_path: Path) -> None:
     reupgraded = runner.invoke(args=["db", "upgrade", RACK_REVISION])
     assert reupgraded.exit_code == 0, reupgraded.output
     _assert_rack_schema(app)
+    dispose_database(app)
 
 
 def _assert_rack_schema(app: Flask) -> None:

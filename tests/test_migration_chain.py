@@ -7,6 +7,7 @@ from sqlalchemy import inspect, text
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 ASSET_REVISION = "e1a5b7c9d302"
@@ -42,6 +43,7 @@ def test_empty_database_upgrade_and_single_downgrade_round_trip(
     )
     assert second_upgrade.exit_code == 0, second_upgrade.output
     _assert_head_schema(app)
+    dispose_database(app)
 
 
 def _assert_head_schema(app: Flask) -> None:
@@ -142,3 +144,4 @@ def test_mfa_migration_preserves_legacy_secret_for_explicit_encryption(
         ).one()
     assert row.mfa_secret == legacy_secret
     assert row.mfa_last_used_step is None
+    dispose_database(app)

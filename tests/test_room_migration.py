@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 DATACENTER_REVISION = "d4e8a1c2f903"
@@ -37,6 +38,7 @@ def test_room_migration_upgrade_downgrade_and_reupgrade(tmp_path: Path) -> None:
     reupgraded = runner.invoke(args=["db", "upgrade", ROOM_REVISION])
     assert reupgraded.exit_code == 0, reupgraded.output
     _assert_room_schema(app)
+    dispose_database(app)
 
 
 def _assert_room_schema(app: Flask) -> None:

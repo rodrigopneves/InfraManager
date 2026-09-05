@@ -13,7 +13,7 @@ from werkzeug.exceptions import (
     TooManyRequests,
 )
 
-import app.models
+import app.models  # noqa: F401 -- registers SQLAlchemy models before migrations
 from app.extensions import csrf, db, limiter, login_manager, migrate
 from app.http_security import apply_http_security
 from app.mfa_crypto import MfaEncryptionError, validate_mfa_encryption_key

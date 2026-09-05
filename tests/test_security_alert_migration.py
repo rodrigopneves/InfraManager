@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 PREVIOUS_REVISION = "a4c8e2d7f105"
@@ -36,6 +37,7 @@ def test_security_alert_migration_round_trip(tmp_path: Path) -> None:
     )
     assert second_upgrade.exit_code == 0, second_upgrade.output
     _assert_security_alert_schema(app)
+    dispose_database(app)
 
 
 def _assert_security_alert_schema(app: Flask) -> None:

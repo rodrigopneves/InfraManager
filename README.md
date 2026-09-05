@@ -196,6 +196,38 @@ A IA será utilizada para:
 - auditoria de segurança;
 - documentação.
 
+## Instalação local
+
+O projeto usa Python 3.14.4 e mantém somente dependências diretas com versões
+exatas. Dependências transitivas continuam sendo resolvidas pelo `pip`.
+
+Para executar a aplicação:
+
+```bash
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+Para desenvolvimento, testes e verificações de qualidade:
+
+```bash
+.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+Validação local recomendada:
+
+```bash
+.venv/bin/python -m pip check
+.venv/bin/python -m pip_audit -r requirements.txt
+.venv/bin/python -m ruff check .
+.venv/bin/python -m pytest -q
+.venv/bin/python -m pytest -q --cov=app --cov-branch --cov-report=term-missing
+```
+
+As versões devem ser atualizadas deliberadamente: criar ambiente limpo, alterar
+somente dependências diretas necessárias e executar `pip check`, auditoria, lint,
+suíte completa e revisão de segurança antes de consolidar a mudança.
+
 O enunciado da atividade permite Antigravity ou ambiente similar baseado em IA. fileciteturn0file0L83-L85
 
 ---
@@ -824,6 +856,12 @@ GitHub Actions
 
 Push para `main` deverá iniciar automaticamente a pipeline, conforme exigência da atividade. fileciteturn0file0L123-L129
 
+A validação contínua atual está em `.github/workflows/ci.yml` e é executada em
+todo push e pull request. Ela usa Ubuntu 24.04 e Python 3.14.4, instala as
+dependências de desenvolvimento, executa `pip check`, `pip-audit`, Ruff, a suíte
+com cobertura e `compileall`. O workflow possui apenas permissão de leitura e não
+usa secrets. Etapas de deploy serão implementadas separadamente.
+
 ---
 
 # Pipeline Prevista
@@ -877,6 +915,9 @@ Ferramenta:
 
 ```text
 pytest
+pytest-cov
+Ruff
+pip-audit
 ```
 
 ---

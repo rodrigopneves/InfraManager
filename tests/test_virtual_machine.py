@@ -18,7 +18,6 @@ from app.models import (
     AuditEventType,
     AuditLog,
     Rack,
-    Room,
     User,
     VirtualMachine,
     VirtualMachineEnvironment,

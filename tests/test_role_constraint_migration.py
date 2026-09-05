@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 PARENT_REVISION = "c2f4a6b8d105"
@@ -76,3 +77,4 @@ def test_role_check_upgrade_and_downgrade(tmp_path: Path) -> None:
             for constraint in inspect(db.engine).get_check_constraints("users")
         }
         assert "ck_users_role" not in checks
+    dispose_database(app)

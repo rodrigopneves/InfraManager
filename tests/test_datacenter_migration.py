@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 PREVIOUS_REVISION = "b7d3a1f6c942"
@@ -45,6 +46,7 @@ def test_datacenter_migration_upgrade_downgrade_and_reupgrade(
     reupgrade_result = runner.invoke(args=["db", "upgrade", DATACENTER_REVISION])
     assert reupgrade_result.exit_code == 0, reupgrade_result.output
     _assert_datacenter_schema(app)
+    dispose_database(app)
 
 
 def _assert_datacenter_schema(app: Flask) -> None:

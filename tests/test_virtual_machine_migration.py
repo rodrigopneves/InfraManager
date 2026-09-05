@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 ASSET_REVISION = "e1a5b7c9d302"
@@ -35,6 +36,7 @@ def test_virtual_machine_migration_upgrade_downgrade_and_reupgrade(
     reupgraded = runner.invoke(args=["db", "upgrade", VIRTUAL_MACHINE_REVISION])
     assert reupgraded.exit_code == 0, reupgraded.output
     _assert_virtual_machine_schema(app)
+    dispose_database(app)
 
 
 def _assert_virtual_machine_schema(app: Flask) -> None:

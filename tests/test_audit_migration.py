@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+from tests.helpers import dispose_database
 
 
 def test_audit_migration_creates_expected_table_and_indexes(
@@ -54,3 +55,4 @@ def test_audit_migration_creates_expected_table_and_indexes(
         "ix_audit_logs_target_user_id",
     }
     assert foreign_keys == {("actor_user_id",), ("target_user_id",)}
+    dispose_database(app)
