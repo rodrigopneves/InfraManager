@@ -14,6 +14,7 @@ from werkzeug.exceptions import (
 
 import app.models
 from app.extensions import csrf, db, limiter, login_manager, migrate
+from app.http_security import apply_http_security
 from app.mfa_crypto import MfaEncryptionError, validate_mfa_encryption_key
 from config import CONFIGURATIONS, ProductionConfig
 
@@ -66,6 +67,7 @@ def create_app(config: str | object | None = None) -> Flask:
     app.register_error_handler(
         InternalServerError, _handle_internal_server_error
     )
+    app.after_request(apply_http_security)
 
     return app
 

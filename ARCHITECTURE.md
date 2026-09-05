@@ -1577,17 +1577,28 @@ A porta do Gunicorn não deverá ser publicada externamente.
 
 # 52. Cabeçalhos de Segurança
 
-Nginx e/ou Flask deverão implementar, conforme compatibilidade:
+Um hook global `after_request`, implementado em `app/http_security.py`, aplica no
+Flask a política de defesa em profundidade a páginas normais, erros e conteúdo
+estático:
 
 ```text
-Strict-Transport-Security
 X-Content-Type-Options
 Content-Security-Policy
+X-Frame-Options
 Referrer-Policy
 Permissions-Policy
+Cross-Origin-Opener-Policy
 ```
 
-Configuração definitiva será especificada em `SECURITY.md`.
+O mesmo hook aplica `no-store`, `Pragma: no-cache` e `Expires: 0` quando a resposta
+pertence a uma sessão autenticada ou aos fluxos públicos sensíveis de autenticação
+e conta. O endpoint `static` é excluído dessa regra para permitir cache de CSS e
+outros assets.
+
+O Nginx continuará responsável por TLS, redirecionamento HTTPS e HSTS. O Flask não
+emite `Strict-Transport-Security`, evitando comportamento divergente entre o HTTP
+local e o esquema externo antes da configuração confiável do proxy. Os valores
+detalhados da CSP e dos demais headers estão definidos em `SECURITY.md`.
 
 ---
 

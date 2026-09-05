@@ -1104,17 +1104,53 @@ Tente novamente mais tarde.
 
 # 43. Security Headers
 
-Deverão ser utilizados, conforme compatibilidade:
+Todas as respostas geradas pelo Flask, inclusive páginas de erro e arquivos
+estáticos, recebem centralmente:
 
 ```text
-Strict-Transport-Security
-Content-Security-Policy
-X-Content-Type-Options
-Referrer-Policy
-Permissions-Policy
+Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self' https://cdn.jsdelivr.net; style-src-attr 'none'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
+Cross-Origin-Opener-Policy: same-origin
 ```
 
-Configuração deverá ser testada antes da entrega.
+`cdn.jsdelivr.net` é autorizado somente para o CSS e o JavaScript do Bootstrap,
+que permanecem protegidos por SRI e `crossorigin`. `data:` é autorizado somente
+em `img-src` para o QR Code MFA e imagens internas do Bootstrap. Não são permitidos
+`unsafe-eval` nem scripts inline. `style-src-attr 'none'` bloqueia estilos inline
+nos atributos HTML. Os dropdowns atuais ficam na navbar, onde Bootstrap 5.3.3
+desativa o modificador `applyStyles` do Popper. Collapse usa atribuições a
+`element.style[dimension]`, que continuam permitidas pela CSP; gerar um atributo
+style via CSSOM não exige liberar atributos style escritos no HTML.
+
+Referências: [Bootstrap Dropdown](https://github.com/twbs/bootstrap/blob/v5.3.3/js/src/dropdown.js),
+[Bootstrap Collapse](https://github.com/twbs/bootstrap/blob/v5.3.3/js/src/collapse.js) e
+[CSP style-src-attr](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
+
+Páginas autenticadas e os blueprints `auth` e `account` recebem:
+
+```text
+Cache-Control: no-store
+Pragma: no-cache
+Expires: 0
+```
+
+`/login` é público para acesso, mas contém um token CSRF vinculado à sessão e,
+após uma tentativa inválida, pode conter o username submetido. Por isso mantém
+`no-store`: evita armazenar esse formulário personalizado e reutilizar tokens de
+outra sessão ou expirados. Páginas públicas comuns, como `/` e `/health` para
+visitantes anônimos, não recebem essa política.
+
+Essa política também cobre respostas intermediárias de Login/MFA e impede o reuso
+de conteúdo sensível após Logout. Arquivos do endpoint `static` são explicitamente
+excluídos de `no-store`, preservando a política normal de cache do Flask.
+
+HSTS não é emitido pelo Flask. O Nginx da implantação final terminará TLS, fará o
+redirecionamento HTTP → HTTPS e será a única camada responsável por
+`Strict-Transport-Security`. Isso evita duplicação e aplicação incorreta em HTTP de
+desenvolvimento antes da configuração de proxy confiável.
 
 ---
 
@@ -1129,6 +1165,9 @@ Content-Security-Policy: frame-ancestors
 ```
 
 e/ou mecanismo equivalente.
+
+O controle atual combina `frame-ancestors 'none'` com `X-Frame-Options: DENY` para
+compatibilidade adicional.
 
 ---
 

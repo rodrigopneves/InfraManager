@@ -1,7 +1,6 @@
 from flask import (
     current_app,
     flash,
-    make_response,
     redirect,
     render_template,
     request,
@@ -111,9 +110,7 @@ def mfa_verify():
         record_event(AuditEventType.MFA_FAILURE, target=user)
         flash("Código de autenticação inválido.", "danger")
 
-    response = make_response(render_template("auth/mfa_verify.html", form=form))
-    response.headers["Cache-Control"] = "no-store"
-    return response
+    return render_template("auth/mfa_verify.html", form=form)
 
 
 @auth.post("/logout")

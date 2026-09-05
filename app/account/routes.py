@@ -1,7 +1,6 @@
 from flask import (
     current_app,
     flash,
-    make_response,
     redirect,
     render_template,
     request,
@@ -65,13 +64,9 @@ def mfa_setup():
         flash("Código de autenticação inválido.", "danger")
 
     qr_data_uri = build_mfa_qr_data_uri(user, secret)
-    response = make_response(
-        render_template(
-            "account/mfa_setup.html", form=form, qr_data_uri=qr_data_uri
-        )
+    return render_template(
+        "account/mfa_setup.html", form=form, qr_data_uri=qr_data_uri
     )
-    response.headers["Cache-Control"] = "no-store"
-    return response
 
 
 @account.post("/mfa/setup/cancel")
@@ -107,8 +102,4 @@ def mfa_disable():
         form.code.data = ""
         flash("Não foi possível desativar o MFA.", "danger")
 
-    response = make_response(
-        render_template("account/mfa_disable.html", form=form)
-    )
-    response.headers["Cache-Control"] = "no-store"
-    return response
+    return render_template("account/mfa_disable.html", form=form)

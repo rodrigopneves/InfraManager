@@ -1060,7 +1060,7 @@ Nenhuma evidência deverá conter segredos.
 
 - [ ] CSRF
 - [ ] Rate Limiting
-- [ ] Headers
+- [x] Headers HTTP e cache de respostas sensíveis no Flask
 - [ ] Security Review
 - [ ] OWASP
 
