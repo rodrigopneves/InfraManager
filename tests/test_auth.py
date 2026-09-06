@@ -234,6 +234,11 @@ def test_production_requires_secret_key(monkeypatch: pytest.MonkeyPatch) -> None
         "MFA_ENCRYPTION_KEY",
         TestingConfig.MFA_ENCRYPTION_KEY,
     )
+    monkeypatch.setattr(
+        ProductionConfig,
+        "RATELIMIT_STORAGE_URI",
+        "redis://rate-limit.example.invalid:6379/0",
+    )
 
     with pytest.raises(RuntimeError, match="SECRET_KEY"):
         create_app("production")

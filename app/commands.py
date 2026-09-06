@@ -4,7 +4,14 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.admin.services import create_user
 from app.extensions import db
-from app.mfa_crypto import MfaEncryptionError, encrypt_mfa_secret, is_legacy_mfa_secret
+from app.mfa_crypto import (
+    MfaEncryptionError,
+    decrypt_mfa_secret_with_key,
+    encrypt_mfa_secret,
+    encrypt_mfa_secret_with_key,
+    is_legacy_mfa_secret,
+    validate_mfa_encryption_key,
+)
 from app.models import User, UserRole, validate_email, validate_username
 
 
@@ -61,3 +68,48 @@ def encrypt_mfa_secrets_command() -> None:
             "Não foi possível migrar os segredos MFA."
         ) from error
     click.echo(f"Segredos MFA migrados: {len(legacy_users)}.")
+
+
+@click.command("rotate-mfa-key")
+@with_appcontext
+def rotate_mfa_key_command() -> None:
+    old_key = click.prompt("Current MFA encryption key", hide_input=True)
+    new_key = click.prompt(
+        "New MFA encryption key",
+        hide_input=True,
+        confirmation_prompt="Repeat new MFA encryption key",
+    )
+    try:
+        validate_mfa_encryption_key(old_key)
+        validate_mfa_encryption_key(new_key)
+    except MfaEncryptionError as error:
+        raise click.ClickException("Chave Fernet inválida.") from error
+    if old_key == new_key:
+        raise click.ClickException("A nova chave deve ser diferente da atual.")
+
+    users = db.session.scalars(
+        db.select(User).where(User._mfa_secret.is_not(None))
+    ).all()
+    if any(is_legacy_mfa_secret(user._mfa_secret) for user in users):
+        raise click.ClickException(
+            "Existem segredos MFA legados; execute encrypt-mfa-secrets antes."
+        )
+
+    try:
+        decrypted_secrets = [
+            (user, decrypt_mfa_secret_with_key(user._mfa_secret, old_key))
+            for user in users
+        ]
+        rotated_secrets = [
+            (user, encrypt_mfa_secret_with_key(secret, new_key))
+            for user, secret in decrypted_secrets
+        ]
+        for user, rotated_secret in rotated_secrets:
+            user._mfa_secret = rotated_secret
+        db.session.commit()
+    except (MfaEncryptionError, SQLAlchemyError) as error:
+        db.session.rollback()
+        raise click.ClickException(
+            "Não foi possível rotacionar os segredos MFA."
+        ) from error
+    click.echo(f"Segredos MFA rotacionados: {len(rotated_secrets)}.")

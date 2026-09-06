@@ -201,6 +201,8 @@ def test_hsts_is_not_duplicated_by_flask_in_production() -> None:
         SECRET_KEY = "production-header-test-only-secret"
         SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
         MFA_ENCRYPTION_KEY = TestingConfig.MFA_ENCRYPTION_KEY
+        RATELIMIT_ENABLED = False
+        RATELIMIT_STORAGE_URI = "redis://rate-limit.example.invalid:6379/0"
 
     app = create_app(HeaderProductionConfig)
     response = app.test_client().get("/", base_url="https://192.0.2.10")

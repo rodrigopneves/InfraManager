@@ -318,10 +318,15 @@ POST /login       → 5 tentativas / 15 minutos
 POST /mfa/verify  → 5 tentativas / 5 minutos
 ```
 
-O backend `memory://` do Flask-Limiter mantém contadores somente no processo local.
-Ele não é adequado para produção com múltiplos workers, pois os limites não seriam
-compartilhados. Um armazenamento compartilhado deverá ser definido antes da
-produção; Redis permanece deliberadamente fora desta etapa.
+O backend `memory://` do Flask-Limiter é permitido somente em desenvolvimento e
+testes. Produção exige um backend Redis compartilhado, configurado por
+`RATELIMIT_STORAGE_URI` com `redis://` ou `rediss://`, para que os contadores sejam
+consistentes entre futuros workers Gunicorn. A URI e eventuais credenciais devem
+permanecer no ambiente protegido e nunca no Git ou em mensagens de erro.
+
+O cliente Redis é criado no startup sem executar uma operação de rede. A primeira
+operação de rate limiting detectará naturalmente uma indisponibilidade do backend;
+esta etapa não adiciona health check nem instala o servidor Redis.
 
 ---
 
@@ -456,7 +461,10 @@ Fernet. A chave vem de `MFA_ENCRYPTION_KEY`, permanece externa ao banco e ao
 repositório e é obrigatória em produção. Valores legados em texto são identificados
 e falham de forma segura até a execução explícita do comando
 `flask encrypt-mfa-secrets`; a migration de schema não altera nem destrói esses
-valores. Rotação de chave exige procedimento operacional explícito antes da troca.
+valores. A rotação utiliza o comando explícito `flask rotate-mfa-key`, com chave
+antiga e nova recebidas por prompts ocultos. O comando valida ambas, bloqueia
+valores legados, descriptografa todo o conjunto antes de alterar linhas e confirma
+uma única transação. Qualquer erro provoca rollback e nenhuma chave é registrada.
 
 Para atualizar uma instalação existente: fazer backup protegido do SQLite,
 configurar `MFA_ENCRYPTION_KEY`, executar `flask db upgrade` e então executar uma
@@ -985,10 +993,11 @@ controlados, sem copiar nome, código, localização, descrição ou conteúdo i
 do formulário. A alteração do recurso e o respectivo AuditLog são confirmados na
 mesma transação.
 
-O endereço IP vem exclusivamente de `request.remote_addr`. A aplicação não
-interpreta `X-Forwarded-For` nesta fase; a confiança no proxy será configurada e
-testada junto com Nginx/ProxyFix. O User-Agent é truncado em 255 caracteres e pode
-ser omitido da tabela administrativa.
+O endereço IP vem exclusivamente de `request.remote_addr`. Em production, a
+factory aplica `ProxyFix` com `x_for=1` e `x_proto=1`, confiando em exatamente um
+Nginx controlado; development e testing ignoram `X-Forwarded-For`. Não se confia
+em Host, porta ou prefixo encaminhados. O User-Agent é truncado em 255 caracteres
+e pode ser omitido da tabela administrativa.
 
 Nos fluxos anteriores à etapa 03.1, falhas de persistência da auditoria executam
 rollback da tentativa, geram erro no Application Log somente com o tipo do evento e
@@ -1035,6 +1044,11 @@ separada e não alteram a imutabilidade da trilha de auditoria.
 
 Logs técnicos devem auxiliar diagnóstico, mas não podem expor informações sensíveis.
 
+Em produção, `LOG_LEVEL` aceita somente `DEBUG`, `INFO`, `WARNING`, `ERROR` e
+`CRITICAL`, usando `INFO` por padrão sem modificar `DEBUG=False`. Flask e Gunicorn
+enviam saída a stdout/stderr para captura futura pelo journald. O access log omite
+query string, cookies, Authorization e corpo.
+
 Produção não deverá registrar:
 
 ```text
@@ -1069,8 +1083,14 @@ Somente administradores consultam e marcam alertas como revisados em
 `/admin/security-alerts`; a revisão também gera AuditLog. Não são armazenados
 senha, hash de senha, TOTP, segredo MFA, chave Fernet, token CSRF, cookie,
 Authorization ou corpo da requisição. O IP vem exclusivamente de
-`request.remote_addr`; `X-Forwarded-For` permanece não confiável até a futura
-configuração coordenada de Nginx e ProxyFix.
+`request.remote_addr`, já normalizado pelo único proxy confiável em production.
+SecurityAlert, AuditLog e Flask-Limiter compartilham essa mesma fonte. Fora de
+production, cabeçalhos encaminhados continuam sem efeito.
+
+O modelo de confiança pressupõe cliente → Nginx → Gunicorn → Flask. ProxyFix não
+valida se a conexão realmente veio do proxy; portanto, o Gunicorn deverá escutar
+somente em loopback ou socket local e nunca ficar exposto diretamente à Internet.
+A configuração concreta do Nginx será realizada em etapa posterior.
 
 Recomenda-se retenção operacional de 90 dias, sujeita à política institucional e
 à legislação aplicável. Não há expurgo automático nesta etapa. E-mail, SMS e SIEM
@@ -1358,6 +1378,10 @@ Unix Socket
 
 Nginx será o único componente Web exposto externamente.
 
+O arquivo `gunicorn.conf.py` fixa `127.0.0.1:8000`, dois workers `sync` e timeouts
+conservadores. O paralelismo pequeno reduz contenção de escrita no SQLite e evita
+dimensionamento agressivo sem medição.
+
 ---
 
 # 55. SQLite
@@ -1365,7 +1389,7 @@ Nginx será o único componente Web exposto externamente.
 Arquivo do banco:
 
 ```text
-instance/inframanager.db
+/var/lib/inframanager/inframanager.db
 ```
 
 deverá:
@@ -1375,6 +1399,11 @@ deverá:
 - não ser servido pelo Nginx;
 - não estar dentro de pasta pública/static.
 
+As conexões aplicam `foreign_keys=ON`, timeout/busy timeout de 30 segundos e WAL
+para bancos em arquivo. WAL melhora concorrência entre leitores e escritor, mas
+escritas continuam serializadas. Backups online devem usar a API `.backup` do
+SQLite e ser validados; restore e migrations devem ocorrer com serviço controlado.
+
 ---
 
 # 56. Backups
@@ -1382,6 +1411,10 @@ deverá:
 Para o MVP acadêmico será prevista rotina simples de backup do banco antes de operações de manutenção/deploy que possam alterar schema.
 
 Backup não deverá ser incluído no repositório público.
+
+O procedimento completo de backup, restore, atualização e rotação Fernet está em
+`DEPLOYMENT.md`. Banco, arquivos WAL/SHM, backups e EnvironmentFile permanecem
+fora do Git e com permissões restritivas.
 
 ---
 
@@ -1834,6 +1867,11 @@ Arquivos deverão possuir somente permissões necessárias.
 Arquivo de serviço não deverá conter credenciais publicamente legíveis.
 
 Variáveis sensíveis deverão utilizar mecanismo apropriado de ambiente/configuração protegido.
+
+O exemplo usa `ProtectSystem=strict`, `ProtectHome=true`, `PrivateTmp=true`,
+`NoNewPrivileges=true` e `UMask=0027`, liberando explicitamente somente
+`/var/lib/inframanager` para escrita. O EnvironmentFile recomendado é
+`/etc/inframanager/inframanager.env`, modo `0640`, owner `root` e grupo do serviço.
 
 ---
 

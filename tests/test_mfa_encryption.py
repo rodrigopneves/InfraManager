@@ -115,11 +115,13 @@ def test_production_rejects_invalid_mfa_encryption_key(
         SECRET_KEY = "production-test-only-secret"
         SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
         MFA_ENCRYPTION_KEY = "invalid-key"
+        RATELIMIT_ENABLED = False
+        RATELIMIT_STORAGE_URI = "redis://rate-limit.example.invalid:6379/0"
 
     caplog.set_level(logging.CRITICAL, logger="app")
 
-    with pytest.raises(RuntimeError, match="MFA encryption configuration"):
+    with pytest.raises(RuntimeError, match="MFA_ENCRYPTION_KEY"):
         create_app(InvalidMfaKeyProductionConfig)
 
-    assert "invalid MFA encryption configuration" in caplog.text
+    assert "invalid critical configuration" in caplog.text
     assert InvalidMfaKeyProductionConfig.MFA_ENCRYPTION_KEY not in caplog.text

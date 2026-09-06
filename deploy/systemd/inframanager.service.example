@@ -1,0 +1,28 @@
+[Unit]
+Description=InfraManager WSGI application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=inframanager
+Group=inframanager
+WorkingDirectory=/opt/inframanager
+EnvironmentFile=/etc/inframanager/inframanager.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/inframanager/.venv/bin/gunicorn -c /opt/inframanager/gunicorn.conf.py wsgi:app
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=35s
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/inframanager
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

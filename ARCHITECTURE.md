@@ -150,6 +150,14 @@ Gunicorn
 
 Gunicorn deverá escutar somente na interface local ou socket Unix.
 
+Em produção, o fluxo completo será cliente → Nginx → Gunicorn → Flask. A factory
+envolve a aplicação com `ProxyFix`, confiando em exatamente um proxy para
+`X-Forwarded-For` e `X-Forwarded-Proto`. `X-Forwarded-Host`, porta e prefixo não
+são confiados. Com isso, `request.remote_addr` representa o cliente e o esquema da
+requisição representa o HTTPS externo. Development e testing não aplicam o
+middleware e ignoram esses cabeçalhos. A configuração real do Nginx permanece para
+etapa posterior, e o Gunicorn não poderá ser acessível diretamente pela Internet.
+
 ---
 
 # 5. Gunicorn
@@ -159,6 +167,12 @@ Gunicorn será utilizado como servidor WSGI.
 O módulo `wsgi.py` exporta a aplicação Flask como `wsgi:app`, carregada a partir da
 Application Factory. O arquivo `run.py` mantém a entrada de desenvolvimento e pode
 ser usado por comandos como `flask --app run.py routes`.
+
+`gunicorn.conf.py` define o bind local `127.0.0.1:8000`, dois workers síncronos e
+timeouts conservadores para a VM pequena e o SQLite. Access e error logs usam
+stdout/stderr; o formato de acesso omite query string, cookies, Authorization e
+corpo. Aumentar workers exige medição, pois as escritas SQLite permanecem
+serializadas.
 
 Responsabilidades:
 
@@ -438,6 +452,13 @@ instance/
 ```
 
 O arquivo deverá estar presente no `.gitignore`.
+
+Em produção, o path recomendado é
+`/var/lib/inframanager/inframanager.db`, fornecido por `DATABASE_URL`. Todas as
+conexões SQLite habilitam foreign keys e timeout de 30 segundos. Bancos em arquivo
+também usam WAL, permitindo leitores durante uma escrita sem remover a
+serialização do escritor. PostgreSQL permanece uma evolução futura caso carga e
+concorrência ultrapassem o perfil do MVP.
 
 ---
 
@@ -1303,6 +1324,11 @@ Exemplos:
 
 Os dois possuem finalidades diferentes.
 
+`LOG_LEVEL` aceita `DEBUG`, `INFO`, `WARNING`, `ERROR` ou `CRITICAL`, com `INFO`
+como padrão de produção. O nível de log não altera `DEBUG=False`. Flask e Gunicorn
+escrevem em stdout/stderr, destinados ao journald pelo exemplo de systemd, sem
+arquivos locais obrigatórios ou handlers adicionados repetidamente.
+
 ## Alertas de Segurança
 
 O `SecurityAlert` é separado do `AuditLog`: auditoria responde “quem fez o quê”,
@@ -1358,10 +1384,12 @@ Rotas prioritárias:
 Limites definitivos serão documentados no `SECURITY.md`.
 
 Na etapa 02, `POST /login` utiliza 5 tentativas em 15 minutos e `POST
-/mfa/verify` utiliza 5 tentativas em 5 minutos. O armazenamento atual `memory://`
-é adequado apenas ao desenvolvimento e à execução com processo único: cada worker
-teria contadores independentes. Produção exigirá backend compartilhado, cuja escolha
-fica fora desta etapa; Redis não é adicionado agora.
+/mfa/verify` utiliza 5 tentativas em 5 minutos. Desenvolvimento e testes utilizam
+`memory://`. Produção exige Redis compartilhado por meio de
+`RATELIMIT_STORAGE_URI`, com esquema `redis://` ou `rediss://`, para manter os
+contadores consistentes entre futuros workers Gunicorn. A URI e eventuais
+credenciais permanecem fora do Git. Esta etapa adiciona o cliente Python e a
+configuração da aplicação, mas não instala nem configura o servidor Redis.
 
 ---
 
@@ -1486,6 +1514,10 @@ Responsabilidades:
 - permitir restart durante deploy;
 - centralizar logs operacionais.
 
+O exemplo versionado em `deploy/systemd/` usa usuário sem privilégio,
+`NoNewPrivileges`, `PrivateTmp`, filesystem somente leitura, home protegido e
+`UMask=0027`. Apenas `/var/lib/inframanager` é liberado para escrita.
+
 ---
 
 # 47. Health Check
@@ -1510,6 +1542,10 @@ O endpoint não deverá revelar:
 - banco utilizado;
 - variáveis;
 - configuração interna.
+
+O endpoint executa `SELECT 1`: sucesso retorna 200 com `{"status":"ok"}` e falha
+de banco retorna 503 com `{"status":"unavailable"}`. Redis não participa desse
+health check e indisponibilidade externa é detectada no uso do rate limiting.
 
 ---
 

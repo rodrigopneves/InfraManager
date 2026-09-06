@@ -45,13 +45,30 @@ desenvolvimento e para comandos Flask.
 
 Débitos conhecidos para hardening e produção:
 
-1. `mfa_secret` ainda não possui criptografia de campo em repouso;
-2. o Flask-Limiter utiliza `memory://`, inadequado para múltiplos workers;
-3. o IP real atrás do proxy ainda não é tratado com `ProxyFix` confiável;
-4. não existe armazenamento compartilhado como Redis;
-5. não existe integração com SIEM;
-6. a auditoria não possui retenção automática;
-7. MFA ainda é opcional por usuário.
+1. não existe integração com SIEM;
+2. a auditoria não possui retenção automática.
+
+O Flask-Limiter mantém `memory://` somente em desenvolvimento e testes. Produção
+exige um backend compartilhado Redis, configurado por `RATELIMIT_STORAGE_URI`, para
+que futuros workers Gunicorn compartilhem os mesmos contadores. A aplicação aceita
+`redis://` e `rediss://`; credenciais eventualmente presentes na URI devem ficar
+somente no ambiente protegido, nunca no Git. Esta configuração prepara o cliente,
+mas não instala nem configura o servidor Redis.
+
+Em produção, a topologia prevista é cliente → Nginx → Gunicorn → Flask. A factory
+aplica `ProxyFix` somente nesse ambiente e confia em exatamente um valor de
+`X-Forwarded-For` e um de `X-Forwarded-Proto`; Host, porta e prefixo encaminhados
+não são confiados. Assim, `request.remote_addr` representa o cliente e
+`request.is_secure` representa o HTTPS externo. Esse modelo só é seguro quando o
+Gunicorn aceita conexões exclusivamente por loopback ou socket local. A
+configuração real de Nginx permanece para etapa posterior.
+
+O runtime versionado inclui `gunicorn.conf.py`, exemplos não ativados de Nginx e
+systemd em `deploy/` e o runbook [DEPLOYMENT.md](DEPLOYMENT.md). Gunicorn usa dois
+workers síncronos em `127.0.0.1:8000`; Flask mantém os arquivos estáticos; SQLite
+em arquivo usa foreign keys, timeout de 30 segundos e WAL. `/health` executa uma
+consulta mínima ao banco e retorna resposta genérica. Logs seguem para
+stdout/stderr e serão coletados pelo journald quando o serviço for instalado.
 
 Esses itens não impedem o uso acadêmico atual, mas devem ser tratados nas etapas
 correspondentes antes de considerar a aplicação pronta para produção.
@@ -624,8 +641,8 @@ VM.DELETE
 Cada evento persiste data/hora UTC, ator e alvo opcionais, `remote_addr`, User-Agent
 sanitizado e limitado a 255 caracteres e detalhes JSON controlados. A consulta somente leitura
 fica disponível para administradores em `/admin/audit`, com eventos mais recentes
-primeiro. Cabeçalhos de proxy não são interpretados até a configuração de
-Nginx/ProxyFix.
+primeiro. Em produção, `ProxyFix` normaliza `remote_addr` a partir de exatamente um
+proxy confiável; development e testing ignoram `X-Forwarded-For`.
 
 A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
 identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas, Racks, Ativos e Máquinas Virtuais, a
@@ -645,8 +662,8 @@ O log não deverá armazenar:
 O `AuditLog` registra quem fez o quê; o `SecurityAlert` registra possíveis abusos
 ou falhas de segurança. Alertas persistem tipo, severidade, usuário opcional,
 `remote_addr`, User-Agent limitado, endpoint, primeira/última ocorrência, contagem
-e estado, nunca formulário ou cabeçalhos sensíveis. Não se confia em
-`X-Forwarded-For` antes da futura configuração de Nginx/ProxyFix.
+e estado, nunca formulário ou cabeçalhos sensíveis. `X-Forwarded-For` somente
+influencia esse valor em produção, atrás do único proxy controlado previsto.
 
 Recomenda-se retenção de 90 dias para alertas, conforme política institucional.
 Não há retenção automática, exportação ou integração com SIEM/syslog nesta etapa.

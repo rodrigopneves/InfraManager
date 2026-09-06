@@ -11,13 +11,20 @@ from sqlalchemy.engine import Engine
 
 
 @event.listens_for(Engine, "connect")
-def enable_sqlite_foreign_keys(dbapi_connection, _connection_record) -> None:
+def configure_sqlite_connection(dbapi_connection, _connection_record) -> None:
     if not isinstance(dbapi_connection, SQLiteConnection):
         return
 
     cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    try:
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.execute("PRAGMA database_list")
+        database_path = cursor.fetchone()[2]
+        if database_path:
+            cursor.execute("PRAGMA journal_mode=WAL")
+    finally:
+        cursor.close()
 
 
 db = SQLAlchemy()

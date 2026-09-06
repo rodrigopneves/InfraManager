@@ -21,13 +21,14 @@ class Config:
     MAX_CONTENT_LENGTH = 64 * 1024
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     RATELIMIT_ENABLED = True
-    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+    RATELIMIT_STORAGE_URI = "memory://"
     SECRET_KEY = os.getenv("SECRET_KEY")
     SECURITY_ALERT_WINDOW_MINUTES = 15
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_PERMANENT = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"timeout": 30}}
 
 
 class DevelopmentConfig(Config):
@@ -50,7 +51,8 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    LOG_LEVEL = logging.INFO
+    LOG_LEVEL = os.getenv("LOG_LEVEL") or "INFO"
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI")
     SESSION_COOKIE_SECURE = True
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
