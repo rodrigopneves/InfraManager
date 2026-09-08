@@ -1,8 +1,12 @@
+import os
+
 import click
+from flask import current_app
 from flask.cli import with_appcontext
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.admin.services import create_user
+from app.demo_seed import DemoSeedConflictError, seed_demo_data
 from app.extensions import db
 from app.mfa_crypto import (
     MfaEncryptionError,
@@ -13,6 +17,30 @@ from app.mfa_crypto import (
     validate_mfa_encryption_key,
 )
 from app.models import User, UserRole, validate_email, validate_username
+
+
+@click.command("seed-demo")
+@with_appcontext
+def seed_demo_command() -> None:
+    configured_environment = os.getenv("FLASK_CONFIG", "").strip().lower()
+    if (
+        current_app.config.get("IS_PRODUCTION")
+        or configured_environment == "production"
+    ):
+        raise click.ClickException("seed-demo is not allowed in production.")
+
+    try:
+        result = seed_demo_data()
+    except (DemoSeedConflictError, SQLAlchemyError, ValueError) as error:
+        db.session.rollback()
+        raise click.ClickException(
+            "Não foi possível popular os dados de demonstração."
+        ) from error
+
+    click.echo(
+        "Dados de demonstração processados: "
+        f"{result.created} criados, {result.existing} já existentes."
+    )
 
 
 @click.command("create-admin")

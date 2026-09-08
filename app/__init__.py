@@ -31,9 +31,10 @@ def create_app(config: str | object | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     selected_config = _resolve_config(config)
     app.config.from_object(selected_config)
+    app.config["IS_PRODUCTION"] = _uses_production_config(selected_config)
     _configure_logging(app)
 
-    if _uses_production_config(selected_config):
+    if app.config["IS_PRODUCTION"]:
         _validate_production_config(app)
         _configure_production_proxy(app)
 
@@ -55,6 +56,7 @@ def create_app(config: str | object | None = None) -> Flask:
         create_admin_command,
         encrypt_mfa_secrets_command,
         rotate_mfa_key_command,
+        seed_demo_command,
     )
     from app.routes import main
 
@@ -70,6 +72,7 @@ def create_app(config: str | object | None = None) -> Flask:
     app.cli.add_command(create_admin_command)
     app.cli.add_command(encrypt_mfa_secrets_command)
     app.cli.add_command(rotate_mfa_key_command)
+    app.cli.add_command(seed_demo_command)
     app.register_error_handler(Forbidden, _handle_forbidden_error)
     app.register_error_handler(CSRFError, _handle_csrf_error)
     app.register_error_handler(TooManyRequests, _handle_rate_limit_error)
