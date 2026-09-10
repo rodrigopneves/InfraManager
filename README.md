@@ -14,64 +14,68 @@ O InfraManager tem como objetivo centralizar informações sobre:
 - controle de acesso;
 - auditoria.
 
-O projeto será desenvolvido aplicando princípios de **Secure by Design**, **Secure by Default**, OWASP Top 10:2025, Cloud Computing e CI/CD.
+O projeto aplica princípios de **Secure by Design**, **Secure by Default**, OWASP Top 10:2025, Cloud Computing e CI/CD.
 
 ---
 
 ## Status do Projeto
 
-**Status atual:** etapa 04 concluída e validada
+**Status atual:** fase final de validação dos requisitos acadêmicos e preparação da entrega.
 
-```text
-Planejamento       ✅
-Requisitos         ✅
-Arquitetura        ✅
-Segurança          ✅
-AGENTS.md           ✅
-Desenvolvimento     🚧
-Testes 02 a 04       ✅
-OCI                 ⏳
-CI/CD               ⏳
-Documentação final  ⏳
-```
+| Área | Situação |
+|---|---|
+| Planejamento | Concluído |
+| Requisitos | Concluído |
+| Arquitetura | Concluída |
+| Desenvolvimento | Concluído no escopo implementado |
+| Segurança da aplicação | Concluída/validada nos controles implementados |
+| Testes automatizados | Concluídos para as funcionalidades implementadas |
+| OCI | Implantada |
+| CI/CD | Implementado: integração contínua; deploy automático pendente |
+| Documentação | Em revisão final |
+| Validação acadêmica/evidências | Em andamento |
 
-As etapas 02, 03 e 04 entregam Application Factory, persistência e migrations,
-autenticação, CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA
-TOTP opcional, auditoria, os CRUDs de Datacenters, Salas, Racks, Ativos e
-Máquinas Virtuais e a interface responsiva em Jinja2 e Bootstrap. O Dashboard
-utiliza dados reais e separa indicadores administrativos conforme o RBAC. O
-ponto WSGI padrão é `wsgi:app`; `run.py` permanece como entrada de
-desenvolvimento e para comandos Flask.
+A aplicação entrega Application Factory, persistência e migrations, autenticação,
+CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP obrigatório,
+auditoria, alertas de segurança e CRUDs de Datacenters, Salas, Racks, Ativos e
+Máquinas Virtuais. A interface responsiva utiliza Jinja2 e Bootstrap. O Dashboard
+consulta dados reais e separa indicadores administrativos conforme o RBAC.
+O ponto WSGI é `wsgi:app`; `run.py` atende ao desenvolvimento e aos comandos Flask.
 
-Débitos conhecidos para hardening e produção:
+O estado de implantação OCI e as confirmações de GitHub público, 2FA e proteção
+das credenciais foram informados pelo responsável pelo projeto nesta revisão.
+Código, testes e workflow foram conferidos no repositório. A consolidação das
+evidências externas permanece em andamento; o quadro não representa aprovação
+integral de todos os requisitos acadêmicos ou de todos os itens previstos no MVP.
+
+Pendências e débitos conhecidos:
 
 1. não existe integração com SIEM;
-2. a auditoria não possui retenção automática.
+2. auditoria e alertas não possuem retenção automática;
+3. recovery codes ainda não possuem implementação no código atual;
+4. deploy automático e suas verificações posteriores não integram a pipeline;
+5. faltam comprovações formais de HTTPS/renovação, SSL Labs A e PQC;
+6. o `.gitignore` local não contém regras gerais para arquivos de chave
+   (`*.pem`, `*.key`, `id_rsa` e `id_ed25519`).
 
-O Flask-Limiter mantém `memory://` somente em desenvolvimento e testes. Produção
-exige um backend compartilhado Redis, configurado por `RATELIMIT_STORAGE_URI`, para
-que futuros workers Gunicorn compartilhem os mesmos contadores. A aplicação aceita
-`redis://` e `rediss://`; credenciais eventualmente presentes na URI devem ficar
-somente no ambiente protegido, nunca no Git. Esta configuração prepara o cliente,
-mas não instala nem configura o servidor Redis.
+O Flask-Limiter usa `memory://` em desenvolvimento e testes. Produção exige Redis
+compartilhado, configurado por `RATELIMIT_STORAGE_URI`, para manter os contadores
+entre workers Gunicorn. A aplicação aceita `redis://` e `rediss://`; a URI e suas
+credenciais permanecem no ambiente protegido. O repositório fornece o cliente
+Python; a operação do servidor Redis pertence à infraestrutura.
 
-Em produção, a topologia prevista é cliente → Nginx → Gunicorn → Flask. A factory
-aplica `ProxyFix` somente nesse ambiente e confia em exatamente um valor de
-`X-Forwarded-For` e um de `X-Forwarded-Proto`; Host, porta e prefixo encaminhados
-não são confiados. Assim, `request.remote_addr` representa o cliente e
-`request.is_secure` representa o HTTPS externo. Esse modelo só é seguro quando o
-Gunicorn aceita conexões exclusivamente por loopback ou socket local. A
-configuração real de Nginx permanece para etapa posterior.
+O deploy realizado na OCI inclui Nginx, Gunicorn e systemd. A factory aplica
+`ProxyFix` somente em produção e confia em exatamente um valor de
+`X-Forwarded-For` e de `X-Forwarded-Proto`; Host, porta e prefixo encaminhados não
+são confiados. Gunicorn deve permanecer acessível somente pelo proxy local.
 
-O runtime versionado inclui `gunicorn.conf.py`, exemplos não ativados de Nginx e
-systemd em `deploy/` e o runbook [DEPLOYMENT.md](DEPLOYMENT.md). Gunicorn usa dois
-workers síncronos em `127.0.0.1:8000`; Flask mantém os arquivos estáticos; SQLite
-em arquivo usa foreign keys, timeout de 30 segundos e WAL. `/health` executa uma
-consulta mínima ao banco e retorna resposta genérica. Logs seguem para
-stdout/stderr e serão coletados pelo journald quando o serviço for instalado.
-
-Esses itens não impedem o uso acadêmico atual, mas devem ser tratados nas etapas
-correspondentes antes de considerar a aplicação pronta para produção.
+O runtime versionado inclui `gunicorn.conf.py` e exemplos de Nginx e systemd em
+`deploy/`. Gunicorn está configurado com dois workers síncronos em
+`127.0.0.1:8000`; Flask atende os arquivos estáticos; SQLite em arquivo usa foreign
+keys, timeout de 30 segundos e WAL. `/health` consulta o banco e retorna resposta
+genérica. Logs seguem para stdout/stderr, integrados ao journald pelo systemd.
+[DEPLOYMENT.md](DEPLOYMENT.md) contém procedimentos de operação, mas ainda se
+apresenta como runbook de preparação: não constitui evidência do deploy realizado.
 
 ---
 
@@ -79,7 +83,7 @@ correspondentes antes de considerar a aplicação pronta para produção.
 
 O projeto foi definido para atender aos requisitos da disciplina **Projeto Aplicado: Práticas de Mercado**.
 
-A atividade exige a construção de uma aplicação web hospedada em nuvem pública utilizando recursos gratuitos, com Ubuntu Server ou Debian, Nginx ou Apache, acesso público pela internet e aplicação de controles de segurança. fileciteturn0file0L21-L46
+A atividade exige a construção de uma aplicação web hospedada em nuvem pública utilizando recursos gratuitos, com Ubuntu Server ou Debian, Nginx ou Apache, acesso público pela internet e aplicação de controles de segurança.
 
 Também são requisitos da atividade:
 
@@ -90,11 +94,15 @@ Também são requisitos da atividade:
 - página interna protegida;
 - Logout funcional;
 - mitigação documentada de pelo menos três categorias da OWASP Top 10:2025;
-- CI/CD utilizando GitHub Actions. fileciteturn0file0L50-L69 fileciteturn0file0L73-L97 fileciteturn0file0L101-L129
+- CI/CD utilizando GitHub Actions.
 
 ---
 
 # Visão Geral
+
+A arquitetura é monolítica modular, com Application Factory e Blueprints. As
+rotas validam requisições e chamam services; estes coordenam regras de negócio,
+models, persistência pelo SQLAlchemy ORM e auditoria.
 
 ```text
                         INTERNET
@@ -148,6 +156,8 @@ Também são requisitos da atividade:
 - Flask-Limiter
 - PyOTP
 - qrcode
+- cryptography (Fernet para segredos MFA persistidos)
+- Redis (contadores compartilhados de rate limiting em produção)
 - MFA/TOTP
 - CSRF
 - RBAC
@@ -189,7 +199,7 @@ Também são requisitos da atividade:
 
 # Ambiente de Desenvolvimento
 
-O ambiente principal previsto é:
+O ambiente de desenvolvimento utiliza:
 
 ```text
 Notebook pessoal
@@ -203,7 +213,7 @@ Visual Studio Code
       └── Codex
 ```
 
-A IA será utilizada para:
+A IA é utilizada como apoio a:
 
 - planejamento;
 - implementação;
@@ -231,6 +241,25 @@ Para desenvolvimento, testes e verificações de qualidade:
 .venv/bin/python -m pip install -r requirements-dev.txt
 ```
 
+Para configurar e iniciar uma instalação local nova, copie `.env.example` para
+`.env` e mantenha `FLASK_CONFIG=development`. Preencha `SECRET_KEY` com um valor
+aleatório exclusivo e `MFA_ENCRYPTION_KEY` com uma chave Fernet válida, gerados e
+armazenados localmente fora do Git. A configuração de desenvolvimento usa SQLite
+em `instance/inframanager.db` e rate limiting em memória.
+
+Depois de preencher o ambiente:
+
+```bash
+.venv/bin/flask --app run.py db upgrade
+.venv/bin/flask --app run.py create-admin
+.venv/bin/flask --app run.py run --host 127.0.0.1
+```
+
+`create-admin` solicita os dados interativamente, com senha oculta e confirmação.
+Acesse `http://127.0.0.1:5000/login` e conclua a configuração TOTP para acessar o
+Dashboard. O servidor Flask local é destinado ao desenvolvimento; a operação com
+Gunicorn/systemd/Nginx está descrita em [DEPLOYMENT.md](DEPLOYMENT.md).
+
 Validação local recomendada:
 
 ```bash
@@ -245,13 +274,13 @@ As versões devem ser atualizadas deliberadamente: criar ambiente limpo, alterar
 somente dependências diretas necessárias e executar `pip check`, auditoria, lint,
 suíte completa e revisão de segurança antes de consolidar a mudança.
 
-O enunciado da atividade permite Antigravity ou ambiente similar baseado em IA. fileciteturn0file0L83-L85
+O enunciado da atividade permite Antigravity ou ambiente similar baseado em IA.
 
 ---
 
 # Módulos do Sistema
 
-O MVP será composto pelos seguintes módulos:
+A aplicação contém os seguintes módulos:
 
 ```text
 InfraManager
@@ -259,7 +288,6 @@ InfraManager
 ├── Autenticação
 │   ├── Login
 │   ├── MFA
-│   ├── Recovery Codes
 │   └── Logout
 │
 ├── Dashboard
@@ -284,7 +312,7 @@ InfraManager
 
 # Autenticação
 
-Fluxo previsto:
+Fluxo implementado:
 
 ```text
 Username + Password
@@ -309,20 +337,20 @@ e confirmar│
     Dashboard
 ```
 
-O MFA é obrigatório para todos os usuários. No primeiro acesso, após a validação da senha, o usuário deverá configurar e confirmar o TOTP antes de acessar o Dashboard. A sessão autenticada definitiva somente será criada depois do código válido.
+O MFA é obrigatório para todos os usuários. No primeiro acesso, após a validação da senha, o usuário precisa configurar e confirmar o TOTP antes de acessar o Dashboard. A sessão autenticada definitiva somente é criada depois do código válido.
 
 O MFA é um requisito adicional de segurança adotado pelo InfraManager, e não uma exigência direta do professor ou do enunciado acadêmico.
 
-Estado incremental: a etapa 02.7 disponibiliza ativação TOTP opcional por usuário
-e exige o segundo fator sempre que ele estiver ativo. A obrigatoriedade no primeiro
-acesso para todas as contas continua sendo requisito do MVP, mas ainda não está
-aplicada nesta etapa.
+O fluxo atual exige MFA desde o primeiro acesso. A desativação exige senha e
+TOTP, encerra a sessão e obriga a configuração de um novo segundo fator. Os
+segredos persistidos são cifrados com Fernet; a chave permanece fora do banco
+e do repositório. A reutilização de um timestep TOTP já aceito é rejeitada.
 
 ---
 
 # MFA
 
-O sistema utilizará TOTP compatível com aplicativos autenticadores.
+O sistema utiliza TOTP compatível com aplicativos autenticadores.
 
 Exemplos:
 
@@ -332,15 +360,19 @@ Exemplos:
 - Authy;
 - outros aplicativos TOTP.
 
-Também serão implementados códigos de recuperação de uso único.
+Os códigos de recuperação de uso único são um requisito ainda pendente: não há
+model, rota ou testes desse fluxo no código atual. A implementação prevista exige
+aleatoriedade, armazenamento somente em hash e invalidação após o uso.
 
 ---
 
 # Perfis de Acesso
 
-O sistema possuirá inicialmente três perfis.
+O sistema possui três perfis, definidos em `app/models/user.py`.
 
-Os perfis serão armazenados diretamente em `User.role`, restrito a `ADMIN`, `OPERATOR` e `VIEWER`; não haverá entidade ou tabela `Role` separada no MVP.
+Os valores persistidos diretamente em `User.role` são `admin`, `operator` e
+`viewer`, com os rótulos Administrador, Operador e Visualizador. O padrão de novos
+usuários é `viewer`. Não existe entidade ou tabela `Role` separada.
 
 ## ADMIN
 
@@ -361,7 +393,7 @@ Pode:
 - pesquisar;
 - utilizar filtros.
 
-Não poderá criar, editar ou excluir recursos de infraestrutura nem executar funções
+Não pode criar, editar ou excluir recursos de infraestrutura nem executar funções
 administrativas.
 
 ## VIEWER
@@ -372,13 +404,14 @@ Pode:
 - pesquisar;
 - utilizar filtros.
 
-Não poderá modificar dados.
+Não pode modificar recursos de infraestrutura nem administrar usuários.
+A configuração do próprio MFA segue o fluxo autenticado específico de conta.
 
 ---
 
 # Gestão de Ativos
 
-O módulo de ativos permitirá:
+O módulo de ativos permite:
 
 - cadastro;
 - visualização;
@@ -387,11 +420,12 @@ O módulo de ativos permitirá:
 - pesquisa;
 - filtros.
 
-Tipos previstos:
+Tipos disponíveis:
 
 - Servidor;
 - Storage;
 - Switch;
+- Roteador;
 - Firewall;
 - Access Point;
 - Notebook;
@@ -403,7 +437,7 @@ Tipos previstos:
 
 # Máquinas Virtuais
 
-O módulo permitirá gerenciamento de:
+O módulo permite gerenciamento de:
 
 - hostname;
 - IP;
@@ -415,7 +449,7 @@ O módulo permitirá gerenciamento de:
 - host;
 - status.
 
-Ambientes previstos:
+Ambientes disponíveis:
 
 ```text
 Produção
@@ -425,11 +459,11 @@ Teste
 Outro
 ```
 
-Na etapa 03.5, toda Máquina Virtual pertence obrigatoriamente a um Ativo do tipo
+Toda Máquina Virtual pertence obrigatoriamente a um Ativo do tipo
 Servidor. O nome é globalmente único, IPv4 e IPv6 são validados no servidor, e os
 recursos são armazenados como vCPU, memória em MB e disco em GB. Os status são Em
 execução, Desligada, Suspensa e Manutenção. Somente Administradores podem criar,
-editar e excluir; Operadores e usuários de Consulta possuem leitura.
+editar e excluir; Operadores e Visualizadores possuem leitura.
 
 ---
 
@@ -450,7 +484,7 @@ Datacenter
  Equipamento
 ```
 
-Todo ativo físico pertence obrigatoriamente a um Rack nesta etapa.
+Todo ativo físico pertence obrigatoriamente a um Rack.
 
 Datacenter, Sala, Rack, Ativo e Máquina Virtual possuem CRUD completo.
 Cada Sala pertence obrigatoriamente a um Datacenter e seu código é único dentro
@@ -493,7 +527,7 @@ administrativos não são consultados nem renderizados para os demais perfis.
 
 # Segurança
 
-O projeto seguirá os seguintes princípios:
+O projeto aplica os seguintes princípios:
 
 ```text
 Secure by Design
@@ -503,7 +537,7 @@ Defense in Depth
 Deny by Default
 ```
 
-Serão utilizados controles como:
+Os controles implementados incluem:
 
 - password hashing;
 - MFA;
@@ -523,9 +557,9 @@ Serão utilizados controles como:
 
 # OWASP Top 10:2025
 
-A atividade exige mitigação de pelo menos três categorias OWASP e sua documentação no README final. fileciteturn0file0L91-L97
+A atividade exige mitigação de pelo menos três categorias OWASP e sua documentação no README final.
 
-O InfraManager pretende demonstrar principalmente:
+O InfraManager implementa controles associados às seguintes categorias:
 
 ## A01:2025 — Broken Access Control
 
@@ -574,7 +608,16 @@ contagem e estado de revisão, e ficam visíveis somente aos Administradores em
 `/admin/security-alerts`. `CRITICAL` está reservado para condições realmente
 graves e não é atribuído automaticamente a tentativas individuais.
 
-A documentação definitiva será atualizada durante o desenvolvimento.
+Referências para a demonstração dos controles implementados:
+
+| Categoria | Código | Testes existentes |
+|---|---|---|
+| A01 | `app/admin/decorators.py` e rotas dos CRUDs | `tests/test_admin.py`, `tests/test_asset.py` |
+| A05 | Services dos CRUDs e templates Jinja2 | `tests/test_listings.py`, `tests/test_forms_ui.py` |
+| A07 | `app/auth/`, `app/account/`, `app/mfa_crypto.py` | `tests/test_auth.py`, `tests/test_mfa.py`, `tests/test_rate_limiting.py` |
+| A09 | `app/audit/services.py`, `app/security_alerts.py` | `tests/test_audit.py`, `tests/test_security_alerts.py` |
+
+As evidências de execução desses controles estão em consolidação para a entrega.
 
 ---
 
@@ -644,7 +687,7 @@ fica disponível para administradores em `/admin/audit`, com eventos mais recent
 primeiro. Em produção, `ProxyFix` normaliza `remote_addr` a partir de exatamente um
 proxy confiável; development e testing ignoram `X-Forwarded-For`.
 
-A etapa 03.1 também acrescentou `resource_type`, `resource_id` e `result` para
+Os campos `resource_type`, `resource_id` e `result` permitem
 identificar recursos de infraestrutura. Nos CRUDs de Datacenters, Salas, Racks, Ativos e Máquinas Virtuais, a
 alteração e o AuditLog usam a mesma transação; os fluxos anteriores mantêm o
 comportamento já existente.
@@ -665,16 +708,16 @@ ou falhas de segurança. Alertas persistem tipo, severidade, usuário opcional,
 e estado, nunca formulário ou cabeçalhos sensíveis. `X-Forwarded-For` somente
 influencia esse valor em produção, atrás do único proxy controlado previsto.
 
-Recomenda-se retenção de 90 dias para alertas, conforme política institucional.
-Não há retenção automática, exportação ou integração com SIEM/syslog nesta etapa.
-Os eventos de Ativos e Máquinas Virtuais já fazem parte da auditoria; novos eventos
-de infraestrutura serão adicionados com os respectivos módulos.
+A documentação prevê retenção de 90 dias para alertas, sujeita à política institucional.
+Não há retenção automática, exportação ou integração com SIEM/syslog remoto
+na implementação atual. Isso não se confunde com a coleta dos logs técnicos pelo
+journald no serviço systemd.
 
 ---
 
 # Estrutura do Projeto
 
-Estrutura planejada:
+Estrutura atual resumida:
 
 ```text
 inframanager/
@@ -688,11 +731,13 @@ inframanager/
 │   ├── datacenter/
 │   ├── room/
 │   ├── rack/
-│   ├── users/
+│   ├── admin/
+│   ├── account/
 │   ├── audit/
 │   ├── templates/
 │   └── static/
 │
+├── deploy/
 ├── migrations/
 ├── tests/
 ├── docs/
@@ -709,7 +754,12 @@ inframanager/
 ├── REQUIREMENTS.md
 ├── SECURITY.md
 ├── README.md
+├── DEPLOYMENT.md
 ├── requirements.txt
+├── requirements-dev.txt
+├── config.py
+├── gunicorn.conf.py
+├── run.py
 └── wsgi.py
 ```
 
@@ -717,7 +767,8 @@ inframanager/
 
 # Infraestrutura OCI
 
-Arquitetura prevista:
+A OCI já foi implantada, incluindo o deploy com Nginx, Gunicorn e systemd.
+A topologia de referência para conferir e organizar as evidências é:
 
 ```text
 OCI Compartment
@@ -748,15 +799,18 @@ Somente portas necessárias deverão estar expostas:
 443/tcp
 ```
 
-Gunicorn não será exposto diretamente à internet.
+Gunicorn está configurado para escutar em `127.0.0.1:8000`. A verificação externa
+de portas e das regras de firewall deve integrar as evidências da implantação.
 
 ---
 
 # SSH
 
-A administração do servidor será realizada utilizando chave SSH.
+A administração do servidor exige chave SSH, independentemente da autenticação
+Git via HTTPS utilizada no ambiente de desenvolvimento.
 
-Autenticação por senha será desabilitada.
+A desativação da autenticação SSH por senha precisa constar na evidência da
+configuração efetiva do servidor.
 
 Fail2Ban deverá utilizar pelo menos a configuração determinada pela atividade:
 
@@ -765,13 +819,14 @@ maxretry = 4
 bantime = 24h
 ```
 
-O requisito é explícito no enunciado. fileciteturn0file0L41-L42
+A configuração ativa e o funcionamento do bloqueio permanecem sujeitos à
+comprovação acadêmica.
 
 ---
 
 # HTTPS
 
-Produção deverá utilizar:
+O requisito HTTPS da entrega utiliza:
 
 ```text
 Let's Encrypt
@@ -781,9 +836,11 @@ Certbot >= 5.4
 Nginx
 ```
 
-O certificado será emitido para o IP público com o perfil `shortlived`, a opção `--ip-address` e um método suportado, preferencialmente `webroot`. O fluxo deverá ser validado primeiro em staging. O Nginx será configurado explicitamente para usar os arquivos emitidos, pois a instalação automática pelo plugin Nginx não cobre certificados de IP.
+O procedimento previsto exige certificado emitido para o IP público com o perfil `shortlived`, a opção `--ip-address` e um método suportado, preferencialmente `webroot`. O fluxo deverá ser validado primeiro em staging. O procedimento requer configuração explícita no Nginx dos arquivos emitidos para o IP público.
 
-Como certificados Let's Encrypt para IP público são de curta duração, a renovação será automatizada e usará `deploy-hook` para recarregar o Nginx.
+O requisito de renovação automática inclui `deploy-hook` para recarregar o Nginx.
+A emissão, o teste em staging, o redirecionamento e a renovação precisam de
+evidências formais; os exemplos versionados não comprovam sua execução.
 
 Fluxo:
 
@@ -806,22 +863,26 @@ SSL Labs: A
 PQC: habilitado
 ```
 
-fileciteturn0file0L43-L46
 
 ---
 
 # GitHub
 
-O projeto será armazenado em repositório público conforme requisito acadêmico. fileciteturn0file0L60-L69
+O repositório é público: [InfraManager](https://github.com/rodrigopneves/InfraManager).
+A conta utiliza 2FA habilitado, conforme confirmação do responsável pelo projeto.
 
-Nenhuma informação confidencial deverá ser versionada.
+O remote `origin` usa HTTPS. A autenticação Git é feita pelo GitHub CLI, configurado
+como helper (`gh auth git-credential`), sem usar a senha da conta para push/pull.
+O responsável confirmou a ausência de credenciais armazenadas em texto simples
+e de credenciais vazadas. Esta revisão documental não constitui uma nova auditoria
+do histórico Git ou do armazenamento de credenciais da conta.
 
-Checklist de acesso ao GitHub:
-
-- 2FA habilitado na conta;
-- operações Git autenticadas por chave SSH protegida ou PAT de escopo mínimo;
-- senha da conta não utilizada para push/pull;
-- chaves e tokens ausentes do repositório, logs e evidências.
+O `.gitignore` protege `.env`, variações de ambiente, bancos locais, `instance/`,
+ambientes virtuais, logs e artefatos de testes. `.env.example` contém placeholders.
+Há uma lacuna na proteção de chaves: o arquivo atual não inclui regras gerais para
+`*.pem`, `*.key`, `id_rsa` e `id_ed25519`; portanto, não se afirma que esses nomes
+estejam cobertos fora dos diretórios já ignorados. Chaves devem permanecer fora do
+repositório. A correção desse arquivo está fora desta revisão exclusiva do README.
 
 ---
 
@@ -847,74 +908,41 @@ real SECRET_KEY
 
 # CI/CD
 
-Fluxo de integração e entrega:
+GitHub Actions está implementado em [.github/workflows/ci.yml](.github/workflows/ci.yml).
+O workflow executa integração contínua em todo `push` (incluindo `main`) e
+`pull_request`, com permissão `contents: read`, Ubuntu 24.04 e Python 3.14.4.
 
-```text
-VS Code + Codex
-       │
-       ▼
-      Git
-       │
-       ▼
-    GitHub
-       │
-       ▼
-GitHub Actions
-       │
-       ├── Lint
-       ├── Tests
-       ├── Security Checks
-       │
-       └── Deploy
-                │
-                ▼
-               OCI
-```
-
-Push para `main` deverá iniciar automaticamente a pipeline, conforme exigência da atividade. fileciteturn0file0L123-L129
-
-A validação contínua atual está em `.github/workflows/ci.yml` e é executada em
-todo push e pull request. Ela usa Ubuntu 24.04 e Python 3.14.4, instala as
-dependências de desenvolvimento, executa `pip check`, `pip-audit`, Ruff, a suíte
-com cobertura e `compileall`. O workflow possui apenas permissão de leitura e não
-usa secrets. Etapas de deploy serão implementadas separadamente.
-
----
-
-# Pipeline Prevista
+Pipeline atual, na ordem do workflow:
 
 ```text
 Checkout
-   │
-   ▼
+   ↓
 Python Setup
-   │
-   ▼
-Dependencies
-   │
-   ▼
-Lint
-   │
-   ▼
-Tests
-   │
-   ▼
-Security Checks
-   │
-   ▼
-Deploy
-   │
-   ▼
-Health Check
+   ↓
+Instalação de requirements-dev.txt
+   ↓
+pip check
+   ↓
+pip-audit (requirements.txt)
+   ↓
+Ruff
+   ↓
+pytest com cobertura de linhas e branches
+   ↓
+compileall (app e tests)
 ```
 
-Falha crítica deverá impedir o deploy.
+O job de qualidade tem timeout de 15 minutos. Falhas nas verificações impedem sua
+conclusão com sucesso. O workflow não utiliza GitHub Secrets e não contém etapas
+de deploy, conexão à OCI, migrations remotas, reinício de serviços ou health check
+pós-deploy. A implantação realizada na OCI é independente desta pipeline.
+O deploy automático permanece pendente para a entrega acadêmica.
 
 ---
 
 # Testes
 
-Serão desenvolvidos testes para:
+A suíte em `tests/` contém testes para:
 
 - Login;
 - Login inválido;
@@ -928,7 +956,7 @@ Serão desenvolvidos testes para:
 - CSRF;
 - auditoria.
 
-Ferramenta:
+Ferramentas de teste e qualidade:
 
 ```text
 pytest
@@ -974,6 +1002,13 @@ AGENTS.md
 Instruções para agentes de IA.
 
 ```text
+DEPLOYMENT.md
+```
+
+Runbook de operação, backup, restore e rotação de chave MFA; ainda contém texto
+de preparação e não comprova por si só a implantação.
+
+```text
 README.md
 ```
 
@@ -983,7 +1018,8 @@ Documento principal do projeto e relatório final da entrega.
 
 # Uso de Inteligência Artificial
 
-O projeto utilizará o Codex como agente integrado ao ambiente de desenvolvimento.
+O projeto utiliza o Codex integrado ao ambiente de desenvolvimento, com revisão
+humana das decisões e alterações.
 
 Fluxo:
 
@@ -1022,7 +1058,8 @@ docs/ia/
 
 # Evidências
 
-Serão mantidas evidências da execução do projeto.
+A coleta e a organização das evidências estão em andamento. Os caminhos abaixo
+são uma organização proposta, não uma relação de arquivos já entregues.
 
 Exemplo:
 
@@ -1063,6 +1100,9 @@ Nenhuma evidência deverá conter segredos.
 
 # Roadmap
 
+Itens marcados indicam implementação ou confirmação do responsável; os demais
+continuam pendentes de implementação ou comprovação, conforme indicado.
+
 ## Fase 0 — Planejamento
 
 - [x] Planejamento geral
@@ -1074,43 +1114,43 @@ Nenhuma evidência deverá conter segredos.
 
 ## Fase 1 — Ambiente
 
-- [ ] Python
-- [ ] Git
-- [ ] VS Code
-- [ ] Codex
-- [ ] ambiente virtual
-- [ ] repositório GitHub
+- [x] Python
+- [x] Git
+- [x] VS Code
+- [x] Codex
+- [x] ambiente virtual
+- [x] repositório GitHub
 
 ## Fase 2 — Aplicação Base
 
-- [ ] estrutura Flask
-- [ ] Application Factory
-- [ ] Blueprints
-- [ ] SQLAlchemy
-- [ ] migrations
+- [x] estrutura Flask
+- [x] Application Factory
+- [x] Blueprints
+- [x] SQLAlchemy
+- [x] migrations
 
 ## Fase 3 — Autenticação
 
-- [ ] Users
-- [ ] Login
-- [ ] Logout
-- [ ] password hashing
-- [ ] sessão
+- [x] Users
+- [x] Login
+- [x] Logout
+- [x] password hashing
+- [x] sessão
 
 ## Fase 4 — MFA
 
-- [ ] TOTP
-- [ ] QR Code
-- [ ] Recovery Codes
-- [ ] testes
-- [ ] primeiro acesso bloqueado na configuração antes do Dashboard
+- [x] TOTP
+- [x] QR Code
+- [ ] Recovery Codes — implementação pendente
+- [x] testes
+- [x] primeiro acesso bloqueado na configuração antes do Dashboard
 
 ## Fase 5 — RBAC
 
-- [ ] ADMIN
-- [ ] OPERATOR
-- [ ] VIEWER
-- [ ] testes de autorização
+- [x] ADMIN
+- [x] OPERATOR
+- [x] VIEWER
+- [x] testes de autorização
 
 ## Fase 6 — CRUD
 
@@ -1129,28 +1169,21 @@ Nenhuma evidência deverá conter segredos.
 
 ## Fase 8 — Segurança
 
-- [ ] CSRF
-- [ ] Rate Limiting
+- [x] CSRF
+- [x] Rate Limiting
 - [x] Headers HTTP e cache de respostas sensíveis no Flask
 - [ ] Security Review
-- [ ] OWASP
+- [x] Controles OWASP documentados no README
 
 ## Fase 9 — OCI
 
-- [ ] Compartment
-- [ ] VCN
-- [ ] Subnet pública
-- [ ] Internet Gateway
-- [ ] Security List/NSG
-- [ ] criação da instância
-- [ ] IP público
-- [ ] instância em execução
-- [ ] VM Ubuntu
-- [ ] SSH
-- [ ] Fail2Ban
-- [ ] UFW
-- [ ] Nginx
-- [ ] Gunicorn
+- [x] Implantação OCI realizada, conforme informação do responsável
+- [x] Deploy com Nginx, Gunicorn e systemd
+- [ ] Consolidar evidências de Compartment, VCN, subnet pública e Internet Gateway
+- [ ] Consolidar evidências de Security List/NSG, criação da instância e IP público
+- [ ] Registrar instância em execução e sistema operacional
+- [ ] Comprovar SSH por chave e autenticação por senha desabilitada
+- [ ] Comprovar Fail2Ban (`maxretry = 4`, `bantime = 24h`) e UFW
 
 ## Fase 10 — HTTPS
 
@@ -1164,49 +1197,55 @@ Nenhuma evidência deverá conter segredos.
 
 ## Fase 11 — CI/CD
 
-- [ ] GitHub Actions
-- [ ] GitHub Secrets
-- [ ] testes
-- [ ] deploy
-- [ ] health check
+- [x] GitHub Actions — workflow de CI implementado
+- [x] Lint, testes com cobertura e auditoria de dependências na pipeline
+- [x] Endpoint `/health` implementado na aplicação
+- [ ] Deploy automático pela pipeline
+- [ ] Health check pós-deploy na pipeline
 
-## Fase 12 — Entrega
+O workflow atual não utiliza Secrets; eventual autenticação do deploy ainda
+precisa ser implementada com proteção das credenciais.
 
-- [ ] README final
-- [ ] evidências
-- [ ] validação OWASP
-- [ ] checklist acadêmico
-- [ ] revisão final
+## Fase 12 — Entrega — em andamento
+
+- [ ] Aprovação do README final
+- [ ] Consolidação das evidências
+- [ ] Validação acadêmica dos controles OWASP
+- [ ] Conclusão do checklist acadêmico
+- [ ] Revisão final e entrega
 
 ---
 
 # Checklist Acadêmico
 
-Antes da entrega deverá ser validado:
+Os itens marcados refletem o código/documentação atual ou as confirmações do
+responsável identificadas acima. Itens externos sem comprovação formal seguem
+pendentes, mesmo quando a implantação geral já foi realizada.
 
-- [ ] aplicação acessível publicamente;
-- [ ] Ubuntu Server ou Debian;
-- [ ] Nginx ou Apache;
-- [ ] SSH por chave;
-- [ ] Fail2Ban;
-- [ ] HTTPS;
-- [ ] redirect HTTP → HTTPS;
+- [ ] aplicação acessível publicamente — registrar evidência de acesso;
+- [ ] Ubuntu Server ou Debian — registrar versão da instância;
+- [x] Nginx — integra o deploy realizado;
+- [ ] SSH por chave — comprovar configuração efetiva;
+- [ ] Fail2Ban — comprovar configuração e bloqueio;
+- [ ] HTTPS — consolidar evidência do certificado válido;
+- [ ] redirect HTTP → HTTPS — comprovar resposta;
 - [ ] SSL Labs A;
 - [ ] PQC;
-- [ ] GitHub público;
-- [ ] GitHub 2FA;
-- [ ] autenticação Git por SSH ou PAT de escopo mínimo;
-- [ ] `.gitignore`;
-- [ ] nenhuma credencial vazada;
-- [ ] Login;
-- [ ] página interna;
-- [ ] Logout;
-- [ ] IA integrada ao desenvolvimento;
-- [ ] OWASP documentado;
-- [ ] GitHub Actions;
+- [x] GitHub público — confirmado pelo responsável;
+- [x] GitHub 2FA — confirmado pelo responsável;
+- [x] autenticação Git via HTTPS com GitHub CLI — helper configurado;
+- [x] `.gitignore` — implementado, com lacuna para chaves descrita na seção GitHub;
+- [x] ausência de credenciais vazadas — confirmada pelo responsável;
+- [x] Login — código e testes em `app/auth/` e `tests/test_auth.py`;
+- [x] página interna protegida — Dashboard e testes de acesso;
+- [x] Logout — POST protegido e testes de encerramento de sessão;
+- [x] IA integrada ao desenvolvimento — VS Code e Codex;
+- [x] OWASP documentado — controles e referências técnicas neste README;
+- [x] GitHub Actions — `.github/workflows/ci.yml`;
 - [ ] deploy automático.
 
-Esse checklist corresponde aos principais critérios finais definidos no enunciado da atividade. fileciteturn0file0L133-L147
+A conclusão acadêmica depende das evidências pendentes e da revisão final dos
+critérios da atividade, não apenas da presença do código ou de exemplos de deploy.
 
 ---
 

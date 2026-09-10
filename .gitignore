@@ -20,6 +20,16 @@ instance/
 .env.*
 !.env.example
 
+# Secrets / private keys
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+
 # Testing / Coverage
 .pytest_cache/
 .coverage
