@@ -42,8 +42,10 @@ Máquinas Virtuais. A interface responsiva utiliza Jinja2 e Bootstrap. O Dashboa
 consulta dados reais e separa indicadores administrativos conforme o RBAC.
 O ponto WSGI é `wsgi:app`; `run.py` atende ao desenvolvimento e aos comandos Flask.
 
-O estado de implantação OCI e as confirmações de GitHub público, 2FA e proteção
-das credenciais foram informados pelo responsável pelo projeto nesta revisão.
+As Fases 9 (OCI) e 10 (HTTPS) foram implementadas manualmente pelo responsável,
+sem uso do Codex. O Eixo 1 está validado, incluindo SSL Labs A e PQC, conforme
+confirmação do responsável. Essa execução e as confirmações de GitHub público,
+2FA e proteção das credenciais fundamentam o estado registrado neste README.
 Código, testes e workflow foram conferidos no repositório. A consolidação das
 evidências externas permanece em andamento; o quadro não representa aprovação
 integral de todos os requisitos acadêmicos ou de todos os itens previstos no MVP.
@@ -54,9 +56,7 @@ Pendências e débitos conhecidos:
 2. auditoria e alertas não possuem retenção automática;
 3. recovery codes ainda não possuem implementação no código atual;
 4. deploy automático e suas verificações posteriores não integram a pipeline;
-5. faltam comprovações formais de HTTPS/renovação, SSL Labs A e PQC;
-6. o `.gitignore` local não contém regras gerais para arquivos de chave
-   (`*.pem`, `*.key`, `id_rsa` e `id_ed25519`).
+5. a consolidação das evidências da implantação manual permanece em andamento.
 
 O Flask-Limiter usa `memory://` em desenvolvimento e testes. Produção exige Redis
 compartilhado, configurado por `RATELIMIT_STORAGE_URI`, para manter os contadores
@@ -767,8 +767,12 @@ inframanager/
 
 # Infraestrutura OCI
 
-A OCI já foi implantada, incluindo o deploy com Nginx, Gunicorn e systemd.
-A topologia de referência para conferir e organizar as evidências é:
+A infraestrutura OCI foi implantada manualmente, com Compartment, VCN, subnet
+pública, Internet Gateway e Security List/NSG. A instância Ubuntu foi criada,
+recebeu IP público e está em execução. SSH, Fail2Ban, firewall e o deploy com
+Nginx, Gunicorn e systemd também estão implementados.
+
+Topologia da implantação:
 
 ```text
 OCI Compartment
@@ -785,13 +789,16 @@ OCI Compartment
                 └── SQLite
 ```
 
-As evidências deverão comprovar compartment, VCN, subnet pública, internet gateway, security list e/ou NSG, criação da instância, IP público atribuído e instância no estado `Running`/em execução.
+A organização das evidências deve registrar separadamente esses componentes, a
+criação da instância, o IP público atribuído e o estado `Running`/em execução.
+Essa consolidação documental não representa pendência de implantação.
 
 ---
 
 # Portas
 
-Somente portas necessárias deverão estar expostas:
+O firewall já está implementado. A política de exposição do projeto limita as
+portas públicas necessárias a:
 
 ```text
 22/tcp
@@ -806,13 +813,14 @@ de portas e das regras de firewall deve integrar as evidências da implantação
 
 # SSH
 
-A administração do servidor exige chave SSH, independentemente da autenticação
-Git via HTTPS utilizada no ambiente de desenvolvimento.
+O acesso administrativo por SSH já está implementado com chave, independentemente
+da autenticação Git via HTTPS utilizada no ambiente de desenvolvimento.
 
 A desativação da autenticação SSH por senha precisa constar na evidência da
 configuração efetiva do servidor.
 
-Fail2Ban deverá utilizar pelo menos a configuração determinada pela atividade:
+Fail2Ban já está implementado. Os valores exigidos pela atividade, a registrar
+na evidência da configuração ativa, são:
 
 ```text
 maxretry = 4
@@ -826,7 +834,7 @@ comprovação acadêmica.
 
 # HTTPS
 
-O requisito HTTPS da entrega utiliza:
+HTTPS foi implementado manualmente com:
 
 ```text
 Let's Encrypt
@@ -836,11 +844,14 @@ Certbot >= 5.4
 Nginx
 ```
 
-O procedimento previsto exige certificado emitido para o IP público com o perfil `shortlived`, a opção `--ip-address` e um método suportado, preferencialmente `webroot`. O fluxo deverá ser validado primeiro em staging. O procedimento requer configuração explícita no Nginx dos arquivos emitidos para o IP público.
+O certificado Let's Encrypt foi emitido para o IP público com Certbot `>= 5.4`.
+O Nginx atende HTTPS, o redirecionamento HTTP → HTTPS está implementado e a
+renovação automática está configurada, conforme confirmação do responsável.
 
-O requisito de renovação automática inclui `deploy-hook` para recarregar o Nginx.
-A emissão, o teste em staging, o redirecionamento e a renovação precisam de
-evidências formais; os exemplos versionados não comprovam sua execução.
+A documentação técnica estabelece o perfil `shortlived`, a opção `--ip-address`,
+validação inicial em staging e recarga do Nginx após renovação por `deploy-hook`.
+Os detalhes desse procedimento devem constar nas evidências da execução manual;
+a presente atualização registra os itens efetivamente confirmados acima.
 
 Fluxo:
 
@@ -854,9 +865,10 @@ HTTP
 HTTPS
 ```
 
-O servidor deverá ser submetido ao Qualys SSL Labs.
+A avaliação no Qualys SSL Labs obteve nota A e o suporte a PQC foi validado,
+conforme confirmação do responsável pela execução manual do Eixo 1.
 
-Critérios obrigatórios:
+Resultados validados:
 
 ```text
 SSL Labs: A
@@ -879,10 +891,9 @@ do histórico Git ou do armazenamento de credenciais da conta.
 
 O `.gitignore` protege `.env`, variações de ambiente, bancos locais, `instance/`,
 ambientes virtuais, logs e artefatos de testes. `.env.example` contém placeholders.
-Há uma lacuna na proteção de chaves: o arquivo atual não inclui regras gerais para
-`*.pem`, `*.key`, `id_rsa` e `id_ed25519`; portanto, não se afirma que esses nomes
-estejam cobertos fora dos diretórios já ignorados. Chaves devem permanecer fora do
-repositório. A correção desse arquivo está fora desta revisão exclusiva do README.
+A seção `Secrets / private keys` também protege `*.pem`, `*.key`, `*.p12`,
+`*.pfx`, `id_rsa`, `id_rsa.*`, `id_ed25519` e `id_ed25519.*` contra inclusão
+acidental de arquivos ainda não versionados. Chaves permanecem fora do repositório.
 
 ---
 
@@ -1175,25 +1186,37 @@ continuam pendentes de implementação ou comprovação, conforme indicado.
 - [ ] Security Review
 - [x] Controles OWASP documentados no README
 
-## Fase 9 — OCI
+## Fase 9 — OCI — concluída manualmente
 
-- [x] Implantação OCI realizada, conforme informação do responsável
-- [x] Deploy com Nginx, Gunicorn e systemd
-- [ ] Consolidar evidências de Compartment, VCN, subnet pública e Internet Gateway
-- [ ] Consolidar evidências de Security List/NSG, criação da instância e IP público
-- [ ] Registrar instância em execução e sistema operacional
-- [ ] Comprovar SSH por chave e autenticação por senha desabilitada
-- [ ] Comprovar Fail2Ban (`maxretry = 4`, `bantime = 24h`) e UFW
+- [x] Compartment
+- [x] VCN
+- [x] Subnet pública
+- [x] Internet Gateway
+- [x] Security List/NSG
+- [x] criação da instância
+- [x] IP público
+- [x] instância em execução
+- [x] VM Ubuntu
+- [x] SSH
+- [x] Fail2Ban
+- [x] firewall
+- [x] Nginx
+- [x] Gunicorn
+- [x] systemd no deploy
 
-## Fase 10 — HTTPS
+## Fase 10 — HTTPS — concluída e validada
 
-- [ ] Certbot `>= 5.4`
-- [ ] certificado Let's Encrypt para IP público
-- [ ] renovação automática com recarga do Nginx
-- [ ] Let's Encrypt
-- [ ] redirect
-- [ ] SSL Labs A
-- [ ] PQC
+- [x] Certbot `>= 5.4`
+- [x] certificado Let's Encrypt para IP público
+- [x] renovação automática
+- [x] Let's Encrypt
+- [x] redirect HTTP → HTTPS
+- [x] SSL Labs A
+- [x] PQC
+
+As Fases 9 e 10 foram executadas manualmente, sem uso do Codex. O Eixo 1 está
+validado, incluindo SSL Labs A e PQC. A consolidação das evidências dessas
+implementações integra a Fase 12.
 
 ## Fase 11 — CI/CD
 
@@ -1219,22 +1242,24 @@ precisa ser implementada com proteção das credenciais.
 # Checklist Acadêmico
 
 Os itens marcados refletem o código/documentação atual ou as confirmações do
-responsável identificadas acima. Itens externos sem comprovação formal seguem
-pendentes, mesmo quando a implantação geral já foi realizada.
+responsável sobre a execução manual identificadas acima. SSL Labs A e PQC estão
+validados; a organização das evidências continua na fase de entrega.
 
 - [ ] aplicação acessível publicamente — registrar evidência de acesso;
-- [ ] Ubuntu Server ou Debian — registrar versão da instância;
+- [x] Ubuntu Server — VM implantada manualmente;
 - [x] Nginx — integra o deploy realizado;
-- [ ] SSH por chave — comprovar configuração efetiva;
-- [ ] Fail2Ban — comprovar configuração e bloqueio;
-- [ ] HTTPS — consolidar evidência do certificado válido;
-- [ ] redirect HTTP → HTTPS — comprovar resposta;
-- [ ] SSL Labs A;
-- [ ] PQC;
+- [x] SSH por chave — implementado manualmente;
+- [x] Fail2Ban — implementado manualmente;
+- [x] firewall — implementado manualmente;
+- [x] HTTPS — certificado Let's Encrypt para IP público;
+- [x] renovação automática do certificado;
+- [x] redirect HTTP → HTTPS;
+- [x] SSL Labs A;
+- [x] PQC;
 - [x] GitHub público — confirmado pelo responsável;
 - [x] GitHub 2FA — confirmado pelo responsável;
 - [x] autenticação Git via HTTPS com GitHub CLI — helper configurado;
-- [x] `.gitignore` — implementado, com lacuna para chaves descrita na seção GitHub;
+- [x] `.gitignore` — inclui proteção de ambientes, bancos e chaves privadas;
 - [x] ausência de credenciais vazadas — confirmada pelo responsável;
 - [x] Login — código e testes em `app/auth/` e `tests/test_auth.py`;
 - [x] página interna protegida — Dashboard e testes de acesso;
