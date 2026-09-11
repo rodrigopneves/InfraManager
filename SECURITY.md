@@ -1150,10 +1150,15 @@ estáticos, recebem centralmente:
 Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; script-src-attr 'none'; style-src 'self' https://cdn.jsdelivr.net; style-src-attr 'none'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
-Referrer-Policy: no-referrer
+Referrer-Policy: same-origin
 Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
 Cross-Origin-Opener-Policy: same-origin
 ```
+
+`Referrer-Policy: same-origin` permite o envio de `Referer` somente para a mesma
+origem, preservando a validação HTTPS estrita do CSRF pelo Flask-WTF
+(`WTF_CSRF_SSL_STRICT=True`). O cabeçalho é omitido em requisições para outras
+origens.
 
 `cdn.jsdelivr.net` é autorizado somente para o CSS e o JavaScript do Bootstrap,
 que permanecem protegidos por SRI e `crossorigin`. `data:` é autorizado somente

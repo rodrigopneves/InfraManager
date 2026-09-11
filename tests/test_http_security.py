@@ -40,7 +40,7 @@ def assert_security_headers(response) -> None:
     assert "'unsafe-eval'" not in response.headers["Content-Security-Policy"]
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
-    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["Referrer-Policy"] == "same-origin"
     assert response.headers["Permissions-Policy"] == (
         "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
     )
@@ -95,19 +95,68 @@ def test_authenticated_dashboard_and_admin_pages_are_not_stored(
         assert_no_store(response)
 
 
+class CsrfParser(HTMLParser):
+    token = None
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "input" and attributes.get("name") == "csrf_token":
+            self.token = attributes.get("value")
+
+
+@pytest.mark.parametrize(
+    ("referer", "valid_token", "expected_status"),
+    [
+        ("https://192.0.2.10/login", True, 302),
+        (None, True, 400),
+        ("https://example.invalid/login", True, 400),
+        ("https://192.0.2.10/login", False, 400),
+    ],
+)
+def test_https_login_preserves_strict_csrf_validation(
+    app: Flask, active_user: User, referer, valid_token, expected_status
+) -> None:
+    app.config["WTF_CSRF_ENABLED"] = True
+    app.config["SESSION_COOKIE_SECURE"] = True
+    assert app.config["WTF_CSRF_SSL_STRICT"] is True
+    client = app.test_client()
+    base_url = "https://192.0.2.10"
+
+    response = client.get("/login", base_url=base_url)
+    assert response.status_code == 200
+    assert_security_headers(response)
+    cookie = response.headers["Set-Cookie"]
+    assert "Secure" in cookie
+    assert "HttpOnly" in cookie
+    assert "SameSite=Lax" in cookie
+    form = CsrfParser()
+    form.feed(response.get_data(as_text=True))
+    assert form.token
+
+    # The test client does not implement browser referrer policies.
+    result = client.post(
+        "/login",
+        base_url=base_url,
+        headers={"Referer": referer} if referer else {},
+        data={
+            "username": active_user.username,
+            "password": "valid-test-password",
+            "csrf_token": form.token if valid_token else "invalid-token",
+        },
+    )
+    assert result.status_code == expected_status
+    assert_security_headers(result)
+    if expected_status == 302:
+        assert result.location == "/mfa/verify"
+    with client.session_transaction() as session:
+        assert "_user_id" not in session
+
+
 def test_public_login_with_session_bound_csrf_is_not_stored() -> None:
     app = create_app(TestingConfig)
     app.config["WTF_CSRF_ENABLED"] = True
     first_client = app.test_client()
     second_client = app.test_client()
-
-    class CsrfParser(HTMLParser):
-        token = None
-
-        def handle_starttag(self, tag, attrs):
-            attributes = dict(attrs)
-            if tag == "input" and attributes.get("name") == "csrf_token":
-                self.token = attributes.get("value")
 
     first_response = first_client.get("/login")
     second_response = second_client.get("/login")
