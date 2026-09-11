@@ -11,13 +11,13 @@ def login(client: FlaskClient, user: User, password: str) -> None:
 def test_public_layout_loads_bootstrap_and_custom_styles(
     client: FlaskClient,
 ) -> None:
-    response = client.get("/")
+    response = client.get("/", follow_redirects=True)
 
     assert response.status_code == 200
     assert b"bootstrap@5.3.3" in response.data
     assert b'/static/css/app.css' in response.data
     assert b'aria-label="Navega\xc3\xa7\xc3\xa3o principal"' in response.data
-    assert b'href="/login"' in response.data
+    assert response.request.path == "/login"
 
 
 def test_authenticated_layout_has_navigation_user_and_csrf_logout(

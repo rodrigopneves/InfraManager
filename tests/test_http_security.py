@@ -54,12 +54,12 @@ def assert_no_store(response) -> None:
     assert response.headers["Expires"] == "0"
 
 
-def test_public_page_has_security_headers_without_sensitive_cache_policy(
+def test_public_redirect_has_security_headers_without_sensitive_cache_policy(
     client: FlaskClient,
 ) -> None:
     response = client.get("/")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert_security_headers(response)
     assert "no-store" not in response.headers.get("Cache-Control", "")
     assert "Pragma" not in response.headers
@@ -192,7 +192,7 @@ def test_hsts_is_reserved_for_tls_terminator_in_development() -> None:
     app = create_app("development")
     response = app.test_client().get("/", base_url="https://localhost")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert_security_headers(response)
 
 
@@ -207,5 +207,5 @@ def test_hsts_is_not_duplicated_by_flask_in_production() -> None:
     app = create_app(HeaderProductionConfig)
     response = app.test_client().get("/", base_url="https://192.0.2.10")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert_security_headers(response)

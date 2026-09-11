@@ -113,16 +113,7 @@
         {% endwith %}
 
         <section class="content-shell">
-          {% block content %}
-            <div class="empty-state">
-              <span class="brand-mark brand-mark-large" aria-hidden="true"><span></span><span></span><span></span></span>
-              <h1>InfraManager está funcionando.</h1>
-              <p>Gerenciamento seguro e centralizado da infraestrutura de TI.</p>
-              {% if not current_user.is_authenticated %}
-                <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Acessar o sistema</a>
-              {% endif %}
-            </div>
-          {% endblock %}
+          {% block content %}{% endblock %}
         </section>
       </div>
     </main>

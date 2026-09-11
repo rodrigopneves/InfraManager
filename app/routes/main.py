@@ -1,4 +1,5 @@
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, Response, current_app, redirect, url_for
+from flask_login import current_user
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -9,8 +10,10 @@ main = Blueprint("main", __name__)
 
 
 @main.get("/")
-def index() -> str:
-    return render_template("base.html")
+def index() -> Response:
+    if current_user.is_authenticated:
+        return redirect(url_for("auth.dashboard"))
+    return redirect(url_for("auth.login"))
 
 
 @main.get("/health")
