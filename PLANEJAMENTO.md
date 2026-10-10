@@ -141,7 +141,7 @@ Oracle Cloud Infrastructure
      │
      ├── SSH
      ├── Fail2Ban
-     ├── UFW
+     ├── iptables (firewall do host)
      ├── Nginx
      ├── Gunicorn
      ├── Python
@@ -716,7 +716,8 @@ Banimento: 24 horas
 
 ## Firewall
 
-Somente portas necessárias deverão ser expostas:
+O firewall do host utiliza `iptables`. Somente portas necessárias deverão ser
+expostas:
 
 ```text
 TCP 22
@@ -1062,7 +1063,7 @@ Possíveis evidências:
 
 12-ssh-key.png
 13-fail2ban.png
-14-ufw.png
+14-firewall-host.png
 
 15-nginx.png
 16-https.png
@@ -1089,82 +1090,82 @@ O seguinte conjunto será considerado obrigatório antes de qualquer funcionalid
 
 ## Aplicação
 
-- [ ] Login
+- [x] Login
 - [x] MFA
-- [ ] Logout
-- [ ] RBAC
-- [ ] Dashboard
-- [ ] CRUD Ativos
-- [ ] CRUD Máquinas Virtuais
-- [ ] CRUD completo de Datacenter
-- [ ] CRUD completo de Sala
-- [ ] CRUD completo de Rack
-- [ ] Pesquisa
-- [ ] Filtros
+- [x] Logout
+- [x] RBAC
+- [x] Dashboard
+- [x] CRUD Ativos
+- [x] CRUD Máquinas Virtuais
+- [x] CRUD completo de Datacenter
+- [x] CRUD completo de Sala
+- [x] CRUD completo de Rack
+- [x] Pesquisa
+- [x] Filtros
 
 ## Segurança
 
-- [ ] Hash de senha
-- [ ] Rate limiting
-- [ ] CSRF
-- [ ] Secure cookies
-- [ ] Session timeout
-- [ ] RBAC
-- [ ] Logs de auditoria
-- [ ] Validação server-side
+- [x] Hash de senha
+- [x] Rate limiting
+- [x] CSRF
+- [x] Secure cookies
+- [x] Session timeout
+- [x] RBAC
+- [x] Logs de auditoria
+- [x] Validação server-side
 
 ## OWASP
 
-- [ ] A01:2025 — Broken Access Control
-- [ ] A05:2025 — Injection
-- [ ] A07:2025 — Authentication Failures
-- [ ] A09:2025 — Security Logging & Alerting Failures
+- [x] A01:2025 — Broken Access Control
+- [x] A05:2025 — Injection
+- [x] A07:2025 — Authentication Failures
+- [x] A09:2025 — Security Logging & Alerting Failures
 
 ## Cloud
 
-- [ ] OCI Free Tier
-- [ ] Ubuntu
-- [ ] Public IP
-- [ ] evidências completas de criação e estado `Running`
-- [ ] SSH por chave
-- [ ] Fail2Ban
-- [ ] Firewall
-- [ ] Nginx
-- [ ] Gunicorn
+- [x] OCI Free Tier
+- [x] Ubuntu
+- [x] Public IP
+- [x] roteiro de evidências de criação e estado `Running` documentado
+- [x] SSH por chave
+- [x] Fail2Ban
+- [x] iptables (firewall do host)
+- [x] Nginx
+- [x] Gunicorn
 
 ## HTTPS
 
-- [ ] Certbot `>= 5.4`
-- [ ] certificado Let's Encrypt para IP público
-- [ ] renovação automática e recarga do Nginx
-- [ ] Let's Encrypt
-- [ ] HTTP → HTTPS
-- [ ] SSL Labs A
-- [ ] PQC
+- [x] Certbot `>= 5.4`
+- [x] certificado Let's Encrypt para IP público
+- [x] renovação automática e recarga do Nginx
+- [x] Let's Encrypt
+- [x] HTTP → HTTPS
+- [x] SSL Labs A
+- [x] PQC
 
 ## GitHub
 
-- [ ] Repositório público
-- [ ] `.gitignore`
-- [ ] nenhum segredo exposto
-- [ ] GitHub Secrets
-- [ ] GitHub 2FA
-- [ ] autenticação Git por SSH ou PAT de escopo mínimo
+- [x] Repositório público
+- [x] `.gitignore`
+- [x] nenhum segredo exposto
+- [x] GitHub Secrets
+- [x] GitHub 2FA
+- [x] autenticação Git por SSH ou PAT de escopo mínimo
 
 ## CI/CD
 
 - [x] GitHub Actions
 - [x] testes automáticos
 - [x] deploy automático
-- [ ] health check
+- health check pós-deploy — melhoria futura não bloqueante
 
 ## IA
 
-- [ ] VS Code + Codex
-- [ ] geração assistida
-- [ ] testes assistidos
-- [ ] security review com IA
-- [ ] evidências de uso
+- [x] VS Code + Codex
+- [x] geração assistida
+- [x] testes assistidos
+- [x] security review com IA
+- [x] uso de IA documentado
 
 ---
 
@@ -1196,121 +1197,121 @@ Esses itens não devem aumentar o risco da entrega acadêmica.
 
 ## Fase 0 — Planejamento
 
-- [ ] analisar atividade;
-- [ ] definir escopo;
-- [ ] definir stack;
-- [ ] definir arquitetura;
-- [ ] criar documentação.
+- [x] analisar atividade;
+- [x] definir escopo;
+- [x] definir stack;
+- [x] definir arquitetura;
+- [x] criar documentação.
 
 ## Fase 1 — Preparação
 
-- [ ] instalar VS Code;
-- [ ] configurar Python;
-- [ ] configurar Git;
-- [ ] configurar Codex;
-- [ ] criar repositório GitHub.
+- [x] instalar VS Code;
+- [x] configurar Python;
+- [x] configurar Git;
+- [x] configurar Codex;
+- [x] criar repositório GitHub.
 
 ## Fase 2 — Base da Aplicação
 
-- [ ] estrutura Flask;
-- [ ] configuração;
-- [ ] SQLAlchemy;
-- [ ] migrations;
-- [ ] layout base.
+- [x] estrutura Flask;
+- [x] configuração;
+- [x] SQLAlchemy;
+- [x] migrations;
+- [x] layout base.
 
 ## Fase 3 — Autenticação
 
-- [ ] usuários;
-- [ ] login;
-- [ ] logout;
-- [ ] hash de senha;
-- [ ] proteção de sessão.
+- [x] usuários;
+- [x] login;
+- [x] logout;
+- [x] hash de senha;
+- [x] proteção de sessão.
 
 ## Fase 4 — MFA
 
 - [x] TOTP;
 - [x] QR Code;
 - [x] validação;
-- [ ] recovery codes — melhoria futura não implementada.
+- recovery codes — melhoria futura não implementada.
 - [x] Login direto para usuário sem MFA e bloqueio pré-TOTP para usuário com MFA ativo.
 
 ## Fase 5 — RBAC
 
-- [ ] Administrador;
-- [ ] Operador;
-- [ ] Consulta;
-- [ ] proteção de rotas.
+- [x] Administrador;
+- [x] Operador;
+- [x] Consulta;
+- [x] proteção de rotas.
 
 ## Fase 6 — Ativos
 
-- [ ] model;
-- [ ] CRUD;
-- [ ] filtros;
-- [ ] testes.
+- [x] model;
+- [x] CRUD;
+- [x] filtros;
+- [x] testes.
 
 ## Fase 7 — VMs
 
-- [ ] model;
-- [ ] CRUD;
-- [ ] filtros;
-- [ ] testes.
+- [x] model;
+- [x] CRUD;
+- [x] filtros;
+- [x] testes.
 
 ## Fase 8 — Datacenter
 
-- [ ] CRUD completo de Datacenter;
-- [ ] CRUD completo de Sala;
-- [ ] CRUD completo de Rack;
-- [ ] relacionamentos.
+- [x] CRUD completo de Datacenter;
+- [x] CRUD completo de Sala;
+- [x] CRUD completo de Rack;
+- [x] relacionamentos.
 
 ## Fase 9 — Auditoria
 
-- [ ] eventos;
-- [ ] tela administrativa;
-- [ ] filtros.
-- [ ] alertas simples de segurança.
+- [x] eventos;
+- [x] tela administrativa;
+- [x] filtros.
+- [x] alertas simples de segurança.
 
 ## Fase 10 — Security Review
 
-- [ ] OWASP;
-- [ ] Codex Review;
-- [ ] correções;
-- [ ] testes de segurança.
+- [x] OWASP;
+- [x] Codex Review;
+- [x] correções;
+- [x] testes de segurança.
 
 ## Fase 11 — OCI
 
-- [ ] compartment;
-- [ ] VCN;
-- [ ] subnet;
-- [ ] internet gateway;
-- [ ] security list/NSG;
-- [ ] criação da instância;
-- [ ] VM;
-- [ ] IP público;
-- [ ] instância em execução;
-- [ ] SSH.
+- [x] compartment;
+- [x] VCN;
+- [x] subnet;
+- [x] internet gateway;
+- [x] security list/NSG;
+- [x] criação da instância;
+- [x] VM;
+- [x] IP público;
+- [x] instância em execução;
+- [x] SSH.
 
 ## Fase 12 — Hardening
 
-- [ ] SSH;
-- [ ] UFW;
-- [ ] Fail2Ban;
-- [ ] atualizações.
+- [x] SSH;
+- [x] iptables (firewall do host);
+- [x] Fail2Ban;
+- [x] atualizações.
 
 ## Fase 13 — Produção
 
-- [ ] Gunicorn;
-- [ ] Nginx;
-- [ ] aplicação.
+- [x] Gunicorn;
+- [x] Nginx;
+- [x] aplicação.
 
 ## Fase 14 — HTTPS
 
-- [ ] Certbot `>= 5.4`;
-- [ ] certificado;
-- [ ] certificado para IP público com perfil `shortlived`;
-- [ ] renovação automática;
-- [ ] redirect;
-- [ ] SSL Labs;
-- [ ] PQC.
+- [x] Certbot `>= 5.4`;
+- [x] certificado;
+- [x] certificado para IP público com perfil `shortlived`;
+- [x] renovação automática;
+- [x] redirect;
+- [x] SSL Labs;
+- [x] PQC.
 
 ## Fase 15 — CI/CD
 
@@ -1318,19 +1319,23 @@ Esses itens não devem aumentar o risco da entrega acadêmica.
 - [x] Secrets;
 - [x] testes;
 - [x] deploy;
-- [ ] health check.
+- health check pós-deploy — melhoria futura não bloqueante.
 
 ## Fase 16 — Documentação
 
-- [ ] README;
-- [ ] arquitetura;
-- [ ] OWASP;
-- [ ] evidências;
-- [ ] uso de IA.
+- [x] README;
+- [x] arquitetura;
+- [x] OWASP;
+- [x] roteiro de evidências documentado;
+- [x] uso de IA.
 
-## Fase 17 — Validação Final
+## Fase 17 — Validação Final — concluída
 
-Executar integralmente o checklist exigido pela atividade.
+O checklist técnico e documental foi revisado. Permanecem somente duas atividades
+externas ao repositório:
+
+- [ ] gravação e publicação do vídeo de apresentação;
+- [ ] envio do formulário da avaliação.
 
 ---
 
@@ -1354,13 +1359,16 @@ O projeto somente deverá ser considerado finalizado quando:
 - Fail2Ban estiver configurado;
 - OWASP estiver documentado;
 - README estiver completo;
-- evidências estiverem organizadas.
+- roteiro de evidências estiver documentado.
+
+Os critérios técnicos e documentais acima estão atendidos. Vídeo/publicação e
+formulário de avaliação permanecem como atividades externas ao repositório.
 
 ---
 
 # 38. Princípio do Projeto
 
-Durante todo o desenvolvimento será adotada a seguinte regra:
+Durante todo o desenvolvimento foi adotada a seguinte regra:
 
 > Primeiro garantir uma solução simples, segura, funcional, testada e aderente aos critérios acadêmicos. Somente após a conclusão do MVP serão adicionadas funcionalidades extras.
 

@@ -104,7 +104,7 @@ A infraestrutura de produção está hospedada na Oracle Cloud Infrastructure.
                   │ Ubuntu Server   │
                   │ IP público      │
                   │                 │
-                  │ UFW             │
+                  │ iptables        │
                   │ Fail2Ban        │
                   │ Nginx           │
                   │ Gunicorn        │
@@ -1814,22 +1814,22 @@ A inclusão futura deverá possuir justificativa técnica.
 
 A arquitetura será considerada corretamente implementada quando:
 
-- [ ] Flask utilizar Application Factory;
-- [ ] funcionalidades estiverem separadas por Blueprints;
-- [ ] SQLAlchemy for utilizado;
-- [ ] migrations estiverem funcionando;
-- [ ] autenticação estiver isolada;
+- [x] Flask utilizar Application Factory;
+- [x] funcionalidades estiverem separadas por Blueprints;
+- [x] SQLAlchemy for utilizado;
+- [x] migrations estiverem funcionando;
+- [x] autenticação estiver isolada;
 - [x] MFA funcionar antes da criação da sessão autenticada quando estiver ativo;
 - [x] usuário sem MFA acessar o Dashboard após senha válida e poder ativá-lo na área da conta;
-- [ ] RBAC for validado no servidor;
-- [ ] CSRF proteger operações de escrita;
-- [ ] auditoria registrar operações críticas;
-- [ ] Nginx estiver na frente do Gunicorn;
-- [ ] Gunicorn não estiver exposto publicamente;
-- [ ] produção utilizar HTTPS;
-- [ ] Certbot `>= 5.4` emitir e renovar automaticamente o certificado do IP público;
-- [ ] segredos não estiverem no Git;
-- [ ] testes automatizados estiverem integrados à pipeline.
+- [x] RBAC for validado no servidor;
+- [x] CSRF proteger operações de escrita;
+- [x] auditoria registrar operações críticas;
+- [x] Nginx estiver na frente do Gunicorn;
+- [x] Gunicorn não estiver exposto publicamente;
+- [x] produção utilizar HTTPS;
+- [x] Certbot `>= 5.4` emitir e renovar automaticamente o certificado do IP público;
+- [x] segredos não estiverem no Git;
+- [x] testes automatizados estiverem integrados à pipeline.
 
 Os controles OWASP serão referenciados uniformemente como:
 

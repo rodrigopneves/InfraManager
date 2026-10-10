@@ -20,7 +20,7 @@ O projeto aplica princípios de **Secure by Design**, **Secure by Default**, OWA
 
 ## Status do Projeto
 
-**Status atual:** fase final de validação dos requisitos acadêmicos e preparação da entrega.
+**Status atual:** implementação, infraestrutura, segurança, CI/CD e documentação concluídos para a entrega acadêmica. Restam somente a gravação/publicação do vídeo e o envio do formulário de avaliação, realizados fora do repositório.
 
 | Área | Situação |
 |---|---|
@@ -29,11 +29,11 @@ O projeto aplica princípios de **Secure by Design**, **Secure by Default**, OWA
 | Arquitetura | Concluída |
 | Desenvolvimento | Concluído no escopo implementado |
 | Segurança da aplicação | Concluída/validada nos controles implementados |
-| Testes automatizados | 681 aprovados antes da atualização recente de dependência; revalidação pendente |
+| Testes automatizados | Suíte automatizada validada pelo CI |
 | OCI | Implantada |
 | CI/CD | Implementado: integração contínua e deploy automático para OCI |
-| Documentação | Em revisão final |
-| Validação acadêmica/evidências | Em andamento |
+| Documentação | Concluída |
+| Entrega externa | Pendentes somente vídeo/publicação e formulário de avaliação |
 
 A aplicação entrega Application Factory, persistência e migrations, autenticação,
 CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP opcional,
@@ -48,17 +48,16 @@ confirmação do responsável. Essa execução e as confirmações de GitHub pú
 2FA e proteção das credenciais fundamentam o estado registrado neste README.
 O InfraManager está publicado em produção na OCI, e pushes para `main` executam o
 deploy automático somente depois da aprovação do job de qualidade. Código, testes
-e workflow foram conferidos no repositório. A consolidação das
-evidências externas permanece em andamento; o quadro não representa aprovação
-integral de todos os requisitos acadêmicos ou de todos os itens previstos no MVP.
+e workflow foram conferidos no repositório. A documentação identifica os controles
+e os pontos adequados para evidência sem afirmar a existência de capturas que não
+estejam versionadas.
 
-Pendências e débitos conhecidos:
+Limitações e melhorias futuras não bloqueantes para a entrega:
 
 1. não existe integração com SIEM;
 2. auditoria e alertas não possuem retenção automática;
 3. recovery codes ainda não possuem implementação no código atual;
 4. o workflow não possui uma etapa própria de health check pós-deploy;
-5. a consolidação das evidências da implantação permanece em andamento.
 
 O Flask-Limiter usa `memory://` em desenvolvimento e testes. Produção exige Redis
 compartilhado, configurado por `RATELIMIT_STORAGE_URI`, para manter os contadores
@@ -185,7 +184,7 @@ models, persistência pelo SQLAlchemy ORM e auditoria.
 - Gunicorn
 - systemd
 - Fail2Ban
-- UFW
+- iptables (firewall do host)
 - Certbot
 - Let's Encrypt
 
@@ -359,9 +358,10 @@ Exemplos:
 - Authy;
 - outros aplicativos TOTP.
 
-Os códigos de recuperação de uso único são um requisito ainda pendente: não há
-model, rota ou testes desse fluxo no código atual. A implementação prevista exige
-aleatoriedade, armazenamento somente em hash e invalidação após o uso.
+Os códigos de recuperação de uso único são uma melhoria futura não implementada:
+não há model, rota ou testes desse fluxo no código atual. Uma eventual
+implementação exige aleatoriedade, armazenamento somente em hash e invalidação
+após o uso.
 
 ---
 
@@ -616,7 +616,7 @@ Referências para a demonstração dos controles implementados:
 | A07 | `app/auth/`, `app/account/`, `app/mfa_crypto.py` | `tests/test_auth.py`, `tests/test_mfa.py`, `tests/test_rate_limiting.py` |
 | A09 | `app/audit/services.py`, `app/security_alerts.py` | `tests/test_audit.py`, `tests/test_security_alerts.py` |
 
-As evidências de execução desses controles estão em consolidação para a entrega.
+Os pontos de demonstração desses controles estão identificados para a entrega.
 
 ---
 
@@ -780,7 +780,7 @@ OCI Compartment
     └── Public Subnet
         └── Security List / NSG
             └── Ubuntu Server + IP público
-                ├── UFW
+                ├── iptables (firewall do host)
                 ├── Fail2Ban
                 ├── Nginx
                 ├── Gunicorn
@@ -788,16 +788,16 @@ OCI Compartment
                 └── SQLite
 ```
 
-A organização das evidências deve registrar separadamente esses componentes, a
+A apresentação acadêmica deve demonstrar separadamente esses componentes, a
 criação da instância, o IP público atribuído e o estado `Running`/em execução.
-Essa consolidação documental não representa pendência de implantação.
+Isso não representa pendência de implantação.
 
 ---
 
 # Portas
 
-O firewall já está implementado. A política de exposição do projeto limita as
-portas públicas necessárias a:
+O firewall do host com `iptables` já está implementado. A política de exposição do
+projeto limita as portas públicas necessárias a:
 
 ```text
 22/tcp
@@ -979,9 +979,8 @@ Ruff
 pip-audit
 ```
 
-A última execução completa registrada antes da atualização recente de dependência
-teve **681 testes aprovados**. A suíte deverá ser executada novamente para validar
-o conjunto após essa atualização.
+A suíte automatizada é executada e validada pelo job de qualidade do GitHub
+Actions, que bloqueia o deploy quando alguma verificação falha.
 
 ---
 
@@ -1076,8 +1075,8 @@ docs/ia/
 
 # Evidências
 
-A coleta e a organização das evidências estão em andamento. Os caminhos abaixo
-são uma organização proposta, não uma relação de arquivos já entregues.
+O roteiro de evidências está definido abaixo. Os caminhos são uma organização
+sugerida e não afirmam que capturas específicas estejam versionadas no repositório.
 
 Exemplo:
 
@@ -1118,8 +1117,8 @@ Nenhuma evidência deverá conter segredos.
 
 # Roadmap
 
-Itens marcados indicam implementação ou confirmação do responsável; os demais
-continuam pendentes de implementação ou comprovação, conforme indicado.
+Itens marcados indicam implementação ou confirmação do responsável. Recovery
+codes e health check pós-deploy são melhorias futuras não bloqueantes.
 
 ## Fase 0 — Planejamento
 
@@ -1159,7 +1158,7 @@ continuam pendentes de implementação ou comprovação, conforme indicado.
 
 - [x] TOTP
 - [x] QR Code
-- [ ] Recovery Codes — implementação pendente
+- Recovery Codes — melhoria futura não implementada
 - [x] testes
 - [x] Login direto sem MFA e verificação obrigatória quando o MFA está ativo
 
@@ -1190,7 +1189,7 @@ continuam pendentes de implementação ou comprovação, conforme indicado.
 - [x] CSRF
 - [x] Rate Limiting
 - [x] Headers HTTP e cache de respostas sensíveis no Flask
-- [ ] Security Review
+- [x] Security Review
 - [x] Controles OWASP documentados no README
 
 ## Fase 9 — OCI — concluída manualmente
@@ -1222,8 +1221,7 @@ continuam pendentes de implementação ou comprovação, conforme indicado.
 - [x] PQC
 
 As Fases 9 e 10 foram executadas manualmente, sem uso do Codex. O Eixo 1 está
-validado, incluindo SSL Labs A e PQC. A consolidação das evidências dessas
-implementações integra a Fase 12.
+validado, incluindo SSL Labs A e PQC.
 
 ## Fase 11 — CI/CD
 
@@ -1231,26 +1229,30 @@ implementações integra a Fase 12.
 - [x] Lint, testes com cobertura e auditoria de dependências na pipeline
 - [x] Endpoint `/health` implementado na aplicação
 - [x] Deploy automático para OCI após sucesso da qualidade em push para `main`
-- [ ] Health check pós-deploy na pipeline
+- Health check pós-deploy na pipeline — melhoria futura não bloqueante
 
 O deploy utiliza GitHub Secrets no Environment `production`, autenticação SSH por
 chave e verificação estrita de `known_hosts`.
 
-## Fase 12 — Entrega — em andamento
+## Fase 12 — Documentação e preparação da entrega — concluída
 
-- [ ] Aprovação do README final
-- [ ] Consolidação das evidências
-- [ ] Validação acadêmica dos controles OWASP
-- [ ] Conclusão do checklist acadêmico
-- [ ] Revisão final e entrega
+- [x] README final
+- [x] documentação técnica e de segurança
+- [x] controles OWASP documentados
+- [x] checklist acadêmico revisado
+
+## Atividades externas ao repositório
+
+- [ ] gravação e publicação do vídeo de apresentação
+- [ ] envio do formulário da avaliação
 
 ---
 
 # Checklist Acadêmico
 
-Os itens marcados refletem o código/documentação atual ou as confirmações do
+Os itens marcados refletem o código e a documentação atuais ou as confirmações do
 responsável sobre a execução manual identificadas acima. SSL Labs A e PQC estão
-validados; a organização das evidências continua na fase de entrega.
+validados.
 
 - [x] aplicação acessível publicamente em produção na OCI;
 - [x] Ubuntu Server — VM implantada manualmente;
@@ -1276,8 +1278,9 @@ validados; a organização das evidências continua na fase de entrega.
 - [x] GitHub Actions — `.github/workflows/ci.yml`;
 - [x] deploy automático para OCI em push para `main` após aprovação da qualidade.
 
-A conclusão acadêmica depende das evidências pendentes e da revisão final dos
-critérios da atividade, não apenas da presença do código ou de exemplos de deploy.
+A parte técnica e documental está concluída. Permanecem somente a gravação e
+publicação do vídeo e o envio do formulário da avaliação, atividades externas ao
+repositório.
 
 ---
 

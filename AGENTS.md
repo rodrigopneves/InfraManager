@@ -910,7 +910,7 @@ Gunicorn
 systemd
 SQLite
 Fail2Ban
-UFW
+iptables (firewall do host)
 Certbot
 ```
 
@@ -1008,6 +1008,8 @@ Não alterar esses valores sem justificativa e aprovação.
 ---
 
 # 48. Firewall
+
+O firewall ativo no host é implementado com `iptables`.
 
 Portas esperadas:
 

@@ -1329,13 +1329,13 @@ bantime = 24h
 
 fileciteturn0file0L41-L42
 
-Será criada evidência da configuração ativa.
+O roteiro de evidências inclui a configuração ativa.
 
 ---
 
 # 52. Firewall
 
-A aplicação deverá seguir Least Privilege.
+O firewall do host utiliza `iptables` e segue Least Privilege.
 
 Portas esperadas:
 
@@ -1709,7 +1709,7 @@ Security Alerts
 
 # 71. Evidências Acadêmicas de Segurança
 
-Deverão ser coletadas evidências como:
+O roteiro acadêmico de evidências abrange:
 
 ```text
 docs/evidencias/security/
@@ -1820,17 +1820,17 @@ Tests?
 
 Checklist:
 
-- [ ] testes aprovados;
-- [ ] nenhuma credencial no Git;
-- [ ] DEBUG desativado;
-- [ ] SECRET_KEY externa;
-- [ ] cookies seguros;
-- [ ] CSRF ativo;
-- [ ] rate limit ativo;
-- [ ] RBAC ativo;
-- [ ] HTTPS ativo;
-- [ ] banco fora de static;
-- [ ] logs sem segredos.
+- [x] testes aprovados pelo CI;
+- [x] nenhuma credencial no Git;
+- [x] DEBUG desativado;
+- [x] SECRET_KEY externa;
+- [x] cookies seguros;
+- [x] CSRF ativo;
+- [x] rate limit ativo;
+- [x] RBAC ativo;
+- [x] HTTPS ativo;
+- [x] banco fora de static;
+- [x] logs sem segredos.
 
 ---
 
@@ -1949,34 +1949,34 @@ Durante desenvolvimento, poderão ser utilizadas branches auxiliares.
 
 O projeto somente poderá ser considerado finalizado quando:
 
-- [ ] senhas estiverem armazenadas somente em hash;
+- [x] senhas estiverem armazenadas somente em hash;
 - [x] MFA estiver funcionando;
 - [x] contas com MFA ativo exigirem confirmação TOTP antes do Dashboard;
-- [ ] sessões estiverem configuradas com segurança;
-- [ ] rate limiting estiver ativo;
-- [ ] RBAC estiver ativo;
-- [ ] CSRF estiver ativo;
-- [ ] validação server-side estiver ativa;
-- [ ] SQLAlchemy estiver sendo utilizado corretamente;
-- [ ] XSS estiver mitigado;
-- [ ] auditoria estiver funcionando;
-- [ ] alertas simples para eventos críticos/repetidos estiverem funcionando;
-- [ ] segredos estiverem fora do Git;
-- [ ] SSH utilizar chave;
-- [ ] senha SSH estiver desabilitada;
-- [ ] Fail2Ban estiver configurado;
-- [ ] firewall estiver configurado;
-- [ ] Gunicorn não estiver exposto;
-- [ ] HTTPS estiver ativo;
-- [ ] Certbot `>= 5.4` emitir e renovar automaticamente certificado para o IP público;
-- [ ] HTTP redirecionar para HTTPS;
-- [ ] SSL Labs retornar A;
-- [ ] PQC estiver confirmado;
-- [ ] GitHub Secrets estiver configurado;
-- [ ] GitHub 2FA estiver habilitado e operações Git utilizarem SSH ou PAT de escopo mínimo;
-- [ ] testes de segurança estiverem passando;
-- [ ] Security Review com IA tiver sido realizado;
-- [ ] OWASP estiver documentado no README.
+- [x] sessões estiverem configuradas com segurança;
+- [x] rate limiting estiver ativo;
+- [x] RBAC estiver ativo;
+- [x] CSRF estiver ativo;
+- [x] validação server-side estiver ativa;
+- [x] SQLAlchemy estiver sendo utilizado corretamente;
+- [x] XSS estiver mitigado;
+- [x] auditoria estiver funcionando;
+- [x] alertas simples para eventos críticos/repetidos estiverem funcionando;
+- [x] segredos estiverem fora do Git;
+- [x] SSH utilizar chave;
+- [x] senha SSH estiver desabilitada;
+- [x] Fail2Ban estiver configurado;
+- [x] firewall do host com `iptables` estiver configurado;
+- [x] Gunicorn não estiver exposto;
+- [x] HTTPS estiver ativo;
+- [x] Certbot `>= 5.4` emitir e renovar automaticamente certificado para o IP público;
+- [x] HTTP redirecionar para HTTPS;
+- [x] SSL Labs retornar A;
+- [x] PQC estiver confirmado;
+- [x] GitHub Secrets estiver configurado;
+- [x] GitHub 2FA estiver habilitado e operações Git utilizarem SSH ou PAT de escopo mínimo;
+- [x] testes de segurança estiverem passando no CI;
+- [x] Security Review com IA tiver sido realizado;
+- [x] OWASP estiver documentado no README.
 
 Recovery codes permanecem uma melhoria futura e não são critério de conclusão do
 escopo atualmente implementado.

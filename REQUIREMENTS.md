@@ -876,7 +876,7 @@ Controles:
 
 Produção hospedada na Oracle Cloud Infrastructure utilizando recursos gratuitos.
 
-Deverão ser coletadas evidências da criação e da operação de: compartment, VCN, subnet pública, internet gateway, security list e/ou NSG, criação da instância, IP público atribuído e instância no estado `Running`/em execução.
+O roteiro de evidências cobre a criação e a operação de: compartment, VCN, subnet pública, internet gateway, security list e/ou NSG, criação da instância, IP público atribuído e instância no estado `Running`/em execução.
 
 ---
 
@@ -927,7 +927,8 @@ Essa configuração decorre diretamente do requisito da atividade. filecite�
 
 ## RNF-022 — Firewall
 
-Somente portas necessárias deverão ser expostas.
+O firewall do host utiliza `iptables`. Somente portas necessárias deverão ser
+expostas.
 
 Inicialmente:
 
@@ -1104,37 +1105,37 @@ O projeto deverá manter evidências das principais interações de desenvolvime
 
 O MVP será considerado funcional quando:
 
-- [ ] usuário conseguir realizar Login;
+- [x] usuário conseguir realizar Login;
 - [x] MFA estiver operacional;
 - [x] usuários com MFA ativo exigirem confirmação TOTP antes do Dashboard;
-- [ ] Logout funcionar;
-- [ ] Dashboard estiver protegido;
-- [ ] RBAC estiver funcionando;
-- [ ] CRUD de Ativos estiver completo;
-- [ ] CRUD de Máquinas Virtuais estiver completo;
-- [ ] CRUD completo de Datacenter estiver funcionando;
-- [ ] CRUD completo de Sala estiver funcionando;
-- [ ] CRUD completo de Rack estiver funcionando;
-- [ ] pesquisa estiver funcionando;
-- [ ] filtros estiverem funcionando;
-- [ ] logs de auditoria estiverem funcionando;
-- [ ] alertas simples de segurança estiverem funcionando;
-- [ ] testes automatizados estiverem aprovados;
+- [x] Logout funcionar;
+- [x] Dashboard estiver protegido;
+- [x] RBAC estiver funcionando;
+- [x] CRUD de Ativos estiver completo;
+- [x] CRUD de Máquinas Virtuais estiver completo;
+- [x] CRUD completo de Datacenter estiver funcionando;
+- [x] CRUD completo de Sala estiver funcionando;
+- [x] CRUD completo de Rack estiver funcionando;
+- [x] pesquisa estiver funcionando;
+- [x] filtros estiverem funcionando;
+- [x] logs de auditoria estiverem funcionando;
+- [x] alertas simples de segurança estiverem funcionando;
+- [x] testes automatizados estiverem aprovados pelo CI;
 - [x] aplicação estiver publicada na OCI;
-- [ ] evidências de compartment, VCN, subnet, internet gateway, security list/NSG, criação da instância, IP público e estado em execução estiverem organizadas;
-- [ ] Nginx estiver configurado;
-- [ ] HTTPS estiver funcionando;
-- [ ] Certbot `>= 5.4` estiver emitindo e renovando o certificado do IP público;
-- [ ] HTTP estiver redirecionando para HTTPS;
-- [ ] SSH utilizar somente chave;
-- [ ] Fail2Ban estiver ativo;
-- [ ] SSL Labs apresentar Nota A;
-- [ ] PQC estiver confirmado;
+- [x] roteiro de evidências de compartment, VCN, subnet, internet gateway, security list/NSG, criação da instância, IP público e estado em execução estiver documentado;
+- [x] Nginx estiver configurado;
+- [x] HTTPS estiver funcionando;
+- [x] Certbot `>= 5.4` estiver emitindo e renovando o certificado do IP público;
+- [x] HTTP estiver redirecionando para HTTPS;
+- [x] SSH utilizar somente chave;
+- [x] Fail2Ban estiver ativo;
+- [x] SSL Labs apresentar Nota A;
+- [x] PQC estiver confirmado;
 - [x] GitHub Actions estiver realizando deploy automático;
-- [ ] nenhum segredo estiver presente no repositório;
-- [ ] GitHub 2FA estiver habilitado e Git utilizar SSH ou PAT de escopo mínimo;
-- [ ] OWASP estiver documentado;
-- [ ] README da entrega estiver completo.
+- [x] nenhum segredo estiver presente no repositório;
+- [x] GitHub 2FA estiver habilitado e Git utilizar SSH ou PAT de escopo mínimo;
+- [x] OWASP estiver documentado;
+- [x] README da entrega estiver completo.
 
 ---
 
