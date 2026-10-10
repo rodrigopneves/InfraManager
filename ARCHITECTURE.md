@@ -78,7 +78,7 @@ A aplicação Flask não deverá ser exposta diretamente à internet.
 
 # 3. Arquitetura de Produção
 
-A infraestrutura de produção será hospedada na Oracle Cloud Infrastructure.
+A infraestrutura de produção está hospedada na Oracle Cloud Infrastructure.
 
 ```text
                         INTERNET
@@ -155,14 +155,14 @@ envolve a aplicação com `ProxyFix`, confiando em exatamente um proxy para
 `X-Forwarded-For` e `X-Forwarded-Proto`. `X-Forwarded-Host`, porta e prefixo não
 são confiados. Com isso, `request.remote_addr` representa o cliente e o esquema da
 requisição representa o HTTPS externo. Development e testing não aplicam o
-middleware e ignoram esses cabeçalhos. A configuração real do Nginx permanece para
-etapa posterior, e o Gunicorn não poderá ser acessível diretamente pela Internet.
+middleware e ignoram esses cabeçalhos. Em produção, o Nginx está configurado como
+proxy reverso, e o Gunicorn não fica acessível diretamente pela Internet.
 
 ---
 
 # 5. Gunicorn
 
-Gunicorn será utilizado como servidor WSGI.
+Gunicorn é utilizado como servidor WSGI.
 
 O módulo `wsgi.py` exporta a aplicação Flask como `wsgi:app`, carregada a partir da
 Application Factory. O arquivo `run.py` mantém a entrada de desenvolvimento e pode
@@ -200,9 +200,9 @@ Flask
 
 # 6. Flask
 
-Flask será utilizado como framework principal.
+Flask é utilizado como framework principal.
 
-A aplicação será estruturada utilizando:
+A aplicação está estruturada utilizando:
 
 - Application Factory;
 - Blueprints;
@@ -464,7 +464,7 @@ concorrência ultrapassem o perfil do MVP.
 
 # 12. Entidades Principais
 
-O banco possuirá inicialmente:
+O banco possui atualmente:
 
 ```text
 User
@@ -474,14 +474,16 @@ Datacenter
 Room
 Rack
 AuditLog
-RecoveryCode
 ```
+
+`RecoveryCode` não faz parte do schema atual e permanece como possível evolução
+futura.
 
 ---
 
 # 13. Modelo User
 
-Campos iniciais:
+Campos atuais relevantes:
 
 ```text
 id
@@ -507,13 +509,17 @@ OPERATOR
 VIEWER
 ```
 
-O RBAC será representado diretamente pelo campo `User.role`, validado contra os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. O MVP não possuirá entidade, tabela, relacionamento ou model `Role` separado.
+O RBAC é representado diretamente pelo campo `User.role`, validado contra os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. O MVP não possui entidade, tabela, relacionamento ou model `Role` separado.
 
 O campo `password_hash` nunca armazenará senha em texto puro.
 
 ---
 
-# 14. Modelo RecoveryCode
+# 14. Modelo RecoveryCode (futuro, não implementado)
+
+Não existe model, tabela, migration, rota ou teste de recovery codes na
+implementação atual. Se essa melhoria for aprovada futuramente, o modelo
+conceitual previsto é:
 
 Campos:
 
@@ -803,10 +809,8 @@ Modelo conceitual:
 ```text
 User
  │
- ├──────────────┐
- │              │
- ▼              ▼
-AuditLog   RecoveryCode
+ ▼
+AuditLog
 
 
 Datacenter
@@ -848,14 +852,14 @@ Credenciais válidas?
 Não              Sim
  │                │
  ▼                ▼
-Erro       MFA configurado?
+Erro          MFA ativo?
                   │
             ┌─────┴─────┐
             │           │
            Não         Sim
             │           │
             ▼           ▼
-       login_user()    /mfa
+       login_user() /mfa/verify
             │        Código TOTP
             │           │
             │           ▼
@@ -961,7 +965,7 @@ ou:
 @permission_required("assets.delete")
 ```
 
-Para o MVP será utilizado modelo simples baseado em roles.
+O MVP utiliza modelo simples baseado em roles.
 
 ---
 
@@ -1414,7 +1418,7 @@ tests/
 └── test_audit.py
 ```
 
-Serão utilizados:
+São utilizados:
 
 ```text
 pytest
@@ -1471,9 +1475,11 @@ A atividade exige GitHub Actions como mecanismo de CI/CD. fileciteturn0fil
 
 ---
 
-# 45. Estratégia Inicial de Deploy
+# 45. Estratégia de Deploy Implementada
 
-GitHub Actions deverá conectar-se à instância OCI por SSH.
+Após o job de qualidade, pushes para `main` acionam o job de deploy, que se conecta
+à instância OCI por SSH. O workflow usa o Environment `production`, Secrets para
+host, usuário, chave e `known_hosts`, e verificação estrita da identidade do host.
 
 Fluxo conceitual:
 
@@ -1484,14 +1490,11 @@ GitHub Actions
       ▼
 OCI Server
       │
-      ├── git pull/deploy
-      ├── atualizar dependências
-      ├── migration
-      ├── restart Gunicorn
-      └── health check
+      └── sudo /usr/local/sbin/inframanager-deploy
 ```
 
-A chave utilizada deverá ficar protegida por GitHub Secrets.
+A chave utilizada fica protegida por GitHub Secrets e é removida do runner ao fim
+do job. O workflow não possui uma etapa própria de health check pós-deploy.
 
 ---
 
@@ -1561,13 +1564,13 @@ Redirect
 HTTPS :443
 ```
 
-Nginx será responsável pelo TLS.
+Nginx é responsável pelo TLS em produção.
 
 O trabalho exige HTTPS, redirecionamento automático e avaliação no SSL Labs. fileciteturn0file0L43-L46
 
-Será utilizado Certbot `>= 5.4` para solicitar à Let's Encrypt um certificado de curta duração para o IP público, por meio do perfil `shortlived`, da opção `--ip-address` e de um método compatível, preferencialmente `webroot`. Como o instalador Nginx do Certbot ainda não configura certificados de IP automaticamente, o Nginx deverá apontar explicitamente para os arquivos emitidos.
+É utilizado Certbot `>= 5.4` para solicitar à Let's Encrypt um certificado de curta duração para o IP público, por meio do perfil `shortlived`, da opção `--ip-address` e de um método compatível, preferencialmente `webroot`. Como o instalador Nginx do Certbot ainda não configura certificados de IP automaticamente, o Nginx aponta explicitamente para os arquivos emitidos.
 
-A renovação frequente deverá ser totalmente automatizada e recarregar o Nginx por `deploy-hook`. O procedimento será validado primeiro em staging e depois em produção.
+A renovação frequente está automatizada e recarrega o Nginx por `deploy-hook`. O procedimento foi validado em staging antes da emissão em produção.
 
 ---
 
@@ -1816,8 +1819,8 @@ A arquitetura será considerada corretamente implementada quando:
 - [ ] SQLAlchemy for utilizado;
 - [ ] migrations estiverem funcionando;
 - [ ] autenticação estiver isolada;
-- [ ] MFA funcionar antes da criação da sessão autenticada;
-- [ ] usuário sem MFA acessar o Dashboard após senha válida e poder ativá-lo na área da conta;
+- [x] MFA funcionar antes da criação da sessão autenticada quando estiver ativo;
+- [x] usuário sem MFA acessar o Dashboard após senha válida e poder ativá-lo na área da conta;
 - [ ] RBAC for validado no servidor;
 - [ ] CSRF proteger operações de escrita;
 - [ ] auditoria registrar operações críticas;

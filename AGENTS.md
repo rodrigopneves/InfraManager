@@ -325,7 +325,7 @@ Dashboard
 
 O MFA TOTP é opcional por usuário. Quando estiver ativo, a validação TOTP será obrigatória antes da criação da sessão autenticada. Quando estiver inativo, credenciais válidas criarão a sessão diretamente, e o usuário poderá ativá-lo posteriormente na área da conta.
 
-O MFA é um requisito adicional definido pelo projeto InfraManager para reforçar a segurança. Ele não deverá ser apresentado como exigência direta do professor ou do enunciado acadêmico.
+O MFA opcional é um controle adicional definido pelo projeto InfraManager para reforçar a segurança. Ele não deverá ser apresentado como exigência direta do professor ou do enunciado acadêmico.
 
 ---
 
@@ -333,7 +333,7 @@ O MFA é um requisito adicional definido pelo projeto InfraManager para reforça
 
 Utilizar TOTP com biblioteca consolidada.
 
-Previsto:
+Implementado com:
 
 ```text
 PyOTP
@@ -348,9 +348,10 @@ O agente NÃO deverá:
 
 ---
 
-# 13. Recovery Codes
+# 13. Recovery Codes — melhoria futura
 
-Recovery codes deverão:
+Recovery codes não estão implementados e não integram o escopo concluído. Caso a
+funcionalidade seja aprovada futuramente, os códigos deverão:
 
 - ser aleatórios;
 - ser de uso único;
@@ -685,8 +686,6 @@ Deverão cobrir:
 - rota protegida sem Login;
 - MFA válido;
 - MFA inválido;
-- recovery code válido;
-- recovery code utilizado.
 
 ---
 

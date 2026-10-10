@@ -146,7 +146,7 @@ Exemplos:
 
 - password hashes;
 - TOTP secrets;
-- recovery codes;
+- recovery codes, caso a melhoria futura seja implementada;
 - Flask Secret Key;
 - chaves SSH;
 - credenciais OCI;
@@ -292,9 +292,9 @@ deverá possuir rate limiting.
 Também deverão ser protegidas:
 
 ```text
-/mfa
-/mfa/recovery
-/password/*
+/mfa/verify
+/account/mfa/setup
+/account/mfa/disable
 ```
 
 Os limites definitivos deverão equilibrar segurança e usabilidade.
@@ -344,7 +344,7 @@ Username + Password
 Credenciais válidas?
    │
    ▼
-MFA configurado?
+MFA ativo?
  ┌─┴──────────┐
  │            │
 Não          Sim
@@ -473,7 +473,11 @@ administrativo permanece fora do escopo desta etapa.
 
 ---
 
-# 15. Recovery Codes
+# 15. Recovery Codes — melhoria futura
+
+Recovery codes não estão implementados no estado atual: não existem model, tabela,
+migration, rota ou testes para esse fluxo. Caso a funcionalidade seja aprovada
+futuramente, deverá obedecer aos seguintes controles:
 
 Códigos de recuperação deverão:
 
@@ -592,7 +596,7 @@ VIEWER
 
 Autorização deverá ocorrer no backend.
 
-O papel será armazenado diretamente em `User.role`, restrito aos valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não haverá entidade ou tabela `Role` separada no MVP.
+O papel é armazenado diretamente em `User.role`, restrito aos valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não existe entidade ou tabela `Role` separada no MVP.
 
 Nunca apenas:
 
@@ -1229,7 +1233,7 @@ A atividade exige redirecionamento automático HTTP → HTTPS. filecitetur
 
 # 46. Certificado TLS
 
-Será utilizado:
+É utilizado:
 
 ```text
 Let's Encrypt
@@ -1946,9 +1950,8 @@ Durante desenvolvimento, poderão ser utilizadas branches auxiliares.
 O projeto somente poderá ser considerado finalizado quando:
 
 - [ ] senhas estiverem armazenadas somente em hash;
-- [ ] MFA estiver funcionando;
-- [ ] contas com MFA ativo exigirem confirmação TOTP antes do Dashboard;
-- [ ] recovery codes estiverem protegidos;
+- [x] MFA estiver funcionando;
+- [x] contas com MFA ativo exigirem confirmação TOTP antes do Dashboard;
 - [ ] sessões estiverem configuradas com segurança;
 - [ ] rate limiting estiver ativo;
 - [ ] RBAC estiver ativo;
@@ -1974,6 +1977,9 @@ O projeto somente poderá ser considerado finalizado quando:
 - [ ] testes de segurança estiverem passando;
 - [ ] Security Review com IA tiver sido realizado;
 - [ ] OWASP estiver documentado no README.
+
+Recovery codes permanecem uma melhoria futura e não são critério de conclusão do
+escopo atualmente implementado.
 
 ---
 

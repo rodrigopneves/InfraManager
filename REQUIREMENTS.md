@@ -10,7 +10,7 @@ O InfraManager será uma aplicação web segura para gerenciamento de infraestru
 - salas;
 - racks;
 - usuários e perfis de acesso;
-- autenticação com MFA;
+- autenticação com MFA TOTP opcional por usuário;
 - auditoria de ações.
 
 O sistema será desenvolvido em Python utilizando Flask e deverá aplicar princípios de Secure by Design e Secure by Default.
@@ -129,7 +129,7 @@ O sistema não deverá informar se o usuário existe ou não.
 
 ## RF-002 — MFA
 
-O MFA TOTP será opcional por usuário. Após a validação correta de usuário e senha, usuários com MFA ativo deverão obrigatoriamente concluir a validação por código TOTP; usuários com MFA inativo serão autenticados diretamente.
+O MFA TOTP é opcional por usuário. Após a validação correta de usuário e senha, usuários com MFA ativo devem obrigatoriamente concluir a validação por código TOTP; usuários com MFA inativo são autenticados diretamente.
 
 Fluxo:
 
@@ -138,7 +138,7 @@ Usuário + senha
       ↓
 Credenciais válidas
       ↓
-MFA configurado?
+MFA ativo?
    ┌──────┴──────┐
    │             │
   Não           Sim
@@ -173,9 +173,11 @@ O MFA opcional é um controle adicional de segurança definido pelo projeto Infr
 
 ---
 
-## RF-004 — Códigos de Recuperação
+## RF-004 — Códigos de Recuperação (melhoria futura)
 
-O sistema deverá permitir a geração de códigos de recuperação do MFA.
+Recovery codes não integram a implementação atual nem o escopo concluído do MVP.
+Caso sejam implementados futuramente, o sistema deverá permitir sua geração para
+recuperação do MFA sem reduzir a segurança do fluxo existente.
 
 Requisitos:
 
@@ -571,7 +573,7 @@ Campos:
 - perfil;
 - status.
 
-O perfil será armazenado diretamente em `User.role`, com os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não haverá entidade ou tabela `Role` separada no MVP.
+O perfil é armazenado diretamente em `User.role`, com os valores técnicos `admin`, `operator` e `viewer`, correspondentes aos perfis ADMIN, OPERATOR e VIEWER. Não existe entidade ou tabela `Role` separada no MVP.
 
 A senha inicial deverá seguir política de segurança definida pelo sistema.
 
@@ -756,8 +758,9 @@ Especialmente:
 
 ```text
 /login
-/mfa
-/password-reset
+/mfa/verify
+/account/mfa/setup
+/account/mfa/disable
 ```
 
 ---
@@ -961,7 +964,7 @@ PQC: habilitado
 
 ## RNF-025 — GitHub Actions
 
-O projeto deverá possuir pipeline no GitHub Actions.
+O projeto possui pipeline de CI/CD no GitHub Actions.
 
 ---
 
@@ -973,13 +976,13 @@ Push para:
 main
 ```
 
-deverá iniciar a pipeline automaticamente, conforme exigência acadêmica. fileciteturn0file0L101-L129
+inicia a pipeline automaticamente, conforme exigência acadêmica. fileciteturn0file0L101-L129
 
 ---
 
 ## RNF-027 — Pipeline
 
-Pipeline inicial:
+Pipeline implementada:
 
 ```text
 Checkout
@@ -995,9 +998,11 @@ Testes
 Security Checks
    ↓
 Deploy OCI
-   ↓
-Health Check
 ```
+
+O deploy usa SSH com Secrets do Environment `production` e executa o script
+protegido de implantação no servidor OCI. O endpoint `/health` existe, mas o
+workflow atual não possui uma etapa própria de health check pós-deploy.
 
 ---
 
@@ -1100,8 +1105,8 @@ O projeto deverá manter evidências das principais interações de desenvolvime
 O MVP será considerado funcional quando:
 
 - [ ] usuário conseguir realizar Login;
-- [ ] MFA estiver operacional;
-- [ ] usuários com MFA ativo exigirem confirmação TOTP antes do Dashboard;
+- [x] MFA estiver operacional;
+- [x] usuários com MFA ativo exigirem confirmação TOTP antes do Dashboard;
 - [ ] Logout funcionar;
 - [ ] Dashboard estiver protegido;
 - [ ] RBAC estiver funcionando;
@@ -1115,7 +1120,7 @@ O MVP será considerado funcional quando:
 - [ ] logs de auditoria estiverem funcionando;
 - [ ] alertas simples de segurança estiverem funcionando;
 - [ ] testes automatizados estiverem aprovados;
-- [ ] aplicação estiver publicada na OCI;
+- [x] aplicação estiver publicada na OCI;
 - [ ] evidências de compartment, VCN, subnet, internet gateway, security list/NSG, criação da instância, IP público e estado em execução estiverem organizadas;
 - [ ] Nginx estiver configurado;
 - [ ] HTTPS estiver funcionando;
@@ -1125,7 +1130,7 @@ O MVP será considerado funcional quando:
 - [ ] Fail2Ban estiver ativo;
 - [ ] SSL Labs apresentar Nota A;
 - [ ] PQC estiver confirmado;
-- [ ] GitHub Actions estiver realizando deploy automático;
+- [x] GitHub Actions estiver realizando deploy automático;
 - [ ] nenhum segredo estiver presente no repositório;
 - [ ] GitHub 2FA estiver habilitado e Git utilizar SSH ou PAT de escopo mínimo;
 - [ ] OWASP estiver documentado;

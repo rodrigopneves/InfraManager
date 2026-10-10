@@ -255,7 +255,7 @@ Validação
 
 # 9. MFA
 
-Será implementado MFA opcional por usuário utilizando TOTP.
+Está implementado MFA opcional por usuário utilizando TOTP.
 
 Após a validação de usuário e senha, quem não tiver MFA ativo será autenticado diretamente e poderá configurá-lo posteriormente na área da conta. Para quem tiver MFA ativo, o Dashboard permanecerá inacessível até a confirmação do TOTP.
 
@@ -281,8 +281,15 @@ Usuário + senha
 Credenciais válidas
   │
   ▼
-Código TOTP
-  │
+MFA ativo?
+ ┌┴─────────┐
+ │          │
+Não        Sim
+ │          │
+ │          ▼
+ │     Código TOTP
+ └────┬─────┘
+      │
   ▼
 Autenticação concluída
   │
@@ -290,18 +297,19 @@ Autenticação concluída
 Dashboard
 ```
 
-Também serão avaliados:
+Também estão implementados:
 
 - QR Code para ativação;
-- códigos de recuperação;
 - armazenamento seguro do segredo MFA;
 - logs de ativação/desativação do MFA.
+
+Recovery codes não estão implementados e permanecem como melhoria futura.
 
 ---
 
 # 10. Controle de Acesso
 
-Inicialmente serão utilizados três perfis.
+São utilizados três perfis.
 
 ## Administrador
 
@@ -370,7 +378,7 @@ Gráficos serão considerados uma evolução, e não requisito inicial.
 
 # 12. Gestão de Ativos de TI
 
-Será implementado CRUD completo.
+O CRUD completo está implementado.
 
 ## Funcionalidades
 
@@ -499,7 +507,7 @@ SQLAlchemy
 SQLite
 ```
 
-Será utilizado:
+São utilizados:
 
 - SQLAlchemy ORM;
 - Flask-Migrate;
@@ -521,8 +529,10 @@ Datacenter
 Room
 Rack
 AuditLog
-RecoveryCode
 ```
+
+`RecoveryCode` não integra o modelo atual e permanece como possível evolução
+futura.
 
 Os perfis `ADMIN`, `OPERATOR` e `VIEWER` serão armazenados diretamente no campo `User.role`. Não será criada entidade ou tabela `Role` separada no MVP.
 
@@ -619,7 +629,7 @@ Mitigações:
 
 ## A09:2025 — Security Logging & Alerting Failures
 
-Serão registrados eventos como:
+São registrados eventos como:
 
 - login bem-sucedido;
 - login falho;
@@ -632,7 +642,7 @@ Serão registrados eventos como:
 - alteração de VM;
 - exclusão de VM.
 
-Também será implementado um mecanismo simples de alertas: falhas repetidas de Login/MFA, bloqueios por rate limiting e tentativas de acesso administrativo negadas gerarão alertas `WARNING` ou `CRITICAL`, com data/hora, origem resumida, contagem e estado de revisão, disponíveis aos Administradores. E-mail, SMS e SIEM não são necessários no MVP.
+Também está implementado um mecanismo simples de alertas: falhas repetidas de Login/MFA, bloqueios por rate limiting e tentativas de acesso administrativo negadas geram alertas `WARNING` ou `CRITICAL`, com data/hora, origem resumida, contagem e estado de revisão, disponíveis aos Administradores. E-mail, SMS e SIEM não são necessários no MVP.
 
 ---
 
@@ -657,9 +667,9 @@ Somente administradores poderão consultar o módulo completo de auditoria.
 
 # 20. Infraestrutura OCI
 
-O projeto será hospedado utilizando recursos gratuitos da Oracle Cloud Infrastructure.
+O projeto está hospedado na Oracle Cloud Infrastructure.
 
-Estrutura prevista:
+Estrutura implantada:
 
 ```text
 OCI
@@ -720,7 +730,7 @@ Sempre que possível, a porta SSH deverá ser limitada ao endereço IP administr
 
 # 22. Servidor Web
 
-Será utilizado:
+É utilizado:
 
 **Nginx**
 
@@ -781,15 +791,15 @@ Critérios da atividade:
 - Nota A;
 - suporte a PQC ativo.
 
-Esses resultados serão registrados como evidências do projeto.
+Esses resultados integram as evidências do projeto.
 
 ---
 
 # 25. GitHub
 
-O código será armazenado em repositório público no GitHub, conforme exigido pela atividade.
+O código está armazenado em repositório público no GitHub, conforme exigido pela atividade.
 
-Repositório previsto:
+Repositório utilizado:
 
 ```text
 inframanager
@@ -839,7 +849,7 @@ Um `.env.example` poderá ser disponibilizado sem valores sensíveis.
 
 # 27. CI/CD
 
-O fluxo exigido pela atividade será implementado utilizando GitHub Actions.
+O fluxo exigido pela atividade está implementado utilizando GitHub Actions.
 
 Fluxo:
 
@@ -870,7 +880,7 @@ GitHub Actions
 
 # 28. Estratégia de Deploy
 
-A pipeline deverá:
+A pipeline implementada executa o seguinte fluxo:
 
 1. detectar push na branch `main`;
 2. executar os testes;
@@ -881,7 +891,9 @@ A pipeline deverá:
 7. atualizar o código;
 8. aplicar migrations;
 9. reiniciar o serviço;
-10. executar health check.
+
+O endpoint `/health` existe, mas o workflow atual não possui uma etapa própria de
+health check pós-deploy.
 
 Fluxo:
 
@@ -926,7 +938,7 @@ Nenhuma dessas informações deverá estar presente no workflow em texto puro.
 
 # 30. Testes
 
-Serão desenvolvidos testes automatizados para funções críticas.
+Foram desenvolvidos testes automatizados para funções críticas.
 
 Prioridades:
 
@@ -940,7 +952,7 @@ Prioridades:
 - validação de formulários;
 - tentativas de acesso não autorizado.
 
-Ferramenta prevista:
+Ferramenta utilizada:
 
 ```text
 pytest
@@ -1078,7 +1090,7 @@ O seguinte conjunto será considerado obrigatório antes de qualquer funcionalid
 ## Aplicação
 
 - [ ] Login
-- [ ] MFA
+- [x] MFA
 - [ ] Logout
 - [ ] RBAC
 - [ ] Dashboard
@@ -1141,9 +1153,9 @@ O seguinte conjunto será considerado obrigatório antes de qualquer funcionalid
 
 ## CI/CD
 
-- [ ] GitHub Actions
-- [ ] testes automáticos
-- [ ] deploy automático
+- [x] GitHub Actions
+- [x] testes automáticos
+- [x] deploy automático
 - [ ] health check
 
 ## IA
@@ -1216,11 +1228,11 @@ Esses itens não devem aumentar o risco da entrega acadêmica.
 
 ## Fase 4 — MFA
 
-- [ ] TOTP;
-- [ ] QR Code;
-- [ ] validação;
-- [ ] recovery codes.
-- [ ] Login direto para usuário sem MFA e bloqueio pré-TOTP para usuário com MFA ativo.
+- [x] TOTP;
+- [x] QR Code;
+- [x] validação;
+- [ ] recovery codes — melhoria futura não implementada.
+- [x] Login direto para usuário sem MFA e bloqueio pré-TOTP para usuário com MFA ativo.
 
 ## Fase 5 — RBAC
 
@@ -1302,10 +1314,10 @@ Esses itens não devem aumentar o risco da entrega acadêmica.
 
 ## Fase 15 — CI/CD
 
-- [ ] GitHub Actions;
-- [ ] Secrets;
-- [ ] testes;
-- [ ] deploy;
+- [x] GitHub Actions;
+- [x] Secrets;
+- [x] testes;
+- [x] deploy;
 - [ ] health check.
 
 ## Fase 16 — Documentação

@@ -29,9 +29,9 @@ O projeto aplica princípios de **Secure by Design**, **Secure by Default**, OWA
 | Arquitetura | Concluída |
 | Desenvolvimento | Concluído no escopo implementado |
 | Segurança da aplicação | Concluída/validada nos controles implementados |
-| Testes automatizados | Concluídos para as funcionalidades implementadas |
+| Testes automatizados | 681 aprovados antes da atualização recente de dependência; revalidação pendente |
 | OCI | Implantada |
-| CI/CD | Implementado: integração contínua; deploy automático pendente |
+| CI/CD | Implementado: integração contínua e deploy automático para OCI |
 | Documentação | Em revisão final |
 | Validação acadêmica/evidências | Em andamento |
 
@@ -46,7 +46,9 @@ As Fases 9 (OCI) e 10 (HTTPS) foram implementadas manualmente pelo responsável,
 sem uso do Codex. O Eixo 1 está validado, incluindo SSL Labs A e PQC, conforme
 confirmação do responsável. Essa execução e as confirmações de GitHub público,
 2FA e proteção das credenciais fundamentam o estado registrado neste README.
-Código, testes e workflow foram conferidos no repositório. A consolidação das
+O InfraManager está publicado em produção na OCI, e pushes para `main` executam o
+deploy automático somente depois da aprovação do job de qualidade. Código, testes
+e workflow foram conferidos no repositório. A consolidação das
 evidências externas permanece em andamento; o quadro não representa aprovação
 integral de todos os requisitos acadêmicos ou de todos os itens previstos no MVP.
 
@@ -55,8 +57,8 @@ Pendências e débitos conhecidos:
 1. não existe integração com SIEM;
 2. auditoria e alertas não possuem retenção automática;
 3. recovery codes ainda não possuem implementação no código atual;
-4. deploy automático e suas verificações posteriores não integram a pipeline;
-5. a consolidação das evidências da implantação manual permanece em andamento.
+4. o workflow não possui uma etapa própria de health check pós-deploy;
+5. a consolidação das evidências da implantação permanece em andamento.
 
 O Flask-Limiter usa `memory://` em desenvolvimento e testes. Produção exige Redis
 compartilhado, configurado por `RATELIMIT_STORAGE_URI`, para manter os contadores
@@ -917,8 +919,9 @@ real SECRET_KEY
 # CI/CD
 
 GitHub Actions está implementado em [.github/workflows/ci.yml](.github/workflows/ci.yml).
-O workflow executa integração contínua em todo `push` (incluindo `main`) e
-`pull_request`, com permissão `contents: read`, Ubuntu 24.04 e Python 3.14.4.
+O workflow executa integração contínua em todo `push` e `pull_request`, com
+permissão `contents: read`, Ubuntu 24.04 e Python 3.14.4. Em pushes para `main`, o
+job de deploy é iniciado somente após o sucesso do job de qualidade.
 
 Pipeline atual, na ordem do workflow:
 
@@ -938,13 +941,16 @@ Ruff
 pytest com cobertura de linhas e branches
    ↓
 compileall (app e tests)
+   ↓
+Deploy para OCI via SSH (somente push em main)
 ```
 
 O job de qualidade tem timeout de 15 minutos. Falhas nas verificações impedem sua
-conclusão com sucesso. O workflow não utiliza GitHub Secrets e não contém etapas
-de deploy, conexão à OCI, migrations remotas, reinício de serviços ou health check
-pós-deploy. A implantação realizada na OCI é independente desta pipeline.
-O deploy automático permanece pendente para a entrega acadêmica.
+conclusão com sucesso e bloqueiam o deploy. O job de produção usa o Environment
+`production` e os Secrets `OCI_SSH_KEY`, `OCI_KNOWN_HOSTS`, `OCI_HOST` e
+`OCI_USER`; valida estritamente o host SSH e executa no servidor o script protegido
+`/usr/local/sbin/inframanager-deploy`. A chave temporária é removida ao final. O
+workflow não possui uma etapa própria de health check pós-deploy.
 
 ---
 
@@ -972,6 +978,10 @@ pytest-cov
 Ruff
 pip-audit
 ```
+
+A última execução completa registrada antes da atualização recente de dependência
+teve **681 testes aprovados**. A suíte deverá ser executada novamente para validar
+o conjunto após essa atualização.
 
 ---
 
@@ -1220,11 +1230,11 @@ implementações integra a Fase 12.
 - [x] GitHub Actions — workflow de CI implementado
 - [x] Lint, testes com cobertura e auditoria de dependências na pipeline
 - [x] Endpoint `/health` implementado na aplicação
-- [ ] Deploy automático pela pipeline
+- [x] Deploy automático para OCI após sucesso da qualidade em push para `main`
 - [ ] Health check pós-deploy na pipeline
 
-O workflow atual não utiliza Secrets; eventual autenticação do deploy ainda
-precisa ser implementada com proteção das credenciais.
+O deploy utiliza GitHub Secrets no Environment `production`, autenticação SSH por
+chave e verificação estrita de `known_hosts`.
 
 ## Fase 12 — Entrega — em andamento
 
@@ -1242,7 +1252,7 @@ Os itens marcados refletem o código/documentação atual ou as confirmações d
 responsável sobre a execução manual identificadas acima. SSL Labs A e PQC estão
 validados; a organização das evidências continua na fase de entrega.
 
-- [ ] aplicação acessível publicamente — registrar evidência de acesso;
+- [x] aplicação acessível publicamente em produção na OCI;
 - [x] Ubuntu Server — VM implantada manualmente;
 - [x] Nginx — integra o deploy realizado;
 - [x] SSH por chave — implementado manualmente;
@@ -1264,7 +1274,7 @@ validados; a organização das evidências continua na fase de entrega.
 - [x] IA integrada ao desenvolvimento — VS Code e Codex;
 - [x] OWASP documentado — controles e referências técnicas neste README;
 - [x] GitHub Actions — `.github/workflows/ci.yml`;
-- [ ] deploy automático.
+- [x] deploy automático para OCI em push para `main` após aprovação da qualidade.
 
 A conclusão acadêmica depende das evidências pendentes e da revisão final dos
 critérios da atividade, não apenas da presença do código ou de exemplos de deploy.
