@@ -7,7 +7,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user, login_required, login_user, logout_user
+from flask_login import current_user, login_required
 
 from app.account import account
 from app.account.forms import DisableMfaForm, MfaCodeForm
@@ -17,7 +17,6 @@ from app.account.services import (
     enable_mfa,
     generate_mfa_secret,
 )
-from app.auth.services import get_pending_mfa_user, start_pending_mfa_login
 from app.audit import record_event
 from app.extensions import limiter
 from app.models import (
@@ -32,20 +31,16 @@ MFA_SETUP_SECRET_KEY = "pending_mfa_setup_secret"
 
 
 @account.route("/mfa/setup", methods=["GET", "POST"])
+@login_required
 @limiter.limit(
     lambda: current_app.config["MFA_SETUP_RATE_LIMIT"], methods=["POST"]
 )
 def mfa_setup():
-    if current_user.is_authenticated:
+    if current_user.mfa_enabled:
         session.pop(MFA_SETUP_SECRET_KEY, None)
         return redirect(url_for("auth.dashboard"))
 
-    user = get_pending_mfa_user()
-    if user is None:
-        flash("Sua configuração expirou. Entre novamente.", "danger")
-        return redirect(url_for("auth.login"))
-    if user.mfa_enabled:
-        return redirect(url_for("auth.mfa_verify"))
+    user = current_user._get_current_object()
 
     secret = session.get(MFA_SETUP_SECRET_KEY)
     if request.method == "GET" and not secret:
@@ -60,8 +55,7 @@ def mfa_setup():
     form = MfaCodeForm()
     if form.validate_on_submit():
         if enable_mfa(user, secret, form.code.data):
-            session.clear()
-            login_user(user)
+            session.pop(MFA_SETUP_SECRET_KEY, None)
             flash("MFA ativado com sucesso.", "success")
             return redirect(url_for("auth.dashboard"))
         form.code.data = ""
@@ -89,12 +83,11 @@ def mfa_setup():
 
 
 @account.post("/mfa/setup/cancel")
+@login_required
 def cancel_mfa_setup():
-    if current_user.is_authenticated:
-        return redirect(url_for("auth.dashboard"))
-    session.clear()
+    session.pop(MFA_SETUP_SECRET_KEY, None)
     flash("Configuração de MFA cancelada.", "info")
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("auth.dashboard"))
 
 
 @account.route("/mfa/disable", methods=["GET", "POST"])
@@ -110,11 +103,8 @@ def mfa_disable():
     form = DisableMfaForm()
     if form.validate_on_submit():
         if disable_mfa(current_user, form.password.data, form.code.data):
-            user = current_user._get_current_object()
-            logout_user()
-            start_pending_mfa_login(user)
-            flash("Configure novamente o MFA para continuar.", "success")
-            return redirect(url_for("account.mfa_setup"))
+            flash("MFA desativado com sucesso.", "success")
+            return redirect(url_for("auth.dashboard"))
         form.code.data = ""
         user = current_user._get_current_object()
         record_event(AuditEventType.MFA_FAILURE, target=user)

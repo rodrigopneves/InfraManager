@@ -129,7 +129,7 @@ O sistema não deverá informar se o usuário existe ou não.
 
 ## RF-002 — MFA
 
-Após a validação correta de usuário e senha, todos os usuários deverão concluir a validação por código TOTP. O MFA é obrigatório, sem exceção por perfil.
+O MFA TOTP será opcional por usuário. Após a validação correta de usuário e senha, usuários com MFA ativo deverão obrigatoriamente concluir a validação por código TOTP; usuários com MFA inativo serão autenticados diretamente.
 
 Fluxo:
 
@@ -144,8 +144,8 @@ MFA configurado?
   Não           Sim
    │             │
    ▼             ▼
-Configuração  Código TOTP
-e confirmação    │
+Autenticação  Código TOTP
+direta            │
    └──────┬──────┘
           ▼
       Dashboard
@@ -153,13 +153,13 @@ e confirmação    │
 
 O código deverá possuir validade temporal.
 
-O usuário não deverá receber sessão autenticada definitiva nem acessar o Dashboard antes da confirmação de um TOTP válido.
+Quando o MFA estiver ativo, o usuário não deverá receber sessão autenticada definitiva nem acessar o Dashboard antes da confirmação de um TOTP válido.
 
 ---
 
 ## RF-003 — Ativação de MFA
 
-No primeiro acesso, o usuário que ainda não possuir MFA configurado deverá ser direcionado obrigatoriamente para a configuração do MFA antes do Dashboard.
+O usuário autenticado que ainda não possuir MFA configurado poderá ativá-lo voluntariamente pela área da conta.
 
 Durante a ativação:
 
@@ -169,7 +169,7 @@ Durante a ativação:
 4. deverá informar um código válido;
 5. somente após a confirmação o MFA será considerado ativo.
 
-O MFA é um requisito adicional de segurança definido pelo projeto InfraManager. Não é uma exigência direta do professor ou do enunciado acadêmico.
+O MFA opcional é um controle adicional de segurança definido pelo projeto InfraManager. Não é uma exigência direta do professor ou do enunciado acadêmico.
 
 ---
 
@@ -1101,7 +1101,7 @@ O MVP será considerado funcional quando:
 
 - [ ] usuário conseguir realizar Login;
 - [ ] MFA estiver operacional;
-- [ ] primeiro acesso exigir configuração e confirmação do MFA antes do Dashboard;
+- [ ] usuários com MFA ativo exigirem confirmação TOTP antes do Dashboard;
 - [ ] Logout funcionar;
 - [ ] Dashboard estiver protegido;
 - [ ] RBAC estiver funcionando;

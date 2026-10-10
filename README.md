@@ -36,7 +36,7 @@ O projeto aplica princípios de **Secure by Design**, **Secure by Default**, OWA
 | Validação acadêmica/evidências | Em andamento |
 
 A aplicação entrega Application Factory, persistência e migrations, autenticação,
-CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP obrigatório,
+CSRF, rate limiting, gestão administrativa de usuários, RBAC, MFA TOTP opcional,
 auditoria, alertas de segurança e CRUDs de Datacenters, Salas, Racks, Ativos e
 Máquinas Virtuais. A interface responsiva utiliza Jinja2 e Bootstrap. O Dashboard
 consulta dados reais e separa indicadores administrativos conforme o RBAC.
@@ -256,8 +256,8 @@ Depois de preencher o ambiente:
 ```
 
 `create-admin` solicita os dados interativamente, com senha oculta e confirmação.
-Acesse `http://127.0.0.1:5000/login` e conclua a configuração TOTP para acessar o
-Dashboard. O servidor Flask local é destinado ao desenvolvimento; a operação com
+Acesse `http://127.0.0.1:5000/login`. O TOTP pode ser ativado posteriormente na
+área de segurança da conta. O servidor Flask local é destinado ao desenvolvimento; a operação com
 Gunicorn/systemd/Nginx está descrita em [DEPLOYMENT.md](DEPLOYMENT.md).
 
 Validação local recomendada:
@@ -321,28 +321,25 @@ Username + Password
 Credenciais válidas
         │
         ▼
-MFA configurado?
+MFA ativo?
      ┌──┴──┐
      │     │
     Não   Sim
      │     │
-     ▼     │
-Configurar │
-e confirmar│
+     │     ▼
+     │    TOTP
      └──┬──┘
-        ▼
-       TOTP
         │
         ▼
     Dashboard
 ```
 
-O MFA é obrigatório para todos os usuários. No primeiro acesso, após a validação da senha, o usuário precisa configurar e confirmar o TOTP antes de acessar o Dashboard. A sessão autenticada definitiva somente é criada depois do código válido.
+O MFA TOTP é opcional por usuário. Após validar a senha, contas sem MFA ativo são autenticadas diretamente; contas com MFA ativo somente recebem a sessão autenticada definitiva depois de um código válido.
 
 O MFA é um requisito adicional de segurança adotado pelo InfraManager, e não uma exigência direta do professor ou do enunciado acadêmico.
 
-O fluxo atual exige MFA desde o primeiro acesso. A desativação exige senha e
-TOTP, encerra a sessão e obriga a configuração de um novo segundo fator. Os
+O usuário autenticado pode ativar o MFA voluntariamente na área da conta. A
+desativação exige senha e TOTP, remove o segredo e preserva a sessão. Os
 segredos persistidos são cifrados com Fernet; a chave permanece fora do banco
 e do repositório. A reutilização de um timestep TOTP já aceito é rejeitada.
 
@@ -1154,7 +1151,7 @@ continuam pendentes de implementação ou comprovação, conforme indicado.
 - [x] QR Code
 - [ ] Recovery Codes — implementação pendente
 - [x] testes
-- [x] primeiro acesso bloqueado na configuração antes do Dashboard
+- [x] Login direto sem MFA e verificação obrigatória quando o MFA está ativo
 
 ## Fase 5 — RBAC
 

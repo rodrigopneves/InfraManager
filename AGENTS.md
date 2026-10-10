@@ -298,7 +298,7 @@ O agente não deverá implementar autorização baseada apenas em ocultação de
 
 # 11. Autenticação
 
-O fluxo obrigatório é:
+O fluxo de autenticação é:
 
 ```text
 Username + Password
@@ -307,18 +307,15 @@ Username + Password
 Credenciais válidas
        │
        ▼
-MFA já configurado?
+ MFA está ativo?
    ┌───┴────┐
    │        │
   Não      Sim
    │        │
-   ▼        │
-Configuração MFA
+   │        ▼
+   │   Validação TOTP
    │        │
    └───┬────┘
-       ▼
-Validação TOTP
-       │
        ▼
 Sessão autenticada
        │
@@ -326,7 +323,7 @@ Sessão autenticada
 Dashboard
 ```
 
-O MFA é obrigatório para todos os usuários. No primeiro acesso, após a validação da senha, o usuário deverá ser direcionado à configuração do MFA e não poderá acessar o Dashboard antes de confirmar um código TOTP válido.
+O MFA TOTP é opcional por usuário. Quando estiver ativo, a validação TOTP será obrigatória antes da criação da sessão autenticada. Quando estiver inativo, credenciais válidas criarão a sessão diretamente, e o usuário poderá ativá-lo posteriormente na área da conta.
 
 O MFA é um requisito adicional definido pelo projeto InfraManager para reforçar a segurança. Ele não deverá ser apresentado como exigência direta do professor ou do enunciado acadêmico.
 

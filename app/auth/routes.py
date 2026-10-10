@@ -45,8 +45,8 @@ def login():
         ).scalar_one_or_none()
 
         if verify_user_password(user, form.password.data):
-            start_pending_mfa_login(user)
             if user.mfa_enabled:
+                start_pending_mfa_login(user)
                 if not user.mfa_secret:
                     clear_pending_mfa_login()
                     record_event(
@@ -61,7 +61,11 @@ def login():
                     flash("Usuário ou senha inválidos.", "danger")
                     return render_template("auth/login.html", form=form)
                 return redirect(url_for("auth.mfa_verify"))
-            return redirect(url_for("account.mfa_setup"))
+
+            record_event(AuditEventType.LOGIN_SUCCESS, actor=user)
+            session.clear()
+            login_user(user)
+            return redirect(url_for("auth.dashboard"))
 
         clear_pending_mfa_login()
         record_event(
@@ -108,7 +112,9 @@ def mfa_verify():
         flash("Sua verificação expirou. Entre novamente.", "danger")
         return redirect(url_for("auth.login"))
     if not user.mfa_enabled or not user.mfa_secret:
-        return redirect(url_for("account.mfa_setup"))
+        clear_pending_mfa_login()
+        flash("Sua verificação expirou. Entre novamente.", "danger")
+        return redirect(url_for("auth.login"))
 
     form = MfaVerifyForm()
     if form.validate_on_submit():

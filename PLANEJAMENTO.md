@@ -255,9 +255,9 @@ Validação
 
 # 9. MFA
 
-Será implementado MFA obrigatório para todos os usuários utilizando TOTP.
+Será implementado MFA opcional por usuário utilizando TOTP.
 
-No primeiro acesso, após a validação de usuário e senha, quem ainda não tiver MFA configurado será direcionado à configuração e confirmação do TOTP. O Dashboard permanecerá inacessível até a conclusão dessa etapa.
+Após a validação de usuário e senha, quem não tiver MFA ativo será autenticado diretamente e poderá configurá-lo posteriormente na área da conta. Para quem tiver MFA ativo, o Dashboard permanecerá inacessível até a confirmação do TOTP.
 
 O MFA é um requisito adicional de segurança adotado pelo InfraManager; não é uma exigência direta do professor ou do enunciado da atividade.
 
@@ -1220,7 +1220,7 @@ Esses itens não devem aumentar o risco da entrega acadêmica.
 - [ ] QR Code;
 - [ ] validação;
 - [ ] recovery codes.
-- [ ] primeiro acesso bloqueado na configuração antes do Dashboard.
+- [ ] Login direto para usuário sem MFA e bloqueio pré-TOTP para usuário com MFA ativo.
 
 ## Fase 5 — RBAC
 
@@ -1328,7 +1328,7 @@ O projeto somente deverá ser considerado finalizado quando:
 
 - a aplicação estiver acessível publicamente;
 - autenticação e MFA estiverem funcionando;
-- primeiro acesso exigir configuração do MFA antes do Dashboard;
+- usuário com MFA ativo exigir confirmação TOTP antes do Dashboard;
 - CRUD completo de Datacenter, Sala e Rack estiver funcional;
 - perfis de acesso estiverem funcionando;
 - não houver credenciais no GitHub;

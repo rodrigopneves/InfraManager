@@ -44,7 +44,6 @@ def enable_mfa(user: User, secret: str, code: str) -> bool:
             target=user,
             commit=False,
         )
-        record_event(AuditEventType.LOGIN_SUCCESS, actor=user, commit=False)
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()

@@ -131,8 +131,8 @@ def test_valid_login_works_before_limit(
     )
 
     assert response.status_code == 302
-    assert response.location.endswith("/account/mfa/setup")
-    assert rate_limited_client.get("/dashboard").status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert rate_limited_client.get("/dashboard").status_code == 200
 
 
 def test_different_remote_addresses_have_independent_limits(

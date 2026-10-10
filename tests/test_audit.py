@@ -121,6 +121,19 @@ def test_mfa_success_and_login_success_only_follow_second_factor(
     assert mfa_user.mfa_secret not in serialized_logs
 
 
+def test_login_without_mfa_records_success_immediately(
+    client: FlaskClient, user_without_mfa: User
+) -> None:
+    response = post_login(
+        client, user_without_mfa.username, "valid-setup-password"
+    )
+    events = get_events(AuditEventType.LOGIN_SUCCESS)
+
+    assert urlparse(response.location).path == "/dashboard"
+    assert len(events) == 1
+    assert events[0].actor_user_id == user_without_mfa.id
+
+
 def test_invalid_mfa_records_failure_without_code(
     client: FlaskClient, mfa_user: User
 ) -> None:
@@ -185,7 +198,7 @@ def test_disabling_mfa_records_event_and_no_sensitive_data(
     audit_log = get_events(AuditEventType.MFA_DISABLED)[0]
     serialized_log = json.dumps(audit_log.details)
 
-    assert urlparse(response.location).path == "/account/mfa/setup"
+    assert urlparse(response.location).path == "/dashboard"
     assert audit_log.actor_user_id == mfa_user.id
     assert audit_log.target_user_id == mfa_user.id
     assert secret not in serialized_log

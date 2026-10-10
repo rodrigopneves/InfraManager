@@ -182,19 +182,17 @@ admin.demo
 
 # 6. Autenticação
 
-A autenticação deverá utilizar, para todos os usuários:
+A autenticação deverá utilizar:
 
 ```text
-Username
+Username + Password
    +
-Password
-   +
-MFA TOTP
+MFA TOTP quando ativo para o usuário
 ```
 
 A autenticação completa somente ocorrerá após todas as etapas exigidas.
 
-O MFA obrigatório é um requisito adicional de segurança do InfraManager. Ele não deverá ser descrito como exigência direta do professor ou do enunciado acadêmico.
+O MFA TOTP é opcional por usuário e constitui um controle adicional de segurança do InfraManager. Quando ativo, não poderá ser ignorado durante o Login.
 
 ---
 
@@ -351,23 +349,20 @@ MFA configurado?
  │            │
 Não          Sim
  │            │
- ▼            │
-Configuração  │
-e confirmação │
- └─────┬──────┘
-       ▼
-Código TOTP
-   │
-   ▼
-Código válido?
-   │
-   ▼
+ ▼            ▼
+Sessão     Código TOTP
+direta         │
+ │             ▼
+ │        Código válido?
+ │             │
+ └──────┬──────┘
+        ▼
 Sessão autenticada
 ```
 
 MFA fortalece diretamente o controle relacionado a falhas de autenticação.
 
-MFA é obrigatório para `ADMIN`, `OPERATOR` e `VIEWER`.
+MFA é opcional para `ADMIN`, `OPERATOR` e `VIEWER`, mas sua verificação é obrigatória para qualquer usuário que o tenha ativado.
 
 TOTP reduz o risco de comprometimento apenas por senha, mas não constitui proteção
 completa contra phishing.
@@ -376,7 +371,7 @@ completa contra phishing.
 
 # 12. Estado Pré-MFA
 
-Após senha correta, o usuário não deverá receber sessão autenticada definitiva.
+Após senha correta de uma conta com MFA ativo, o usuário não deverá receber sessão autenticada definitiva.
 
 Deverá existir apenas estado temporário.
 
@@ -386,7 +381,7 @@ Exemplo conceitual:
 session["pending_mfa_user_id"]
 ```
 
-A chamada:
+A chamada, nesse fluxo:
 
 ```python
 login_user(user)
@@ -406,7 +401,7 @@ inválido. Senha, código TOTP e segredo TOTP não integram esse estado.
 Fluxo:
 
 ```text
-Senha validada no primeiro acesso
+Usuário autenticado sem MFA
       │
       ▼
 Solicita ativação
@@ -427,14 +422,12 @@ Código de confirmação
 MFA ativado
 ```
 
-O MFA só deverá ser marcado como ativo após um código TOTP válido ser confirmado.
+Abrir ou cancelar a configuração não altera a autenticação atual. O MFA somente será marcado como ativo após a confirmação de um código TOTP válido.
 
-Enquanto a configuração não for confirmada, o usuário permanecerá em estado pré-MFA e não poderá acessar o Dashboard nem outras rotas protegidas.
-
-O usuário inicia o setup após validar a senha, ainda em estado pré-MFA. O QR Code é
+O usuário inicia o setup voluntariamente em sua sessão autenticada. O QR Code é
 SVG gerado em memória e incorporado como `data URI`; nenhum arquivo ou endpoint
-público é criado. Abrir a página não ativa MFA. A ativação e a sessão autenticada
-ocorrem somente após validar um código TOTP.
+público é criado. Abrir a página não ativa MFA; a ativação ocorre somente após
+validar um código TOTP.
 
 A verificação usa `PyOTP`, janela de tolerância equivalente a `valid_window=1` e
 aceita somente códigos de seis dígitos. O último timestep aceito é persistido e a
@@ -474,9 +467,8 @@ substituída enquanto não existir procedimento de recriptografia validado; uma 
 direta provoca falha segura na leitura em vez de retornar plaintext.
 
 A desativação pelo titular exige simultaneamente a senha atual e um TOTP válido.
-Quando concluída, remove o segredo persistido, encerra a sessão autenticada e
-mantém o usuário em estado pré-MFA para configuração imediata de um novo segredo.
-Sem concluir o novo setup, nenhuma rota autenticada fica acessível. Reset
+Quando concluída, remove o segredo persistido e mantém a sessão autenticada. O
+usuário poderá configurar um novo segredo voluntariamente pela área da conta. Reset
 administrativo permanece fora do escopo desta etapa.
 
 ---
@@ -526,7 +518,7 @@ Código TOTP
 
 ou procedimento administrativo explicitamente autorizado.
 
-A ação deverá gerar AuditLog. Como o MFA é obrigatório, um reset administrativo não poderá deixar a conta operando sem o segundo fator: no próximo Login, o usuário deverá ser obrigado a configurar e confirmar novo TOTP antes do Dashboard.
+A ação deverá gerar AuditLog. Como o MFA é opcional, um reset administrativo poderá deixar a conta sem o segundo fator; uma nova ativação dependerá de configuração e confirmação voluntárias pelo titular.
 
 ---
 
@@ -1955,7 +1947,7 @@ O projeto somente poderá ser considerado finalizado quando:
 
 - [ ] senhas estiverem armazenadas somente em hash;
 - [ ] MFA estiver funcionando;
-- [ ] primeiro acesso exigir configuração e confirmação de MFA antes do Dashboard;
+- [ ] contas com MFA ativo exigirem confirmação TOTP antes do Dashboard;
 - [ ] recovery codes estiverem protegidos;
 - [ ] sessões estiverem configuradas com segurança;
 - [ ] rate limiting estiver ativo;

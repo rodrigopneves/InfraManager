@@ -855,25 +855,23 @@ Erro       MFA configurado?
            Não         Sim
             │           │
             ▼           ▼
-       /mfa/setup     /mfa
+       login_user()    /mfa
+            │        Código TOTP
             │           │
-       Confirmar      Código TOTP
-       código TOTP       │
+            │           ▼
+            │      login_user()
             └─────┬─────┘
-                  ▼
-              login_user()
-                  │
                   ▼
               Dashboard
 ```
 
-O MFA é obrigatório para todos os usuários. O primeiro acesso deverá conduzir à configuração e confirmação do TOTP antes do Dashboard. Esse endurecimento é requisito adicional do InfraManager e não exigência direta do professor.
+O MFA TOTP é opcional por usuário. Contas com MFA ativo passam pelo estado pré-MFA e somente criam a sessão após um código válido; contas com MFA inativo criam a sessão após a senha e podem ativar TOTP voluntariamente na área da conta.
 
 ---
 
 # 24. Estado Pré-MFA
 
-Após senha correta e antes da validação MFA, o usuário NÃO deverá ser considerado autenticado.
+Para contas com MFA ativo, após senha correta e antes da validação TOTP, o usuário NÃO deverá ser considerado autenticado.
 
 Deverá existir estado temporário limitado.
 
@@ -892,8 +890,8 @@ login_user(user)
 Isso evita que a primeira etapa seja confundida com autenticação completa.
 
 Esse estado possui somente `user_id` e timestamp, expira após 5 minutos e é
-validado novamente contra status e existência do usuário antes da configuração ou
-validação do segundo fator. A integridade do estado mantido no cliente depende da
+validado novamente contra status e existência do usuário antes da validação do
+segundo fator. A integridade do estado mantido no cliente depende da
 assinatura da sessão Flask.
 
 ---
@@ -933,11 +931,11 @@ MFA ativado
 O segredo TOTP deverá receber proteção adequada definida no `SECURITY.md`.
 
 O fluxo usa `PyOTP` com tolerância de uma janela temporal. O QR Code é gerado em
-memória como SVG e entregue somente durante o setup autorizado pelo estado pré-MFA.
+memória como SVG e entregue somente durante o setup de um usuário autenticado.
 O Blueprint `account` concentra ativação e desativação; o Blueprint `auth`
 concentra a verificação que conclui o login.
 
-O MFA é obrigatório para todos os usuários, sem política de exceção por perfil. O
+O MFA é opcional por usuário e, quando ativo, obrigatório em cada Login. O
 segredo persistido usa criptografia autenticada Fernet com chave externa ao banco e
 ao repositório. O último timestep aceito fica em `mfa_last_used_step`; a atualização
 condicional desse campo rejeita timesteps iguais ou anteriores, inclusive diante de
@@ -1819,7 +1817,7 @@ A arquitetura será considerada corretamente implementada quando:
 - [ ] migrations estiverem funcionando;
 - [ ] autenticação estiver isolada;
 - [ ] MFA funcionar antes da criação da sessão autenticada;
-- [ ] primeiro acesso sem MFA configurado ser bloqueado no fluxo de configuração antes do Dashboard;
+- [ ] usuário sem MFA acessar o Dashboard após senha válida e poder ativá-lo na área da conta;
 - [ ] RBAC for validado no servidor;
 - [ ] CSRF proteger operações de escrita;
 - [ ] auditoria registrar operações críticas;

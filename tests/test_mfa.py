@@ -38,7 +38,7 @@ def complete_mfa_login(client: FlaskClient, user: User):
     return complete_login(client, user.username, "valid-mfa-password")
 
 
-def test_user_without_mfa_is_sent_to_setup_without_authentication(
+def test_user_without_mfa_logs_in_directly_without_pending_mfa(
     client: FlaskClient, user_without_mfa: User
 ) -> None:
     response = client.post(
@@ -49,8 +49,11 @@ def test_user_without_mfa_is_sent_to_setup_without_authentication(
         },
     )
 
-    assert urlparse(response.location).path == "/account/mfa/setup"
-    assert client.get("/dashboard").status_code == 302
+    assert urlparse(response.location).path == "/dashboard"
+    assert client.get("/dashboard").status_code == 200
+    with client.session_transaction() as session:
+        assert PENDING_MFA_USER_ID_KEY not in session
+        assert PENDING_MFA_STARTED_AT_KEY not in session
 
 
 def test_mfa_user_requires_verification_before_authentication(
@@ -267,13 +270,13 @@ def test_cancel_setup_removes_pending_secret(
 
     response = client.post("/account/mfa/setup/cancel")
 
-    assert urlparse(response.location).path == "/login"
-    assert client.get("/dashboard").status_code == 302
+    assert urlparse(response.location).path == "/dashboard"
+    assert client.get("/dashboard").status_code == 200
     with client.session_transaction() as session:
         assert MFA_SETUP_SECRET_KEY not in session
 
 
-def test_authenticated_user_cannot_enter_or_cancel_setup_flow(
+def test_user_with_mfa_cannot_enter_or_cancel_setup_flow(
     client: FlaskClient, mfa_user: User
 ) -> None:
     complete_mfa_login(client, mfa_user)
@@ -300,10 +303,10 @@ def test_user_can_disable_mfa_with_password_and_totp(
     )
     db.session.refresh(mfa_user)
 
-    assert urlparse(response.location).path == "/account/mfa/setup"
+    assert urlparse(response.location).path == "/dashboard"
     assert mfa_user.mfa_enabled is False
     assert mfa_user.mfa_secret is None
-    assert client.get("/dashboard").status_code == 302
+    assert client.get("/dashboard").status_code == 200
 
 
 def test_wrong_password_prevents_mfa_disable(
@@ -431,7 +434,7 @@ def test_totp_consumption_rolls_back_when_login_audit_fails(
     assert client.get("/dashboard").status_code == 302
 
 
-def test_unconfigured_pending_user_cannot_use_verification_endpoint(
+def test_authenticated_user_without_mfa_does_not_use_verification_endpoint(
     client: FlaskClient, user_without_mfa: User
 ) -> None:
     login_with_password(
@@ -441,8 +444,8 @@ def test_unconfigured_pending_user_cannot_use_verification_endpoint(
     response = client.get("/mfa/verify")
 
     assert response.status_code == 302
-    assert urlparse(response.location).path == "/account/mfa/setup"
-    assert client.get("/dashboard").status_code == 302
+    assert urlparse(response.location).path == "/dashboard"
+    assert client.get("/dashboard").status_code == 200
 
 
 @pytest.mark.parametrize("offset", [-1, 0, 1])
@@ -514,7 +517,7 @@ def test_setup_code_is_already_consumed_when_first_session_starts(
     assert client.get("/dashboard").status_code == 302
 
 
-def test_disable_forces_immediate_reenrollment_with_fresh_replay_state(
+def test_disabled_mfa_can_be_voluntarily_reenabled_with_fresh_replay_state(
     client: FlaskClient, mfa_user: User, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     base_time = 2_000_000_000
@@ -542,7 +545,7 @@ def test_disable_forces_immediate_reenrollment_with_fresh_replay_state(
     )
     db.session.refresh(mfa_user)
 
-    assert urlparse(disable_response.location).path == "/account/mfa/setup"
+    assert urlparse(disable_response.location).path == "/dashboard"
     assert replacement_secret != original_secret
     assert urlparse(setup_response.location).path == "/dashboard"
     assert mfa_user.mfa_last_used_step == int(base_time + 30) // 30

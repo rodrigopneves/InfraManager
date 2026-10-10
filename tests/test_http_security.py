@@ -186,12 +186,13 @@ def test_mfa_pages_and_redirects_are_not_stored(
     )
     setup_response = client.get("/account/mfa/setup")
 
-    assert urlparse(login_response.location).path == "/account/mfa/setup"
+    assert urlparse(login_response.location).path == "/dashboard"
     for response in (login_response, setup_response):
         assert_security_headers(response)
         assert_no_store(response)
 
     client.post("/account/mfa/setup/cancel")
+    client.post("/logout")
     client.post(
         "/login",
         data={"username": mfa_user.username, "password": "valid-mfa-password"},
